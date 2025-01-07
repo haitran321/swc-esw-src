@@ -1,0 +1,39 @@
+   SAP_011          5              // Replica range bin offset. The start range bin is set to this value
+   SAP_015          0.1            // Time interval for sending DSPS summary status report to RIMS (0.1)
+   SAP_016          5              // Time interval for sending DSPS detail status report to RIMS (5)
+   SAP_017          20              // Max number 1MHz detection
+   SAP_018          20             // Max number 100 KHz detection
+   SAP_020          350            // Max number of reported range bin for a Range Window report
+   SAP_021          50.0           // Detecton threshold bias scale factor for 100 kHz single pulse detection with non zero satellite ID 
+   SAP_022          24             // Max number of Waveforms per resource period
+   SAP_023          1.25e05        // Sample rate for 100 kHz waveforms
+   SAP_024          1.25e06        // Sample rate for 1 MHz waveforms
+   SAP_025          1              // Disables or enables the Pilot Pulse Gain Correction
+   SAP_026          100.0          // Detecton threshold bias scale factor for 100 kHz single pulse detection (2.0)
+   SAP_027          10.0           // Detecton threshold bias scale factor for 1 MHz single pulse detection (3.0)
+   SAP_028          15             // Number of CFAR range bins
+   SAP_029          -10.0          // SLB threshold bias when SLB mode is Off (-10.0)
+   SAP_030          2              // CFAR threshold algorithm (1 = lesser, 2 = greater, 3 = average)
+   SAP_031          6.0            // Magnitude differential for interpolation.
+   SAP_032          0              // Channel initialization configuration 0 = All, 1 = Cross
+   SAP_033          65             // The number of range bins for cfar bypass
+   SAP_034          6              // The dsps sequence id for computing dc offset
+   SAP_035          20             // The number of the average for computing smoothed dc offset, max = 100
+   SAP_036          10.0           // Channel 5 lower limit for magnitude detection
+   SAP_037          9.0            // Other channels lower limit for magnitude detection
+   SAP_038          1.00           // Minimum magnitude for log-magnitude conversion
+   SAP_039          0.0            // Mean for PDT calculation. When 0 the computed mean of the window is used instead
+   SAP_040          5.5            // Monopulse check 1.  Maximum diff between center and max cross
+   SAP_041          10.5           // Monopulse check 2.  Maximum diff between center and min cross
+   SAP_042          2.0            // Monopulse check 3.  Minimum diff between center and min cross
+   SAP_043          8.0            // SLB threshold bias when SLB mode is On 
+   SAP_044          9.5            // SLB threshold bias when SLB mode is On Extended 
+   SAP_045          50             // Minimum number of range bins for PDT calculation
+   SAP_046          1.0            // Monopulse check for all detection
+   SAP_047          -2.5           // Monopulse check cross channel detection
+   SAP_048          -4.0           // Monopulse check corner channel detection
+   SAP_049          1              // Monopulse check enabling flag (1 = enable (default), 0 = disable)
+   SAP_050          1              // Monopulse check sending deleted detection flag (0 = don't send (default), 1 = send deleted detection)                             
+   SAP_051          1000           // The smoothed factor for computing smoothed PDT mean noise                             
+   SAP_052          65             // Minimum number of range window noise samples to declare valid range window noise                             
+   SAP_053          25.0           // Maximum interpolated amplitudes of CH5H, CH5V, top, left, right, bottom of of the det. rpt. to declare valid range window noise

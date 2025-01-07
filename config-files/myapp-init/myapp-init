@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# ZCU104: 172.16.80.8
+# CS: 172.16.80.9
+# TR: 172.16.80.12
+
+ifconfig eth0 172.16.80.9 netmask 255.255.255.0
+ping -c 1 172.16.80.30
+ping -c 1 172.16.80.111
+/mnt/sd-mmcblk0p1/bin/soc-app.elf&
