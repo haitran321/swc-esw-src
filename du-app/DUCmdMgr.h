@@ -56,29 +56,6 @@ class DUCmdMgr : public EventProcessor
 
         int TEST_STATUS;
 
-        // Tx Module Configs
-        int RFG_SW_TRIGGER;
-        int RFG_INIT_TESTING;
-        int RFG_MIN_START_TIME;
-        int lastRFGActionStopTime[NUM_DU_CHANNELS];
-
-        // TX HW Setup variables
-        int INTERNAL_TRIGGER;
-        int RFG_HW_SETUP_ENABLE;
-        int RFG_HW_SETUP_CH;
-        int RFG_HW_SETUP_START;
-        int RFG_HW_SETUP_STOP;
-        int RFG_HW_SETUP_FREQUENCY;
-        int RFG_HW_SETUP_AMPLITUDE;
-        int RFG_HW_SETUP_LFM;
-        int RFG_HW_SETUP_PHASE;
-        int RFG_HW_SETUP_PC;
-        int RFG_DDS_FREQ_MHZ;
-
-        float TR_FTW_Conversion_usec;
-        float TR_FTW_Conversion_sec;
-        float TR_RTW_Conversion;
-
         void processIncomingMsg();
 
         // Variables for TWGS Timing Triggers
@@ -88,7 +65,7 @@ class DUCmdMgr : public EventProcessor
 
         DUHWMgr &_duHWMgr;
 
-        UIODevice* _uio1Dev;
+//      UIODevice* _uio1Dev;
         void processInterrupt();
         ElapsedTimer eInterruptProcessing;
 

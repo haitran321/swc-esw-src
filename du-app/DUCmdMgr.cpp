@@ -28,7 +28,7 @@ DUCmdMgr::DUCmdMgr() :
     _udpWarmRestart(NULL),
     _udpFromTWGS(NULL),
     _duHWMgr(DUHWMgr::getInstance()),
-    _uio1Dev(NULL),
+//  _uio1Dev(NULL),
     _statusRptToTWGS(NULL)
 {
 }
@@ -89,90 +89,6 @@ STATUS DUCmdMgr::start()
 
     rc = rc || configs.get("TEST_STATUS", TEST_STATUS);
 
-    if (MODULE_TYPE == TX)
-    {
-        // Tx Module configs
-        rc = rc || configs.get("TX_SW_TRIGGER", RFG_SW_TRIGGER);
-        rc = rc || configs.get("TX_INIT_TESTING", RFG_INIT_TESTING);
-        rc = rc || configs.get("TX_MIN_START_TIME", RFG_MIN_START_TIME);
-
-        for (int ch = 0; ch < NUM_DU_CHANNELS; ch++)
-        {
-            lastRFGActionStopTime[ch] = RFG_MIN_START_TIME;
-        }
-
-        // Tx HW Setup data
-        rc = rc || configs.get("TX_INTERNAL_TRIGGER", INTERNAL_TRIGGER);
-        rc = rc || configs.get("TX_HW_SETUP_ENABLE", RFG_HW_SETUP_ENABLE);
-        rc = rc || configs.get("TX_HW_SETUP_CH", RFG_HW_SETUP_CH);
-        rc = rc || configs.get("TX_HW_SETUP_START", RFG_HW_SETUP_START);
-        rc = rc || configs.get("TX_HW_SETUP_STOP", RFG_HW_SETUP_STOP);
-        rc = rc || configs.get("TX_HW_SETUP_FREQUENCY", RFG_HW_SETUP_FREQUENCY);
-        rc = rc || configs.get("TX_HW_SETUP_AMPLITUDE", RFG_HW_SETUP_AMPLITUDE);
-        rc = rc || configs.get("TX_HW_SETUP_LFM", RFG_HW_SETUP_LFM);
-        rc = rc || configs.get("TX_HW_SETUP_PHASE", RFG_HW_SETUP_PHASE);
-        rc = rc || configs.get("TX_HW_SETUP_PC", RFG_HW_SETUP_PC);
-        rc = rc || configs.get("TX_DDS_FREQ_MHZ", RFG_DDS_FREQ_MHZ);
-
-        // Compute freq and ramp conversion
-        TR_FTW_Conversion_usec = 4294967296.0 / float(RFG_DDS_FREQ_MHZ);
-        TR_FTW_Conversion_sec = TR_FTW_Conversion_usec / 1000000.0;
-        TR_RTW_Conversion = TR_FTW_Conversion_sec / 200.0;
-
-        printf("RFG_DDS_FREQ_MHZ = %d, TR_FTW_Conversion_usec = %f, TR_RTW_Conversion = %f\n",
-               RFG_DDS_FREQ_MHZ, TR_FTW_Conversion_usec, TR_RTW_Conversion);
-
-    }
-    else if (MODULE_TYPE == WG1)
-    {
-        // Tx Module configs
-        rc = rc || configs.get("WG1_SW_TRIGGER", RFG_SW_TRIGGER);
-        rc = rc || configs.get("WG1_INIT_TESTING", RFG_INIT_TESTING);
-        rc = rc || configs.get("WG1_MIN_START_TIME", RFG_MIN_START_TIME);
-
-        for (int ch = 0; ch < NUM_DU_CHANNELS; ch++)
-        {
-            lastRFGActionStopTime[ch] = RFG_MIN_START_TIME;
-        }
-
-        // Tx HW Setup data
-        rc = rc || configs.get("WG1_HW_SETUP_ENABLE", RFG_HW_SETUP_ENABLE);
-        rc = rc || configs.get("WG1_HW_SETUP_CH", RFG_HW_SETUP_CH);
-        rc = rc || configs.get("WG1_HW_SETUP_START", RFG_HW_SETUP_START);
-        rc = rc || configs.get("WG1_HW_SETUP_STOP", RFG_HW_SETUP_STOP);
-        rc = rc || configs.get("WG1_HW_SETUP_FREQUENCY", RFG_HW_SETUP_FREQUENCY);
-        rc = rc || configs.get("WG1_HW_SETUP_AMPLITUDE", RFG_HW_SETUP_AMPLITUDE);
-        rc = rc || configs.get("WG1_HW_SETUP_LFM", RFG_HW_SETUP_LFM);
-        rc = rc || configs.get("WG1_HW_SETUP_PHASE", RFG_HW_SETUP_PHASE);
-        rc = rc || configs.get("WG1_HW_SETUP_PC", RFG_HW_SETUP_PC);
-    }
-    else if (MODULE_TYPE == WG2)
-    {
-        // Tx Module configs
-        rc = rc || configs.get("WG2_SW_TRIGGER", RFG_SW_TRIGGER);
-        rc = rc || configs.get("WG2_INIT_TESTING", RFG_INIT_TESTING);
-        rc = rc || configs.get("WG2_MIN_START_TIME", RFG_MIN_START_TIME);
-
-        for (int ch = 0; ch < NUM_DU_CHANNELS; ch++)
-        {
-            lastRFGActionStopTime[ch] = RFG_MIN_START_TIME;
-        }
-
-        // Tx HW Setup data
-        rc = rc || configs.get("WG2_HW_SETUP_ENABLE", RFG_HW_SETUP_ENABLE);
-        rc = rc || configs.get("WG2_HW_SETUP_CH", RFG_HW_SETUP_CH);
-        rc = rc || configs.get("WG2_HW_SETUP_START", RFG_HW_SETUP_START);
-        rc = rc || configs.get("WG2_HW_SETUP_STOP", RFG_HW_SETUP_STOP);
-        rc = rc || configs.get("WG2_HW_SETUP_FREQUENCY", RFG_HW_SETUP_FREQUENCY);
-        rc = rc || configs.get("WG2_HW_SETUP_AMPLITUDE", RFG_HW_SETUP_AMPLITUDE);
-        rc = rc || configs.get("WG2_HW_SETUP_LFM", RFG_HW_SETUP_LFM);
-        rc = rc || configs.get("WG2_HW_SETUP_PHASE", RFG_HW_SETUP_PHASE);
-        rc = rc || configs.get("WG2_HW_SETUP_PC", RFG_HW_SETUP_PC);
-    }
-
-    printf("INTERNAL_TRIGGER = %d, RFG_HW_SETUP_ENABLE = %d, RFG_HW_SETUP_CH = %d\n",
-            INTERNAL_TRIGGER, RFG_HW_SETUP_ENABLE, RFG_HW_SETUP_CH);
-
     // Setup Logger
     _logger.initialize();
     _logger.logInfo("DUCmdMgr Initializing");
@@ -226,47 +142,26 @@ STATUS DUCmdMgr::start()
     _logger.logInfo("Successfully created _udpWarmRestart device");
     printf("Successfully created _udpWarmRestart device\n");
 
-    // UDP device to send status report to TWGS
-    // Only use for WGs
-    if ((MODULE_TYPE == WG1) || (MODULE_TYPE == WG2))
-    {
-        stringstream statusRptToTWGSDevName;
-        _statusRptToTWGS = new UDPNetworkDevice(NetworkClient, TWGS_STATUS_IP_ADDRESS, STATUS_TO_TWGS_PORT, false);
-        statusRptToTWGSDevName << "UDP Status Rpt Device ";
-        statusRptToTWGSDevName << TWGS_STATUS_IP_ADDRESS << ":" << STATUS_TO_TWGS_PORT;
-        _statusRptToTWGS->setName(statusRptToTWGSDevName.str());
-
-        if (_statusRptToTWGS->open() != OK)
-        {
-            printf("Error openning dev %s", _statusRptToTWGS->getName().c_str());
-            rc = rc || ERROR;
-        }
-        else
-        {
-            printf("Successfully open Status Rpt To TWGS UDP device\n");
-        }
-    }
-
     // Initialize rf generator
     _duHWMgr.initialize();
 
     // Open UIO device
-    _uio1Dev = new UIODevice(AXI_INT_OFFSET, 0);
-
-    if (_uio1Dev->open() != OK)
-    {
-        _logger.logInfo("ERROR openning dev %s", _uio1Dev->getName().c_str());
-        return ERROR;
-    }
-    if (addEvent(*_uio1Dev, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processInterrupt)) != OK)
-    {
-        _logger.logInfo("ERROR adding event to dev %s", _uio1Dev->getName().c_str());
-        return ERROR;
-    }
-    _logger.logInfo("Successfully created _uio1Dev device");
-
-    // Map UIO address
-    _uio1Dev->mmap();
+//  _uio1Dev = new UIODevice(AXI_INT_OFFSET, 0);
+//
+//  if (_uio1Dev->open() != OK)
+//  {
+//      _logger.logInfo("ERROR openning dev %s", _uio1Dev->getName().c_str());
+//      return ERROR;
+//  }
+//  if (addEvent(*_uio1Dev, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processInterrupt)) != OK)
+//  {
+//      _logger.logInfo("ERROR adding event to dev %s", _uio1Dev->getName().c_str());
+//      return ERROR;
+//  }
+//  _logger.logInfo("Successfully created _uio1Dev device");
+//
+//  // Map UIO address
+//  _uio1Dev->mmap();
 
     // printEventList();
 
@@ -275,23 +170,23 @@ STATUS DUCmdMgr::start()
     return OK;
 }
 
-void DUCmdMgr::processInterrupt()
-{
-    eInterruptProcessing.start();
-
-#ifdef PRINT_DEBUG
-    printf("In processInterrupt()\n");
-#endif
-
-    size_t bytesRead = 0;
-    int pending = 0;
-
-    _uio1Dev->read((char *)&pending, sizeof(int), bytesRead);
-    printf("Reading interrupt, number of interrupt = %d\n", pending);
-    _uio1Dev->clearInterrupt();
-
-    eInterruptProcessing.stop();
-}
+//void DUCmdMgr::processInterrupt()
+//{
+//    eInterruptProcessing.start();
+//
+//#ifdef PRINT_DEBUG
+//    printf("In processInterrupt()\n");
+//#endif
+//
+//    size_t bytesRead = 0;
+//    int pending = 0;
+//
+//    _uio1Dev->read((char *)&pending, sizeof(int), bytesRead);
+//    printf("Reading interrupt, number of interrupt = %d\n", pending);
+//    _uio1Dev->clearInterrupt();
+//
+//    eInterruptProcessing.stop();
+//}
 
 void DUCmdMgr::processIncomingMsg()
 {

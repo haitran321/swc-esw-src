@@ -54,13 +54,6 @@ STATUS DUHWMgr::initialize()
     printf("getFirmwareVersionReg = 0x%x\n", _duDev->getFirmwareVersionReg());
     printf("getBoardStatusReg = 0x%x\n", _duDev->getBoardStatusReg());
     printf("getBoardControlReg = 0x%x\n", _duDev->getBoardControlReg());
-
-    // Default tx module mode to: 
-    // CH1: enable, pbp mode, no pbsk, lfm down chirp, no trigger timeout, external trigger
-    // CH2: disable
-    // CH3: disable
-    // CH4: disable
-    // All: use action cmd in PBP mode, external trigger, 
     
     boardControlValue = DeviceUtilities::readMask(DU_BOARD_CONTROL_MASK, getBoardControl());
 
@@ -68,8 +61,10 @@ STATUS DUHWMgr::initialize()
 //  boardControlValue = DeviceUtilities::updateReg(DU_TRIGGER_MODE_MASK, boardControlValue, DU_TRIGGER_EXTERNAL);
 //  setBoardControl(boardControlValue);
 
-    getRegs(0x8, 0x8);
-    _logger.logInfo("Board control reg = 0x%x", getBoardControl());
+//  getRegs(0x8, 0x8);
+//  _logger.logInfo("Board control reg = 0x%x", getBoardControl());
+
+    return OK;
 }
 
 void DUHWMgr::getRegs(int startReg, int endReg)

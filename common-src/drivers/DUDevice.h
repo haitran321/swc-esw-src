@@ -67,26 +67,16 @@ typedef struct
     int firmwareVersion;
     int boardStatus;
     int boardControl;
-    DUCWSignalType cwSignals[NUM_DU_CHANNELS];
-    // For TX FW
-    // int spare1[29];
-    // End For TX FW
-    // For WG1 FW
-    int spare1[9];
-    int controlMux;
+    int armKSineAlpha;
+    int armKSineBeta;
+    int atbKSineAlpha;
+    int atbKSineBeta;
+    int spare1[20];
     int fpgaDieTemp;
-    int ddsStatus;
-    int lmkReadWrite;
-    // End For WG1 FW
-//  int gatedCWEmOnDur;
-    int spare2;
-    int gatedCWEmPeriod;
-    int triggerTimeout;
+    int vccIntVoltage;
+    int vccAuxVoltage;
+    int vbramVoltage;
     int diagInfo;
-    int ch0NumActions;
-    int ch1NumActions;
-    int ch2NumActions;
-    int ch3NumActions;
 }DURegType;
 
 #define DU_CH0_STARTING_ADDR_OFFSET 0x0100
@@ -210,15 +200,9 @@ public:
 
     int getBoardControlReg();
 
-    STATUS setCWRegs(DU_CHANNEL channel, DUCWSignalType signal);
-
-    DUCWSignalType getCWRegs(DU_CHANNEL channel);
-
     STATUS setNumActionsReg(DU_CHANNEL channel, int val);
 
     void getRegs(int startReg, int endReg);
-
-    void setGatedCWEmulatorRegs(int period);
 
 private:
 

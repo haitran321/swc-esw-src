@@ -109,26 +109,6 @@ STATUS DUDevice::getBoardControlReg()
     return (regs->boardControl);
 }
 
-STATUS DUDevice::setCWRegs(DU_CHANNEL channel, DUCWSignalType signal)
-{
-    STATUS rc = OK;
-
-    regs->cwSignals[channel].amplitude = signal.amplitude;
-    regs->cwSignals[channel].freq = signal.freq;
-
-    return rc;    
-}
-
-DUCWSignalType DUDevice::getCWRegs(DU_CHANNEL channel)
-{
-    DUCWSignalType action;
-
-    action.amplitude = regs->cwSignals[channel].amplitude;
-    action.freq = regs->cwSignals[channel].freq;
-    
-    return action;    
-}
-
 // STATUS DUDevice::setDMAControllerReg(int val)
 // {
 //     STATUS rc = OK;
@@ -161,27 +141,27 @@ STATUS DUDevice::setNumActionsReg(DU_CHANNEL ch, int val)
 {
     STATUS rc = OK;
 
-    if (ch == DU_CHANNEL_0)
-    {
-        regs->ch0NumActions = val;
-    }
-    else if (ch == DU_CHANNEL_1)
-    {
-        regs->ch1NumActions = val;
-    }
-    else if (ch == DU_CHANNEL_2)
-    {
-        regs->ch2NumActions = val;
-    }
-    else if (ch == DU_CHANNEL_3)
-    {
-        regs->ch3NumActions = val;
-    }
-    else
-    {
-        printf("ERROR:  invalid DU channel number = %d\n", ch);
-        rc = ERROR;
-    }
+//  if (ch == DU_CHANNEL_0)
+//  {
+//      regs->ch0NumActions = val;
+//  }
+//  else if (ch == DU_CHANNEL_1)
+//  {
+//      regs->ch1NumActions = val;
+//  }
+//  else if (ch == DU_CHANNEL_2)
+//  {
+//      regs->ch2NumActions = val;
+//  }
+//  else if (ch == DU_CHANNEL_3)
+//  {
+//      regs->ch3NumActions = val;
+//  }
+//  else
+//  {
+//      printf("ERROR:  invalid DU channel number = %d\n", ch);
+//      rc = ERROR;
+//  }
     
     return rc;
 }    
@@ -194,10 +174,4 @@ void DUDevice::getRegs(int startReg, int endReg)
     {
         printf("0x%x: 0x%x\n", startReg + (i*4), readReg(startReg + (i*4)));
     }
-}
-
-void DUDevice::setGatedCWEmulatorRegs(int period)
-{
-//  regs->gatedCWEmOnDur = duration;
-    regs->gatedCWEmPeriod = period; 
 }
