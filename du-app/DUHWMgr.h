@@ -34,6 +34,10 @@ class DUHWMgr : public Uncopyable
 
         int getBoardStatus();
 
+        int getDiagInfo();
+
+        STATUS setDiagInfo(int val);
+
         void clearAllActions();
 
         STATUS addAction(DU_CHANNEL chId, DUActionType action, unsigned int ftw);
@@ -47,6 +51,8 @@ class DUHWMgr : public Uncopyable
         void toggleSWInternalTriggerFlag();
 
         void setTriggerMode(DU_TRIGGER_ENUM mode);
+
+        void toggleInterruptBit();
 
     protected:
         /**
@@ -64,6 +70,8 @@ class DUHWMgr : public Uncopyable
         DUDevice* _duDev;
 
         int boardControlValue;
+
+        int diagRegValue;
 
         int _numActions[NUM_DU_CHANNELS];
 

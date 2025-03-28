@@ -104,7 +104,7 @@ STATUS TUDevice::setBoardControlReg(int val)
     return rc;
 }
 
-STATUS TUDevice::getBoardControlReg()
+int TUDevice::getBoardControlReg()
 {
     return (regs->boardControl);
 }

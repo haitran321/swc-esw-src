@@ -92,6 +92,16 @@ int DUHWMgr::getBoardStatus()
     return (_duDev->getBoardStatusReg());
 }
 
+int DUHWMgr::getDiagInfo()
+{
+    return (_duDev->getDiagInfoReg());
+}
+
+STATUS DUHWMgr::setDiagInfo(int val)
+{
+    return(_duDev->setDiagInfoReg(val));
+}
+
 void DUHWMgr::clearAllActions()
 {
     for (int i = 0; i < NUM_DU_CHANNELS; i++)
@@ -182,4 +192,13 @@ void DUHWMgr::setTriggerMode(DU_TRIGGER_ENUM mode)
     _logger.logInfo("Setting trigger mode to %d, board control reg = 0x%x", mode, getBoardControl());
     setBoardControl(boardControlValue);
 }
+
+void DUHWMgr::toggleInterruptBit()
+{
+    diagRegValue = DeviceUtilities::updateReg(0x1, diagRegValue, 0);
+    setDiagInfo(diagRegValue);
+    diagRegValue = DeviceUtilities::updateReg(0x1, diagRegValue, 1);
+    setDiagInfo(diagRegValue);
+}
+
 

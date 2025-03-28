@@ -28,7 +28,8 @@ DUCmdMgr::DUCmdMgr() :
     _udpWarmRestart(NULL),
     _udpFromTWGS(NULL),
     _duHWMgr(DUHWMgr::getInstance()),
-//  _uio1Dev(NULL),
+    _uio1Dev(NULL),
+    _timerDev(NULL),
     _statusRptToTWGS(NULL)
 {
 }
@@ -47,6 +48,12 @@ DUCmdMgr::~DUCmdMgr()
 
     delete _udpWarmRestart;
     _udpWarmRestart = NULL;
+
+    delete _uio1Dev;
+    _uio1Dev = NULL;
+
+    delete _timerDev;
+    _timerDev = NULL;
 
     delete _statusRptToTWGS;
     _statusRptToTWGS = NULL;
@@ -146,22 +153,39 @@ STATUS DUCmdMgr::start()
     _duHWMgr.initialize();
 
     // Open UIO device
-//  _uio1Dev = new UIODevice(AXI_INT_OFFSET, 0);
-//
-//  if (_uio1Dev->open() != OK)
-//  {
-//      _logger.logInfo("ERROR openning dev %s", _uio1Dev->getName().c_str());
-//      return ERROR;
-//  }
-//  if (addEvent(*_uio1Dev, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processInterrupt)) != OK)
-//  {
-//      _logger.logInfo("ERROR adding event to dev %s", _uio1Dev->getName().c_str());
-//      return ERROR;
-//  }
-//  _logger.logInfo("Successfully created _uio1Dev device");
-//
-//  // Map UIO address
-//  _uio1Dev->mmap();
+    _uio1Dev = new UIODevice(AXI_INT_OFFSET, 0);
+
+    if (_uio1Dev->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _uio1Dev->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_uio1Dev, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processInterrupt)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _uio1Dev->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _uio1Dev device");
+
+    // Map UIO address
+    _uio1Dev->mmap();
+
+    // Timer testing
+    timespec init = { 10, 0 };
+    timespec timeout = { 10, 0 };
+    _timerDev = new TimerDevice(init, timeout);
+
+    if (_timerDev->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _timerDev->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_timerDev, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processTimer)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _timerDev->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _timerDev device");
 
     // printEventList();
 
@@ -170,23 +194,41 @@ STATUS DUCmdMgr::start()
     return OK;
 }
 
-//void DUCmdMgr::processInterrupt()
-//{
-//    eInterruptProcessing.start();
-//
-//#ifdef PRINT_DEBUG
-//    printf("In processInterrupt()\n");
-//#endif
-//
-//    size_t bytesRead = 0;
-//    int pending = 0;
-//
-//    _uio1Dev->read((char *)&pending, sizeof(int), bytesRead);
-//    printf("Reading interrupt, number of interrupt = %d\n", pending);
-//    _uio1Dev->clearInterrupt();
-//
-//    eInterruptProcessing.stop();
-//}
+void DUCmdMgr::processInterrupt()
+{
+    eInterruptProcessing.start();
+
+#ifdef PRINT_DEBUG
+    printf("In processInterrupt()\n");
+#endif
+
+    size_t bytesRead = 0;
+    int pending = 0;
+
+    _uio1Dev->read((char *)&pending, sizeof(int), bytesRead);
+    printf("Reading interrupt, number of interrupt = %d\n", pending);
+    _uio1Dev->clearInterrupt();
+
+    eInterruptProcessing.stop();
+}
+
+void DUCmdMgr::processTimer()
+{
+    static int timerCounter = 0;
+
+    timerCounter++;
+
+//  if (timerCounter % 100 == 0)
+//  {
+        printf("In processTimer: timerCounter = %d\n", timerCounter);
+//  }
+
+    // Set Diag bit to generate interrupt
+
+    _duHWMgr.toggleInterruptBit();
+
+    _timerDev->read();
+}
 
 void DUCmdMgr::processIncomingMsg()
 {

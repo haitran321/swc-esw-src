@@ -200,6 +200,10 @@ public:
 
     int getBoardControlReg();
 
+    STATUS setDiagInfoReg(int val);
+
+    int getDiagInfoReg();
+
     STATUS setNumActionsReg(DU_CHANNEL channel, int val);
 
     void getRegs(int startReg, int endReg);

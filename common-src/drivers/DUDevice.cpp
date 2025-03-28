@@ -104,9 +104,23 @@ STATUS DUDevice::setBoardControlReg(int val)
     return rc;
 }
 
-STATUS DUDevice::getBoardControlReg()
+int DUDevice::getBoardControlReg()
 {
     return (regs->boardControl);
+}
+
+STATUS DUDevice::setDiagInfoReg(int val)
+{
+    STATUS rc = OK;
+
+    regs->diagInfo = val;
+
+    return rc;
+}
+
+int DUDevice::getDiagInfoReg()
+{
+    return (regs->diagInfo);
 }
 
 // STATUS DUDevice::setDMAControllerReg(int val)

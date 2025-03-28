@@ -12,6 +12,7 @@
 #include "LEDDevice.h"
 #include "DUHWMgr.h"
 #include "UIODevice.h"
+#include "TimerDevice.h"
 #include "Logger.h"
 #include "ElapsedTimer.h"
 
@@ -65,8 +66,10 @@ class DUCmdMgr : public EventProcessor
 
         DUHWMgr &_duHWMgr;
 
-//      UIODevice* _uio1Dev;
+        UIODevice* _uio1Dev;
+        TimerDevice* _timerDev;
         void processInterrupt();
+        void processTimer();
         ElapsedTimer eInterruptProcessing;
 
         // For status report
