@@ -73,6 +73,7 @@ typedef enum
     CS_STATUS_RPT_MSG_ID            = 1421,
     RFG_STATUS_RPT_MSG_ID           = 1422,
     RX_STATUS_RPT_MSG_ID            = 1423,
+    STEERING_CMD_MSG_ID             = 1501,
 
 } RIMSMessageId;
 
@@ -193,6 +194,13 @@ typedef struct
 {
    SLBModeOption type;
 } SLBModeCmdDataType;
+
+/** Steering message data  */
+typedef struct
+{
+   int alpha;
+   int beta;
+} SteeringCmdDataType;
 
 /**
  * Automated Gain Control Levels

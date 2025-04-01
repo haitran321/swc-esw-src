@@ -100,21 +100,6 @@ typedef enum
 
 typedef enum
 {
-    DU_CHANNEL_0 = 0,
-    DU_CHANNEL_1 = 1,
-    DU_CHANNEL_2 = 2,
-    DU_CHANNEL_3 = 3,
-    DU_CHANNEL_4 = 4,
-    DU_CHANNEL_5 = 5,
-    DU_CHANNEL_6 = 6,
-    DU_CHANNEL_7 = 7,
-    DU_CHANNEL_8 = 8,
-    DU_CHANNEL_9 = 9,
-    NUM_DU_CHANNELS = 10
-} DU_CHANNEL;
-
-typedef enum
-{
     TU_CHANNEL_0 = 0,
     TU_CHANNEL_1 = 1,
     TU_CHANNEL_2 = 2,

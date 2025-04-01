@@ -8,6 +8,7 @@
 #include "DUCmdMgr.h"
 #include "WriteRegCmdMsg.h"
 #include "ShutdownCmdMsg.h"
+#include "SteeringCmdMsg.h"
 #include "ConfigDataManager.h"
 #include "DeviceFactory.h"
 #include "EndianUtils.h"
@@ -279,118 +280,25 @@ void DUCmdMgr::processIncomingMsg()
             }
             break;
         }
-//    case RFG_CMD_MSG_ID:
-//        {
-//            if ((MODULE_TYPE == TX) || (MODULE_TYPE == WG1) || (MODULE_TYPE == WG2))
-//            {
-//                GenRFSignalCmdMsg *cloneGenRFSignalMsg = new GenRFSignalCmdMsg(msg->getBuf(), msg->getBufSize());
-//                cloneGenRFSignalMsg->byteSwapToLocal();
-//                int numActions = cloneGenRFSignalMsg->getDataSize() / sizeof(RFGenCmdType);
-//
-//                static int TxCmdCounter = 0;
-//                TxCmdCounter++;
-//                if ((TxCmdCounter % 100) == 0)
-//                {
-//                    printf("RFG_CMD_MSG_ID: pbpId = %d, TxCmdCounter = %d\n", cloneGenRFSignalMsg->getPBPId(), TxCmdCounter);
-//                }
-//
-//                _logger.logInfo("In RFG_CMD_MSG_ID pbpId = %d", cloneGenRFSignalMsg->getPBPId());
-//
-//                RFGenCmdType *params = reinterpret_cast<RFGenCmdType *>(cloneGenRFSignalMsg->getDataBufPos());
-//
-//                for (int i = 0; i < numActions; i++)
-//                {
-//                    DU_CHANNEL chId = params[i].channelId;
-//
-//                    long freq = (params[i].action.signal.freqMHz * 1000000) + params[i].action.signal.freqHz;
-//                    unsigned int ftw = int(float(freq) * TR_FTW_Conversion_sec);
-//
-////                  int pwUsec = (int)((params[i].action.stopTime - params[i].action.startTime) / 200.0);
-//                    unsigned int startUsec = params[i].action.startTime / 1000;
-//                    unsigned int stopUsec = params[i].action.stopTime / 1000;
-//                    unsigned int pwUsec = (unsigned int)(stopUsec - startUsec);
-//
-//                    unsigned int rtw = (unsigned int)(float(params[i].action.signal.lfmRamp) / pwUsec * TR_RTW_Conversion);
-//
-//                    _logger.logDebug("++++++++++++++++++++++++");
-//                    _logger.logDebug("TX Action number %d: PBP ID = %d, Receive ID = %d, channelId = %d", i, cloneGenRFSignalMsg->getPBPId(), params[i].recvId, chId);
-//                    _logger.logDebug("TX startTime = %d (%d usec), stopTime = %d (%d usec), pw = %d usec",
-//                                     params[i].action.startTime, startUsec,
-//                                     params[i].action.stopTime, stopUsec,
-//                                     pwUsec);
-//                    _logger.logDebug("TX amplitude = %d, phaseOffset = %u, freq_Hz = %d (Hz), freq_MHz = %d (MHz), freq = %ld (Hz), ftw = %d, lfmRamp = %d (Hz), rtw = %d, phaseCode = %d",
-//                                     params[i].action.signal.amplitude, params[i].action.signal.phaseOffset,
-//                                     params[i].action.signal.freqHz, params[i].action.signal.freqMHz, freq, ftw,
-//                                     params[i].action.signal.lfmRamp, rtw,
-//                                     params[i].action.signal.phaseCode);
-//
-//                    printf("++++++++++++++++++++++++\n");
-//                    printf("TX Action number %d: PBP ID = %d, Receive ID = %d, channelId = %d\n", i, cloneGenRFSignalMsg->getPBPId(), params[i].recvId, chId);
-//                    printf("TX startTime = %d (%d usec), stopTime = %d (%d usec), pw = %d usec\n",
-//                                     params[i].action.startTime, startUsec,
-//                                     params[i].action.stopTime, stopUsec,
-//                                     pwUsec);
-//                    printf("TX amplitude = %d, phaseOffset = %u, freq = %d (Hz), freq_MHz = %d (MHz),  freq = %ld (Hz), ftw = %d, lfmRamp = %d (Hz), rtw = %d, phaseCode = %d\n",
-//                                     params[i].action.signal.amplitude, params[i].action.signal.phaseOffset,
-//                                     params[i].action.signal.freqHz, params[i].action.signal.freqMHz, freq, ftw,
-//                                     params[i].action.signal.lfmRamp, rtw,
-//                                     params[i].action.signal.phaseCode);
-//
-//                    // Generate hw instructions
-//                    if (RFG_INIT_TESTING == 1)
-//                    {
-////                      _duHWMgr.addInitAction(chId, params[i].action.signal);
-//                    }
-//                    else
-//                    {
-//                        // Check action before adding
-//                        // Verify no overlapping
-//                        bool overlapped = false;
-//
-//                        if (params[i].action.startTime < lastRFGActionStopTime[chId])
-//                        {
-//                            overlapped = true;
-//                            _logger.logInfo("ERROR: startTime (%d) < lastTXActionStopTime (%d)", params[i].action.startTime, lastRFGActionStopTime[chId]);
-//                        }
-//
-//                        if (params[i].action.stopTime < params[i].action.startTime)
-//                        {
-//                            overlapped = true;
-//                            _logger.logInfo("ERROR: stopTime (%d) < startTime (%d)", params[i].action.stopTime, params[i].action.startTime);
-//                        }
-//
-//                        if (!overlapped)
-//                        {
-//                            lastRFGActionStopTime[params[i].channelId] = params[i].action.stopTime;
-//                            params[i].action.signal.lfmRamp = rtw;
-//                            _duHWMgr.addAction(chId, params[i].action, ftw);
-//                        }
-//                    }
-//
-//                }
-//
-//                // Init setup
-//                if (RFG_INIT_TESTING == 1)
-//                {
-////                  _duHWMgr.initTest();
-//                }
-//                else
-//                {
-//                    // Program actions to FW
-//                    _duHWMgr.programActions();
-//
-//                    // For WG1 and WG2, expecting 1 message with all actions for the PBP.
-//                    // TWGS will be sending the message at DeltaP, so need to do everything
-//                    // normally do at DeltaP here and do nothing at DeltaP
-//                    if ((MODULE_TYPE == WG1) || (MODULE_TYPE == WG2) || (INTERNAL_TRIGGER == 1))
-//                    {
-//                        toggleLoadCmdFlag();
-//                    }
-//                }
-//            }
-//
-//            break;
-//        }
+    case STEERING_CMD_MSG_ID:
+        {
+            SteeringCmdMsg *cloneSteeringCmdMsg = new SteeringCmdMsg(msg->getBuf(), msg->getBufSize());
+            cloneSteeringCmdMsg->byteSwapToLocal();
+            int numActions = cloneSteeringCmdMsg->getDataSize() / sizeof(SteeringCmdDataType);
+
+            static int SteeringCmdCounter = 0;
+            SteeringCmdCounter++;
+            if ((SteeringCmdCounter % 100) == 0)
+            {
+                printf("RFG_CMD_MSG_ID: pbpId = %d, SteeringCmdCounter = %d\n", cloneSteeringCmdMsg->getPBPId(), SteeringCmdCounter);
+            }
+
+            _logger.logInfo("In RFG_CMD_MSG_ID pbpId = %d", cloneSteeringCmdMsg->getPBPId());
+
+            SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(cloneSteeringCmdMsg->getDataBufPos());
+
+            break;
+        }
         // printf("Successfully write from readUdpData\n");
     }
 }

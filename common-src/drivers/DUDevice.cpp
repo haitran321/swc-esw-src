@@ -25,55 +25,10 @@ STATUS DUDevice::mmap()
     return OK;
 }
 
-DUFWActionType * DUDevice::getCh0StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH0_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh1StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH1_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh2StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH2_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh3StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH3_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh4StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH4_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh5StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH5_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh6StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH6_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh7StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH7_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh8StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH8_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh9StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH9_STARTING_ADDR_OFFSET);
-}
+//DUFWActionType * DUDevice::getCmdStartingAddress()
+//{
+//    return (DUFWActionType *)(_apbBusAddr + DU_CMD_STARTING_ADDR_OFFSET);
+//}
 
 int DUDevice::readReg(int offset)
 {
