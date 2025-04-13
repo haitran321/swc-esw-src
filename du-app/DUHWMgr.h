@@ -29,30 +29,20 @@ class DUHWMgr : public Uncopyable
         void setReg(int offset, int data);
 
         int getBoardControl();
-
         STATUS setBoardControl(int val);
 
         int getBoardStatus();
 
         int getDiagInfo();
-
         STATUS setDiagInfo(int val);
 
-        void clearAllActions();
+        STATUS setArmKSine(RFCC_CH ch, int val);
+        int getArmKSine(RFCC_CH ch);
+        void runFWScanLimitCheck();
+        int getFWScanLimitCheckStatus();
 
-        STATUS addAction(DU_CHANNEL chId, DUActionType action, unsigned int ftw);
-
-        void programActions();
-
-        int getNumActions(DU_CHANNEL ch);
-
-        void toggleLoadCmdFlag();
-
-        void toggleSWInternalTriggerFlag();
-
-        void setTriggerMode(DU_TRIGGER_ENUM mode);
-
-        void toggleInterruptBit();
+        STATUS setAtbKSine(RFCC_CH ch, int val);
+        int getAtbKSine(RFCC_CH ch);
 
     protected:
         /**
@@ -73,22 +63,8 @@ class DUHWMgr : public Uncopyable
 
         int diagRegValue;
 
-        int _numActions[NUM_DU_CHANNELS];
-
-        DUFWActionType *_actions[NUM_DU_CHANNELS];
-
         /* Common config parameters */
         int MODULE_TYPE;
-        int SW_TRIGGER;
-        int INIT_TESTING;
-        int PBP_MODE_USING_INIT_REGS;
-        int INTERNAL_TRIGGER;
-        int CHIRP_DIR;
-
-        // WG specific config parameters
-        int WG1_COMBINER_ENABLE;
-        int WG1_60MHZ_INPUT;
-
 };
 
 

@@ -7,6 +7,9 @@
 #define ERROR -1
 #define STATUS int
 
+#define PASSED 1
+#define FAILED 0
+
 #define UINT unsigned int
 #define UINT32 unsigned int
 #define ULONG unsigned long
@@ -66,6 +69,13 @@ typedef enum
     DRC = 4,
     DR  = 5 
 } MODULE_TYPE;
+
+typedef enum
+{
+    ALPHA = 0,
+    BETA = 1,
+    NUM_RFCC_CHS = 2
+} RFCC_CH;
 
 typedef enum
 {

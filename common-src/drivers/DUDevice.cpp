@@ -73,6 +73,40 @@ STATUS DUDevice::setDiagInfoReg(int val)
     return rc;
 }
 
+int DUDevice::getArmKSineReg(RFCC_CH ch)
+{
+    return (regs->armKSine[ch]);
+}
+
+STATUS DUDevice::setArmKSineReg(RFCC_CH ch, int val)
+{
+    STATUS rc = OK;
+
+    regs->armKSine[ch] = val;
+
+    return rc;
+}
+
+int DUDevice::getAtbKSineReg(RFCC_CH ch)
+{
+    return (regs->atbKSine[ch]);
+}
+
+STATUS DUDevice::setAtbKSineReg(RFCC_CH ch, int val)
+{
+    STATUS rc = OK;
+
+    regs->atbKSine[ch] = val;
+
+    return rc;
+}
+
+int DUDevice::getSLStatusReg()
+{
+    return (regs->scanLimitResult);
+}
+
+
 int DUDevice::getDiagInfoReg()
 {
     return (regs->diagInfo);
@@ -104,36 +138,7 @@ int DUDevice::getDiagInfoReg()
 //     printf("Write status reg = 0x%x\n", readReg(0x24));
 //     printf("Read control reg = 0x%x\n", readReg(0x4C));
 //     printf("Read status reg = 0x%x\n", readReg(0x28));
-// }
-
-STATUS DUDevice::setNumActionsReg(DU_CHANNEL ch, int val)
-{
-    STATUS rc = OK;
-
-//  if (ch == DU_CHANNEL_0)
-//  {
-//      regs->ch0NumActions = val;
-//  }
-//  else if (ch == DU_CHANNEL_1)
-//  {
-//      regs->ch1NumActions = val;
-//  }
-//  else if (ch == DU_CHANNEL_2)
-//  {
-//      regs->ch2NumActions = val;
-//  }
-//  else if (ch == DU_CHANNEL_3)
-//  {
-//      regs->ch3NumActions = val;
-//  }
-//  else
-//  {
-//      printf("ERROR:  invalid DU channel number = %d\n", ch);
-//      rc = ERROR;
-//  }
-    
-    return rc;
-}    
+// } 
 
 void DUDevice::getRegs(int startReg, int endReg)
 {

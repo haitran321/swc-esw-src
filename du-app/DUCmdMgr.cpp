@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <unistd.h>
+#include <cmath>
 #include <sys/reboot.h>
 #include "DUCmdMgr.h"
 #include "WriteRegCmdMsg.h"
@@ -18,7 +19,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define PRINT_DEBUG
+//#define PRINT_DEBUG
 
 /**
  * Constructor
@@ -172,8 +173,8 @@ STATUS DUCmdMgr::start()
     _uio1Dev->mmap();
 
     // Timer testing
-    timespec init = { 10, 0 };
-    timespec timeout = { 10, 0 };
+    timespec init = { 0, 0 };
+    timespec timeout = { 0, 0 };
     _timerDev = new TimerDevice(init, timeout);
 
     if (_timerDev->open() != OK)
@@ -197,7 +198,10 @@ STATUS DUCmdMgr::start()
 
 void DUCmdMgr::processInterrupt()
 {
-    eInterruptProcessing.start();
+//  eInterruptProcessing.reset();
+//  eInterruptProcessing.start();
+
+    uint64_t startTimeNSec = ts.GetNanoSecondsSinceMidnight();
 
 #ifdef PRINT_DEBUG
     printf("In processInterrupt()\n");
@@ -207,10 +211,24 @@ void DUCmdMgr::processInterrupt()
     int pending = 0;
 
     _uio1Dev->read((char *)&pending, sizeof(int), bytesRead);
-    printf("Reading interrupt, number of interrupt = %d\n", pending);
+//  printf("Reading interrupt, number of interrupt = %d\n", pending);
     _uio1Dev->clearInterrupt();
 
-    eInterruptProcessing.stop();
+    // Get FW SL check status
+//  printf("FW SL status = 0x%x\n", _duHWMgr.getFWScanLimitCheckStatus());
+    int alpha = _duHWMgr.getArmKSine(ALPHA);
+    int beta = _duHWMgr.getArmKSine(BETA);
+
+    int swSLResult = runSWScanLimitCheck(float(alpha), float(beta));
+
+//  printf("%d,%d,%d,%d,%d\n", alpha, beta, _duHWMgr.getFWScanLimitCheckStatus(), swSLResult);
+
+//  eInterruptProcessing.stop();
+//  printf("SW Scan Limit Check took %f\n", eInterruptProcessing.secs());
+
+    uint64_t stopTimeNSec = ts.GetNanoSecondsSinceMidnight();
+    printf("SW Scan Limit Check took %ld\n", stopTimeNSec - startTimeNSec);
+
 }
 
 void DUCmdMgr::processTimer()
@@ -226,7 +244,7 @@ void DUCmdMgr::processTimer()
 
     // Set Diag bit to generate interrupt
 
-    _duHWMgr.toggleInterruptBit();
+//  _duHWMgr.toggleInterruptBit();
 
     _timerDev->read();
 }
@@ -246,14 +264,14 @@ void DUCmdMgr::processIncomingMsg()
     }
     else
     {
-        printf("Successfully read %d bytes\n", (int)bytesRead);
+//      printf("Successfully read %d bytes\n", (int)bytesRead);
     }
 
     msg->setTotalMsgSize(bytesRead);
     msg->byteSwapHeaderToLocal();
 
     _logger.logInfo("Processing incoming RIMS messages: msgId = %d", msg->getMsgId());
-    printf("Processing incoming RIMS messages: msgId = %d\n", msg->getMsgId());
+//  printf("Processing incoming RIMS messages: msgId = %d\n", msg->getMsgId());
 
     switch (msg->getMsgId())
     {
@@ -296,6 +314,17 @@ void DUCmdMgr::processIncomingMsg()
             _logger.logInfo("In RFG_CMD_MSG_ID pbpId = %d", cloneSteeringCmdMsg->getPBPId());
 
             SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(cloneSteeringCmdMsg->getDataBufPos());
+
+//          printf("Alpha = %d, Beta = %d\n", params->alpha, params->beta);
+
+            // Set KSine Regs
+            _duHWMgr.setArmKSine(ALPHA, params->alpha);
+            _duHWMgr.setArmKSine(BETA, params->beta);
+
+//          _duHWMgr.getRegs(0xC, 0x10);
+
+            // Toggle the Scan Limit check 
+            _duHWMgr.runFWScanLimitCheck();
 
             break;
         }
@@ -355,6 +384,75 @@ void DUCmdMgr::processWarmRestartMsg()
         sleep(3);
         reboot(RB_AUTOBOOT);
     }
+}
+
+#define GAMMA 1.207234
+#define CENTER_FREQ 442.0
+#define K 533.597428    // (GAMMA*CENTER_FREQ)
+#define UV_THRESHOLD 0.8703556
+#define W_THRESHOLD 0.333807
+#define EL_THRESHOLD 0.01658
+
+int DUCmdMgr::runSWScanLimitCheck(float alpha, float beta)
+{
+#ifdef PRINT_DEBUG
+    printf("****************************************************************\n");
+    printf("UV_THRESHOLD = %f, W_THRESHOLD = %f, EL_THRESHOLD = %f\n", UV_THRESHOLD, W_THRESHOLD, EL_THRESHOLD);
+#endif
+
+    float u = -beta/K;
+    float v = alpha/K;
+    float w = sqrt(1 - u*u - v*v);
+    float sinEl = v*cos(0.785398) + w*sin(0.785398);   // el_b is boresight elevation at 45 degree in radians
+
+#ifdef PRINT_DEBUG
+    printf("alpha = %f, beta = %f, K = %f, u = %f, v = %f, w = %f, sinEl = %f\n", alpha, beta, K, u, v, w, sinEl);
+#endif
+
+    // Check against thresholds
+    bool slResult = PASSED;
+    bool failed = false;
+    bool elFailed = false;
+
+    // Check w for NAN
+    if (std::isnan(w)) 
+    {
+        failed = true;
+    }
+    // Elevation test
+    else if (sinEl < EL_THRESHOLD)
+    {
+        elFailed = true;
+    }
+    // u, v, w tests
+    else if ((abs(u) > UV_THRESHOLD) || (abs(v) > UV_THRESHOLD) || (w < W_THRESHOLD))
+    {
+        // One of u, v, or w has failed, but elevation passed.  Recompute
+        // rounded values of u, v, and w, then check them again.
+        float signBeta = (beta > 0.0) ? 1.0 : ((beta < 0.0) ? -1.0 : 0.0);
+        float signAlpha = (alpha > 0.0) ? 1.0 : ((alpha < 0.0) ? -1.0 : 0.0);
+        u = -(beta - signBeta/2.0)/K;
+        v = -(alpha - signAlpha/2.0)/K;
+        w = sqrt(1 - u*u - v*v);
+
+        // Re-test u, v and w
+        if ((abs(u) > UV_THRESHOLD) || (abs(v) > UV_THRESHOLD) || (w < W_THRESHOLD))
+        {
+            // Even the rounded values fail.
+            failed = true;
+        }
+    }
+
+    // Set overall test result
+    if (failed || elFailed)
+    {
+        slResult = FAILED;
+#ifdef PRINT_DEBUG
+        printf("slResult = %d, failed = %d, elFailed = %d\n", slResult, failed, elFailed);
+#endif
+    }
+
+    return slResult;
 }
 
 

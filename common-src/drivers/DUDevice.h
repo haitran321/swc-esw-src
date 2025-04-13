@@ -8,10 +8,8 @@ typedef struct
     int firmwareVersion;
     int boardStatus;
     int boardControl;
-    int armKSineAlpha;
-    int armKSineBeta;
-    int atbKSineAlpha;
-    int atbKSineBeta;
+    int armKSine[2];
+    int atbKSine[2];
     int scanLimitResult;
     int spare1[19];
     int fpgaDieTemp;
@@ -46,10 +44,10 @@ typedef enum
 {
     DU_SL_CHECK_RESULTS_MASK    = 0x0000001F,    /* Bits 0..4 */
     DU_SL_OVERALL_STATUS_MASK   = 0x00000001,    /* Bit 0 */
-    DU_SL_U_STATUS_MASK         = 0x00000001,    /* Bit 1 */
-    DU_SL_V_STATUS_MASK         = 0x00000001,    /* Bit 2 */
-    DU_SL_W_STATUS_MASK         = 0x00000001,    /* Bit 3 */
-    DU_SL_EL_STATUS_MASK        = 0x00000001,    /* Bit 4 */
+    DU_SL_U_STATUS_MASK         = 0x00000002,    /* Bit 1 */
+    DU_SL_V_STATUS_MASK         = 0x00000004,    /* Bit 2 */
+    DU_SL_W_STATUS_MASK         = 0x00000010,    /* Bit 3 */
+    DU_SL_EL_STATUS_MASK        = 0x00000020,    /* Bit 4 */
 }DU_SL_CHECK_RESULTS_ENUM;
 
 class DUDevice : public Device
@@ -70,11 +68,17 @@ public:
     int getBoardStatusReg();
 
     STATUS setBoardControlReg(int val);
-
     int getBoardControlReg();
 
-    STATUS setDiagInfoReg(int val);
+    STATUS setArmKSineReg(RFCC_CH ch, int val);
+    int getArmKSineReg(RFCC_CH ch);
 
+    STATUS setAtbKSineReg(RFCC_CH ch, int val);
+    int getAtbKSineReg(RFCC_CH ch);
+
+    int getSLStatusReg();
+
+    STATUS setDiagInfoReg(int val);
     int getDiagInfoReg();
 
     void getRegs(int startReg, int endReg);

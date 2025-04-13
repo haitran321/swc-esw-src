@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include "date.h"
 
 using namespace std::chrono;
 
@@ -12,6 +13,10 @@ class Timestamp
         Timestamp();
 
         uint64_t GetTimestamp();
+
+        uint64_t GetSecondsSinceMidnight();
+
+        uint64_t GetNanoSecondsSinceMidnight();
 
 };
 

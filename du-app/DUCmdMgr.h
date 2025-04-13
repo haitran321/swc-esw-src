@@ -15,6 +15,7 @@
 #include "TimerDevice.h"
 #include "Logger.h"
 #include "ElapsedTimer.h"
+#include "Timestamp.h"
 
 class DUCmdMgr : public EventProcessor
 {
@@ -71,9 +72,12 @@ class DUCmdMgr : public EventProcessor
         void processInterrupt();
         void processTimer();
         ElapsedTimer eInterruptProcessing;
+        Timestamp ts;
 
         // For status report
         UDPNetworkDevice* _statusRptToTWGS;
+
+        int runSWScanLimitCheck(float alpha, float beta);
 
 };
 
