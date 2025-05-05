@@ -220,14 +220,15 @@ void DUCmdMgr::processInterrupt()
     int beta = _duHWMgr.getArmKSine(BETA);
 
     int swSLResult = runSWScanLimitCheck(float(alpha), float(beta));
+    int fwSLResult = _duHWMgr.getFWScanLimitCheckStatus();
 
-//  printf("%d,%d,%d,%d,%d\n", alpha, beta, _duHWMgr.getFWScanLimitCheckStatus(), swSLResult);
+    printf("%d,%d,0x%x,%d,%d\n", alpha, beta, fwSLResult, fwSLResult & 0x1, swSLResult);
 
 //  eInterruptProcessing.stop();
 //  printf("SW Scan Limit Check took %f\n", eInterruptProcessing.secs());
 
     uint64_t stopTimeNSec = ts.GetNanoSecondsSinceMidnight();
-    printf("SW Scan Limit Check took %ld\n", stopTimeNSec - startTimeNSec);
+//  printf("SW Scan Limit Check took %ld\n", stopTimeNSec - startTimeNSec);
 
 }
 
