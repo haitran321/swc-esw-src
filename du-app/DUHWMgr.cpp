@@ -57,9 +57,10 @@ STATUS DUHWMgr::initialize()
     
     boardControlValue = DeviceUtilities::readMask(DU_BOARD_CONTROL_MASK, getBoardControl());
 
-    // Set trigger mode to external
-//  boardControlValue = DeviceUtilities::updateReg(DU_TRIGGER_MODE_MASK, boardControlValue, DU_TRIGGER_EXTERNAL);
-//  setBoardControl(boardControlValue);
+    // Set Test mode
+    boardControlValue = DeviceUtilities::updateReg(DU_MODE_MASK, boardControlValue, TEST);
+    boardControlValue = DeviceUtilities::updateReg(DU_STEERING_WORD_SRC_MASK, boardControlValue, ARM);
+    setBoardControl(boardControlValue);
 
 //  getRegs(0x8, 0x8);
 //  _logger.logInfo("Board control reg = 0x%x", getBoardControl());
@@ -129,9 +130,9 @@ int DUHWMgr::getFWScanLimitCheckStatus()
 
 void DUHWMgr::runFWScanLimitCheck()
 {
-    boardControlValue = DeviceUtilities::updateReg(DU_TRIGGER_SL_TEST_MASK, boardControlValue, 1);
+    boardControlValue = DeviceUtilities::updateReg(DU_NEW_STEERING_WORD_MASK, boardControlValue, 1);
     setBoardControl(boardControlValue);
-    boardControlValue = DeviceUtilities::updateReg(DU_TRIGGER_SL_TEST_MASK, boardControlValue, 0);
+    boardControlValue = DeviceUtilities::updateReg(DU_NEW_STEERING_WORD_MASK, boardControlValue, 0);
     setBoardControl(boardControlValue);
 }
 

@@ -74,8 +74,20 @@ typedef enum
 {
     ALPHA = 0,
     BETA = 1,
-    NUM_RFCC_CHS = 2
 } RFCC_CH;
+
+typedef enum
+{
+    SWCR  = 0,
+    SWC   = 1,
+    JOINT = 2,
+} SCWR_CONFIG;
+
+typedef enum
+{
+    ONLINE = 0,
+    TEST_ENABLE = 1,
+} SCWR_MODE;
 
 typedef enum
 {
