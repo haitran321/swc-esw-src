@@ -1,7 +1,3 @@
-/**
-* $Id: DSPSSAPManager.cpp 5102 2009-12-04 20:57:39Z nei18232 $
-*/
-
 #include "DSPSSAPManager.h"
 
 DSPSSAPManager::DSPSSAPManager()

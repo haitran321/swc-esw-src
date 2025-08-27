@@ -1,22 +1,19 @@
-/**
-* $Id: RIMSMessage.cpp 5758 2010-05-13 15:45:12Z alv70669 $
-*/
 #include <iomanip>
 
-#include "RIMSMessage.h"
+#include "Message.h"
 
-RIMSMessage::RIMSMessage() : _header(reinterpret_cast<RIMSHeaderType *>(_buffer)), _curDataPos(0), _totalMsgSize(0)
+Message::Message() : _header(reinterpret_cast<MsgHeaderType *>(_buffer)), _curDataPos(0), _totalMsgSize(0)
 {
     memset(_buffer, 0, sizeof(_buffer));
 }
 
-RIMSMessage::RIMSMessage(char *buffer, int bufSize) : _header(reinterpret_cast<RIMSHeaderType *>(_buffer)), _curDataPos(sizeof(RIMSHeaderType)),
+Message::Message(char *buffer, int bufSize) : _header(reinterpret_cast<MsgHeaderType *>(_buffer)), _curDataPos(sizeof(MsgHeaderType)),
 _totalMsgSize(bufSize)
 {
     // Validate input buffer size.
-    if (bufSize > MAX_RIMS_MSG_SIZE)
+    if (bufSize > MAX_MSG_SIZE)
     {
-        throw std::string("Invalid size for new RIMSMessage");
+        throw std::string("Invalid size for new Message");
     }
 
     // Copy input buffer.
@@ -24,7 +21,7 @@ _totalMsgSize(bufSize)
     memcpy(_buffer, buffer, bufSize);
 }
 
-RIMSMessage::RIMSMessage(RIMSMessageId msgId) : _header(reinterpret_cast<RIMSHeaderType *>(_buffer)), _curDataPos(0),
+Message::Message(MessageId msgId) : _header(reinterpret_cast<MsgHeaderType *>(_buffer)), _curDataPos(0),
 _totalMsgSize(0)
 {
     memset(_buffer, 0, sizeof(_buffer));
@@ -32,7 +29,7 @@ _totalMsgSize(0)
     _header->msgLen = 0;
 }
 
-bool RIMSMessage::isHeaderValid()
+bool Message::isHeaderValid()
 {
     // Validate total bytes read to header message length.
     if (_header->msgLen != _totalMsgSize)
@@ -44,7 +41,7 @@ bool RIMSMessage::isHeaderValid()
 
     // Validate header message length against header record
     // information.
-    if (_header->msgLen != (static_cast<int>(sizeof(RIMSHeaderType)) +
+    if (_header->msgLen != (static_cast<int>(sizeof(MsgHeaderType)) +
                            (_header->recLen * _header->recNum)))
     {
         printf("isHeaderValid: message size and msgLen = %d _totalMsgSize = %d", 
@@ -55,9 +52,9 @@ bool RIMSMessage::isHeaderValid()
     return(true);
 }
 
-void RIMSMessage::byteSwapHeaderToLocal()
+void Message::byteSwapHeaderToLocal()
 {
-   _header->msgId = (RIMSMessageId)fromNetworkInt(_header->msgId);
+   _header->msgId = (MessageId)fromNetworkInt(_header->msgId);
    _header->pbpId = (int)fromNetworkInt(_header->pbpId);
    _header->msgLen = (int)fromNetworkInt(_header->msgLen);
    _header->recNum = (int)fromNetworkInt(_header->recNum);
@@ -66,7 +63,7 @@ void RIMSMessage::byteSwapHeaderToLocal()
 }
 
 
-void RIMSMessage::dump(FILE* stream)
+void Message::dump(FILE* stream)
 {
     char* ptr = getBuf();
     unsigned size = getBufSize();

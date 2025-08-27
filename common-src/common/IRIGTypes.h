@@ -1,11 +1,3 @@
-/**
-* $Id: IRIGTypes.h 5099 2009-12-04 20:54:27Z nei18232 $
-*
-* Defines types, enums, constants, etc common to IRIG 
-* processing. This file is at the Drivers package level because 
-* it needs to be shared between driver and application code. 
-*
-*/
 #ifndef IRIGTypes_H
 #define IRIGTypes_H
 

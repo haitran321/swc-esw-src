@@ -1,8 +1,8 @@
 /**
- * $Id: DeviceFactory.h 5100 2009-12-04 20:54:54Z nei18232 $
+ * $Id: DeviceFactory.h
  *
  * DeviceFactory creates devices based on names, where the
- * details of the devices are specified in a configuration file. 
+ * details of the devices are specified in a configuration file.
  * <p/>
  * The devices configuration file is formatted like a traditional
  * <code>key=value</code> pair configuration file.

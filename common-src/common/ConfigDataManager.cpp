@@ -1,7 +1,3 @@
-/**
-* $Id: ConfigDataManager.cpp 5102 2009-12-04 20:57:39Z nei18232 $
-*/
-
 #include "ConfigDataManager.h"
 
 ConfigDataManager::ConfigDataManager() :

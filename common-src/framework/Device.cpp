@@ -1,6 +1,3 @@
-/**
-* $Id: Device.cpp 6634 2011-03-10 23:02:13Z ste38548 $
-*/
 #include <stdio.h>
 //#include <usrLib.h>
 //#include <ioLib.h>

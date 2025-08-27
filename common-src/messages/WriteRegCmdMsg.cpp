@@ -4,7 +4,7 @@
 #include "WriteRegCmdMsg.h"
 
 WriteRegCmdMsg::WriteRegCmdMsg(char *buffer, int bufSize) :
-RIMSCommandMessage(buffer, bufSize),
+CommandMessage(buffer, bufSize),
 _data(reinterpret_cast<RegCmdDataType *>(getDataBufPos()))
 {
 }

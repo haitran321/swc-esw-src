@@ -3,17 +3,17 @@
 
 #include "Device.h"
 
-#define NUM_DCUs 152
+#define NUM_DCU 152
 
 typedef struct
 {
-    int firmwareVersion;
-    int boardStatus;
-    int boardControl;
-    int armKSine[2];
-    int atbKSine[2];
-    int scanLimitResult;
-    int systemConfigStatus;
+    int fwVer;
+    int brdStatus;
+    int brdCtrl;
+    int armKSine[NUM_RFCC_CH];
+    int atbKSine[NUM_RFCC_CH];
+    int slResult;
+    int sysConfigStatus;
     int swcrStatusToTwgs;
     int spare1[15];
     int atbEmulator;
@@ -23,7 +23,7 @@ typedef struct
     int vccAuxVoltage;
     int vbramVoltage;
     int diagInfo;
-    int dcuStatus[NUM_DCUs];
+    int dcuStatus[NUM_DCU];
 }DURegType;
 
 //#define DU_CMD_STARTING_ADDR_OFFSET 0x0100
@@ -40,7 +40,7 @@ typedef enum
 
 typedef enum
 {
-    DU_BOARD_CONTROL_MASK       = 0x8000001F,    /* Bits 0..4, and 31 */
+    DU_BRD_CTRL_MASK            = 0x8000001F,    /* Bits 0..4, and 31 */
     DU_UNIT_TYPE_MASK           = 0x00000001,    /* Bit 0 */
     DU_STEERING_WORD_SRC_MASK   = 0x00000002,    /* Bit 1 */
     DU_NEW_STEERING_WORD_MASK   = 0x00000004,    /* Bit 2 */
@@ -108,22 +108,22 @@ public:
 
     void writeReg(int offset, int data);
 
-    int getFirmwareVersionReg();
+    int getFWVerReg();
 
-    int getBoardStatusReg();
+    int getBrdStatusReg();
 
-    STATUS setBoardControlReg(int val);
-    int getBoardControlReg();
+    void setBrdCtrlReg(int val);
+    int getBrdCtrlReg();
 
-    STATUS setArmKSineReg(RFCC_CH ch, int val);
+    void setArmKSineReg(RFCC_CH ch, int val);
     int getArmKSineReg(RFCC_CH ch);
 
-    STATUS setAtbKSineReg(RFCC_CH ch, int val);
+    void setAtbKSineReg(RFCC_CH ch, int val);
     int getAtbKSineReg(RFCC_CH ch);
 
     int getSLStatusReg();
 
-    STATUS setDiagInfoReg(int val);
+    void setDiagInfoReg(int val);
     int getDiagInfoReg();
 
     void getRegs(int startReg, int endReg);

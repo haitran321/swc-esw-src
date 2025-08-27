@@ -6,7 +6,7 @@
 DUHWMgr::DUHWMgr() :
 _logger(Logger::getInstance()),
 _duDev(NULL),
-boardControlValue(-1)
+brdCtrVal(-1)
 {
 }
 
@@ -51,16 +51,16 @@ STATUS DUHWMgr::initialize()
 
     printf("After create _duDev\n");
 
-    printf("getFirmwareVersionReg = 0x%x\n", _duDev->getFirmwareVersionReg());
-    printf("getBoardStatusReg = 0x%x\n", _duDev->getBoardStatusReg());
-    printf("getBoardControlReg = 0x%x\n", _duDev->getBoardControlReg());
+    printf("getFirmwareVersionReg = 0x%x\n", _duDev->getFWVerReg());
+    printf("getBoardStatusReg = 0x%x\n", _duDev->getBrdStatusReg());
+    printf("getBoardControlReg = 0x%x\n", _duDev->getBrdCtrlReg());
     
-    boardControlValue = DeviceUtilities::readMask(DU_BOARD_CONTROL_MASK, getBoardControl());
+    brdCtrVal = DeviceUtilities::readMask(DU_BRD_CTRL_MASK, _duDev->getBrdCtrlReg());
 
     // Set Test mode
-    boardControlValue = DeviceUtilities::updateReg(DU_MODE_MASK, boardControlValue, TEST);
-    boardControlValue = DeviceUtilities::updateReg(DU_STEERING_WORD_SRC_MASK, boardControlValue, ARM);
-    setBoardControl(boardControlValue);
+    brdCtrVal = DeviceUtilities::updateReg(DU_MODE_MASK, brdCtrVal, TEST);
+    brdCtrVal = DeviceUtilities::updateReg(DU_STEERING_WORD_SRC_MASK, brdCtrVal, ARM);
+    _duDev->setBrdCtrlReg(brdCtrVal);
 
 //  getRegs(0x8, 0x8);
 //  _logger.logInfo("Board control reg = 0x%x", getBoardControl());
@@ -78,44 +78,14 @@ void DUHWMgr::setReg(int offset, int data)
     _duDev->writeReg(offset, data);
 }
 
-int DUHWMgr::getBoardControl()
-{
-    return (_duDev->getBoardControlReg());
-}
-
-STATUS DUHWMgr::setBoardControl(int val)
-{
-    return(_duDev->setBoardControlReg(val));
-}
-
-int DUHWMgr::getBoardStatus()
-{
-    return (_duDev->getBoardStatusReg());
-}
-
-int DUHWMgr::getDiagInfo()
-{
-    return (_duDev->getDiagInfoReg());
-}
-
-STATUS DUHWMgr::setDiagInfo(int val)
-{
-    return(_duDev->setDiagInfoReg(val));
-}
-
-STATUS DUHWMgr::setArmKSine(RFCC_CH ch, int val)
-{
-    return(_duDev->setArmKSineReg(ch, val));
-}
-
 int DUHWMgr::getArmKSine(RFCC_CH ch)
 {
     return(_duDev->getArmKSineReg(ch));
 }
 
-STATUS DUHWMgr::setAtbKSine(RFCC_CH ch, int val)
+void DUHWMgr::setArmKSine(RFCC_CH ch, int val)
 {
-    return(_duDev->setAtbKSineReg(ch, val));
+    _duDev->setArmKSineReg(ch, val);
 }
 
 int DUHWMgr::getAtbKSine(RFCC_CH ch)
@@ -123,16 +93,20 @@ int DUHWMgr::getAtbKSine(RFCC_CH ch)
     return(_duDev->getAtbKSineReg(ch));
 }
 
+void DUHWMgr::setAtbKSine(RFCC_CH ch, int val)
+{
+    _duDev->setAtbKSineReg(ch, val);
+}
+
 int DUHWMgr::getFWScanLimitCheckStatus()
 {
     return (_duDev->getSLStatusReg());
 }
-
 void DUHWMgr::runFWScanLimitCheck()
 {
-    boardControlValue = DeviceUtilities::updateReg(DU_NEW_STEERING_WORD_MASK, boardControlValue, 1);
-    setBoardControl(boardControlValue);
-    boardControlValue = DeviceUtilities::updateReg(DU_NEW_STEERING_WORD_MASK, boardControlValue, 0);
-    setBoardControl(boardControlValue);
+    brdCtrVal = DeviceUtilities::updateReg(DU_NEW_STEERING_WORD_MASK, brdCtrVal, 1);
+    _duDev->setBrdCtrlReg(brdCtrVal);
+    brdCtrVal = DeviceUtilities::updateReg(DU_NEW_STEERING_WORD_MASK, brdCtrVal, 0);
+    _duDev->setBrdCtrlReg(brdCtrVal);
 }
 

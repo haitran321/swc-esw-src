@@ -74,6 +74,7 @@ typedef enum
 {
     ALPHA = 0,
     BETA = 1,
+    NUM_RFCC_CH = 2
 } RFCC_CH;
 
 typedef enum

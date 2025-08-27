@@ -1,11 +1,3 @@
-/**
-* $Id: StatusRptMsg.h 2402 2008-12-23 04:45:05Z alv70669 $
-*
-* Class StatusRptMsg represents a Status Report message sent to
-* RIMS and is derived from class RIMSReportMessage. It provides
-* methods to manipulate the body of a Status Report message.
-*
-*/
 #ifndef StatusRptMsg_H
 #define StatusRptMsg_H
 
@@ -13,7 +5,7 @@
 
 using namespace std;
 
-#include "RIMSReportMessage.h"
+#include "ReportMessage.h"
 
 typedef struct
 {
@@ -27,7 +19,7 @@ typedef struct
     HealthState spare;
 } StatusRptDataType;
 
-class StatusRptMsg : public RIMSReportMessage
+class StatusRptMsg : public ReportMessage
 {
 public:
 
@@ -35,7 +27,7 @@ public:
     * Constructor
     *
     */
-    explicit StatusRptMsg(RIMSMessageId msgId);
+    explicit StatusRptMsg(MessageId msgId);
 
     /**
     * Destructor

@@ -1,13 +1,3 @@
-/** 
- *  $Id: ConfigDataManager.h 5102 2009-12-04 20:57:39Z nei18232 $
- *  
- *  ConfigDataManager exists to obtain Configuration
- *  (non-SAP) data values from the FTP Server.  This class
- *  simply extends the Properties class and only
- *  implements its own Singleton and load() to set the filename.
- *  
- */
-
 #ifndef ConfigDataManager_H
 #define ConfigDataManager_H
 

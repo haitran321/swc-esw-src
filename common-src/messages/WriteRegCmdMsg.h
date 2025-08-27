@@ -14,10 +14,10 @@
 
 using namespace std;
 
-#include "RIMSCommandMessage.h"
+#include "CommandMessage.h"
 #include "InternalMsgTypes.h"
 
-class WriteRegCmdMsg : public RIMSCommandMessage
+class WriteRegCmdMsg : public CommandMessage
 {
 public:
 

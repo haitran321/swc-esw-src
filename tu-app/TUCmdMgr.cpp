@@ -193,10 +193,10 @@ void TUCmdMgr::processIncomingMsg()
     // printf("In processIncomingMsg()\n");
     size_t bytesRead = 0;
 
-    RIMSCommandMessage *msg = new RIMSCommandMessage();
+    CommandMessage *msg = new CommandMessage();
 
     // Read UDP data
-    if (_udpFromRIMS->read(msg->getBuf(), MAX_RIMS_MSG_SIZE, bytesRead) != OK)
+    if (_udpFromRIMS->read(msg->getBuf(), MAX_MSG_SIZE, bytesRead) != OK)
     {
         printf("error reading from _udpFromRIMS\n");
         return;
@@ -209,8 +209,8 @@ void TUCmdMgr::processIncomingMsg()
     msg->setTotalMsgSize(bytesRead);
     msg->byteSwapHeaderToLocal();
 
-    _logger.logInfo("Processing incoming RIMS messages: msgId = %d", msg->getMsgId());
-    printf("Processing incoming RIMS messages: msgId = %d\n", msg->getMsgId());
+    _logger.logInfo("Processing incoming messages: msgId = %d", msg->getMsgId());
+    printf("Processing incoming messages: msgId = %d\n", msg->getMsgId());
 
     switch (msg->getMsgId())
     {
@@ -357,8 +357,8 @@ void TUCmdMgr::processWarmRestartMsg()
 {
     size_t bytesRead = 0;
 
-    RIMSHeaderType *rimsHeaderPtr;
-    rimsHeaderPtr = &_rimsHeaderBuf[warmRestartBufCounter];
+    MsgHeaderType *msgHeaderPtr;
+    msgHeaderPtr = &_msgHeaderBuf[warmRestartBufCounter];
     warmRestartBufCounter++;
 
     if (warmRestartBufCounter >= 4)
@@ -367,7 +367,7 @@ void TUCmdMgr::processWarmRestartMsg()
     }
 
     // Read UDP data
-    if (_udpWarmRestart->read((char *)rimsHeaderPtr, sizeof(RIMSHeaderType), bytesRead) != OK)
+    if (_udpWarmRestart->read((char *)msgHeaderPtr, sizeof(MsgHeaderType), bytesRead) != OK)
     {
         printf("error reading from _udpWarmRestart\n");
         return;
@@ -378,11 +378,11 @@ void TUCmdMgr::processWarmRestartMsg()
     }
 
     // Convert to Little Endian
-    rimsHeaderPtr->msgId = (RIMSMessageId)fromNetworkInt(rimsHeaderPtr->msgId);
+    msgHeaderPtr->msgId = (MessageId)fromNetworkInt(msgHeaderPtr->msgId);
 
     _logger.logInfo("Processing incoming Warm Restart messages");
 
-    if (rimsHeaderPtr->msgId == 2003)
+    if (msgHeaderPtr->msgId == 2003)
     {
         printf("****Calling System Reboot****\n");
         _logger.logInfo("****Calling System Reboot****");

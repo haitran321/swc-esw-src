@@ -1,7 +1,3 @@
-/**
-* $Id: TBRSDeviceUtilities.cpp 6264 2010-09-21 18:57:59Z tra18693 $
-*/
-
 #include <stdio.h>
 #include <strings.h>
 

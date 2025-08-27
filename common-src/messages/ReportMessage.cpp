@@ -1,22 +1,19 @@
-/**
-* $Id: RIMSReportMessage.cpp 6329 2010-11-08 17:15:49Z ste38548 $
-*/
-#include "RIMSReportMessage.h"
+#include "ReportMessage.h"
 
-RIMSReportMessage::RIMSReportMessage()
+ReportMessage::ReportMessage()
 {
 }
 
-RIMSReportMessage::RIMSReportMessage(RIMSMessageId msgId) :
-RIMSMessage(msgId)
+ReportMessage::ReportMessage(MessageId msgId) :
+Message(msgId)
 {
 }
 
-STATUS RIMSReportMessage::buildMsg()
+STATUS ReportMessage::buildMsg()
 {
    // Update message size.
 
-   _header->msgLen = sizeof(RIMSHeaderType);
+   _header->msgLen = sizeof(MsgHeaderType);
 
    // Update header fields.
 
@@ -28,13 +25,13 @@ STATUS RIMSReportMessage::buildMsg()
    return(OK);
 }
 
-STATUS RIMSReportMessage::addData(const char *data, int size)
+STATUS ReportMessage::addData(const char *data, int size)
 {
    // Validate that data can fit into RIMS message, and
    // that msgLen has been initialized.
 
-   if (_header->msgLen + size > MAX_RIMS_MSG_SIZE ||
-       _header->msgLen < static_cast<int>(sizeof(RIMSHeaderType)))
+   if (_header->msgLen + size > MAX_MSG_SIZE ||
+       _header->msgLen < static_cast<int>(sizeof(MsgHeaderType)))
    {
       return(ERROR);
    }
@@ -62,9 +59,9 @@ STATUS RIMSReportMessage::addData(const char *data, int size)
    return(OK);
 }
 
-void RIMSReportMessage::headerByteSwapToNetwork()
+void ReportMessage::headerByteSwapToNetwork()
 {
-    _header->msgId = (RIMSMessageId)toNetworkInt(_header->msgId);
+    _header->msgId = (MessageId)toNetworkInt(_header->msgId);
     _header->pbpId = toNetworkInt(_header->pbpId);
     // WARNING:  This will make the message incorrect
     _header->msgLen = toNetworkInt(_header->msgLen);    

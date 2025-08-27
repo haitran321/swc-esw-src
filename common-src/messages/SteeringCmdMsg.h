@@ -8,10 +8,10 @@
 
 using namespace std;
 
-#include "CSPUMsgTypes.h"
-#include "RIMSCommandMessage.h"
+#include "SWCMsgTypes.h"
+#include "CommandMessage.h"
 
-class SteeringCmdMsg : public RIMSCommandMessage
+class SteeringCmdMsg : public CommandMessage
 {
 public:
 

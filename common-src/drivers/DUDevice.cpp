@@ -40,37 +40,29 @@ void DUDevice::writeReg(int offset, int data)
     *((unsigned *)(_apbBusAddr + offset)) = data;
 }
 
-int DUDevice::getFirmwareVersionReg()
+int DUDevice::getFWVerReg()
 {
-    return (regs->firmwareVersion);
+    return (regs->fwVer);
 }
 
-int DUDevice::getBoardStatusReg()
+int DUDevice::getBrdStatusReg()
 {
-    return (regs->boardStatus);
+    return (regs->brdStatus);
 }
 
-STATUS DUDevice::setBoardControlReg(int val)
+void DUDevice::setBrdCtrlReg(int val)
 {
-    STATUS rc = OK;
-
-    regs->boardControl = val;
-
-    return rc;
+    regs->brdCtrl = val;
 }
 
-int DUDevice::getBoardControlReg()
+int DUDevice::getBrdCtrlReg()
 {
-    return (regs->boardControl);
+    return (regs->brdCtrl);
 }
 
-STATUS DUDevice::setDiagInfoReg(int val)
+void DUDevice::setDiagInfoReg(int val)
 {
-    STATUS rc = OK;
-
     regs->diagInfo = val;
-
-    return rc;
 }
 
 int DUDevice::getArmKSineReg(RFCC_CH ch)
@@ -78,13 +70,9 @@ int DUDevice::getArmKSineReg(RFCC_CH ch)
     return (regs->armKSine[ch]);
 }
 
-STATUS DUDevice::setArmKSineReg(RFCC_CH ch, int val)
+void DUDevice::setArmKSineReg(RFCC_CH ch, int val)
 {
-    STATUS rc = OK;
-
     regs->armKSine[ch] = val;
-
-    return rc;
 }
 
 int DUDevice::getAtbKSineReg(RFCC_CH ch)
@@ -92,18 +80,14 @@ int DUDevice::getAtbKSineReg(RFCC_CH ch)
     return (regs->atbKSine[ch]);
 }
 
-STATUS DUDevice::setAtbKSineReg(RFCC_CH ch, int val)
+void DUDevice::setAtbKSineReg(RFCC_CH ch, int val)
 {
-    STATUS rc = OK;
-
     regs->atbKSine[ch] = val;
-
-    return rc;
 }
 
 int DUDevice::getSLStatusReg()
 {
-    return (regs->scanLimitResult);
+    return (regs->slResult);
 }
 
 

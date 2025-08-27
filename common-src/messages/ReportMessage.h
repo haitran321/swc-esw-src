@@ -1,19 +1,10 @@
-/**
-* $Id: RIMSReportMessage.h 5101 2009-12-04 20:55:24Z nei18232 $
-*
-* Class RIMSReportMessage is the base class that represents 
-* report messages sent to RIMS. It provides methods common to 
-* all RIMS report messages. It is derived from the base class 
-* RIMSMessage. 
-*
-*/
-#ifndef RIMSReportMessage_H
-#define RIMSReportMessage_H
+#ifndef ReportMessage_H
+#define ReportMessage_H
 
-#include "CSPUMsgTypes.h"
-#include "RIMSMessage.h"
+#include "SWCMsgTypes.h"
+#include "Message.h"
 
-class RIMSReportMessage : public RIMSMessage
+class ReportMessage : public Message
 {
 public:
 
@@ -21,20 +12,20 @@ public:
    * Constructor
    *
    */
-   RIMSReportMessage();
+   ReportMessage();
 
    /**
    * Constructor
    *
-   * @param msgId Message id for RIMS Report message
+   * @param msgId Message id for Report message
    */
-   explicit RIMSReportMessage(RIMSMessageId msgId);
+   explicit ReportMessage(MessageId msgId);
 
    /**
    * Destructor
    *
    */
-   virtual ~RIMSReportMessage(){};
+   virtual ~ReportMessage(){};
 
    /**
    * Method buildMsg is a virtual method that is implemented by a 
@@ -70,7 +61,7 @@ protected:
 
 };
 
-inline void RIMSReportMessage::setPBPId(int pbpId)
+inline void ReportMessage::setPBPId(int pbpId)
 {
    _header->pbpId = pbpId;
 }

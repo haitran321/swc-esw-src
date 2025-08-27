@@ -50,7 +50,7 @@ class DUCmdMgr : public EventProcessor
 
         // Warm Restart Device
         UDPNetworkDevice* _udpWarmRestart;
-        RIMSHeaderType _rimsHeaderBuf[4];
+        MsgHeaderType _msgHeaderBuf[4];
         int warmRestartBufCounter;
         void processWarmRestartMsg();
 

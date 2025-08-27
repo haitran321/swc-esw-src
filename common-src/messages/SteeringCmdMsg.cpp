@@ -2,10 +2,10 @@
 * $Id: SteeringCmdMsg.cpp 5101 2009-12-04 20:55:24Z nei18232 $
 */
 #include "SteeringCmdMsg.h"
-#include "CSPUMsgTypes.h"
+#include "SWCMsgTypes.h"
 
 SteeringCmdMsg::SteeringCmdMsg(char *buffer, int bufSize) :
-RIMSCommandMessage(buffer, bufSize),
+CommandMessage(buffer, bufSize),
 _data(reinterpret_cast<SteeringCmdDataType *>(getDataBufPos()))
 {
 }

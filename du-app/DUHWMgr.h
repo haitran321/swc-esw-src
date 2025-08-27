@@ -25,24 +25,15 @@ class DUHWMgr : public Uncopyable
         void close();
 
         void getRegs(int startReg, int endReg);
-
         void setReg(int offset, int data);
 
-        int getBoardControl();
-        STATUS setBoardControl(int val);
-
-        int getBoardStatus();
-
-        int getDiagInfo();
-        STATUS setDiagInfo(int val);
-
-        STATUS setArmKSine(RFCC_CH ch, int val);
         int getArmKSine(RFCC_CH ch);
+        void setArmKSine(RFCC_CH ch, int val);
         void runFWScanLimitCheck();
         int getFWScanLimitCheckStatus();
 
-        STATUS setAtbKSine(RFCC_CH ch, int val);
         int getAtbKSine(RFCC_CH ch);
+        void setAtbKSine(RFCC_CH ch, int val);
 
     protected:
         /**
@@ -59,9 +50,9 @@ class DUHWMgr : public Uncopyable
 
         DUDevice* _duDev;
 
-        int boardControlValue;
+        int brdCtrVal;
 
-        int diagRegValue;
+        int diagRegVal;
 
         /* Common config parameters */
         int MODULE_TYPE;

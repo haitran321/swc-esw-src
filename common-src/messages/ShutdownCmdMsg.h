@@ -14,10 +14,10 @@
 
 using namespace std;
 
-#include "CSPUMsgTypes.h"
-#include "RIMSCommandMessage.h"
+#include "SWCMsgTypes.h"
+#include "CommandMessage.h"
 
-class ShutdownCmdMsg : public RIMSCommandMessage
+class ShutdownCmdMsg : public CommandMessage
 {
 public:
 
