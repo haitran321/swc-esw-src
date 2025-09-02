@@ -1,12 +1,12 @@
-#include "StatusRptMsg.h"
+#include "LRUStatusRptMsg.h"
 
-StatusRptMsg::StatusRptMsg(MessageId msgId) :
-ReportMessage(msgId)
+LRUStatusRptMsg::LRUStatusRptMsg(MessageId msgId) :
+ReportMessage(LRU_STATUS_RPT_MSG_ID)
 {
     memset(&_data, 0, sizeof(_data));
 }
 
-STATUS StatusRptMsg::buildMsg()
+STATUS LRUStatusRptMsg::buildMsg()
 {
     STATUS rc = OK;
     // Build header.

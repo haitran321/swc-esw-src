@@ -25,30 +25,15 @@ class TUHWMgr : public Uncopyable
         void close();
 
         void getRegs(int startReg, int endReg);
-
         void setReg(int offset, int data);
 
-        int getBoardControl();
+        int getArmKSine(RFCC_CH ch);
+        void setArmKSine(RFCC_CH ch, int val);
+        void runFWScanLimitCheck();
+        int getFWScanLimitCheckStatus();
 
-        STATUS setBoardControl(int val);
-
-        int getBoardStatus();
-
-        void clearAllActions();
-
-        STATUS addAction(TU_CHANNEL chId, TUActionType action, unsigned int ftw);
-
-        void setCWRegs(TU_CHANNEL channel, TUCWSignalType signal);
-
-        void programActions();
-
-        int getNumActions(TU_CHANNEL ch);
-
-        void toggleLoadCmdFlag();
-
-        void toggleSWInternalTriggerFlag();
-
-        void setTriggerMode(TU_TRIGGER_ENUM mode);
+        int getAtbKSine(RFCC_CH ch);
+        void setAtbKSine(RFCC_CH ch, int val);
 
     protected:
         /**
@@ -65,24 +50,12 @@ class TUHWMgr : public Uncopyable
 
         TUDevice* _tuDev;
 
-        int boardControlValue;
+        int brdCtrVal;
 
-        int _numActions[NUM_TU_CHANNELS];
-
-        TUFWActionType *_actions[NUM_TU_CHANNELS];
+        int diagRegVal;
 
         /* Common config parameters */
         int MODULE_TYPE;
-        int SW_TRIGGER;
-        int INIT_TESTING;
-        int PBP_MODE_USING_INIT_REGS;
-        int INTERNAL_TRIGGER;
-        int CHIRP_DIR;
-
-        // WG specific config parameters
-        int WG1_COMBINER_ENABLE;
-        int WG1_60MHZ_INPUT;
-
 };
 
 

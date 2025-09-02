@@ -112,21 +112,21 @@ STATUS DSPSSAPManager::ReadDataFiles()
     }
 
     // Read noise input
-    sprintf(fname, "/mnt/sd-mmcblk0p1/conf/dsps_dcoffset.txt");
-    fp = fopen(fname, "r");
-    if (fp == NULL)
-    {
-        printf("DSPSDataManager: Could not open file %s\n", fname);
-    }
-
-    if (fp != NULL)
-    {
-        for (int i = 0; i < MAX_PULSE_TYPES; i++)
-        {
-            fscanf(fp, "%f", &dspsSap.dcOffsets[i]);
-        }
-        fclose(fp);
-    }
+//  sprintf(fname, "/mnt/sd-mmcblk0p1/conf/dsps_dcoffset.txt");
+//  fp = fopen(fname, "r");
+//  if (fp == NULL)
+//  {
+//      printf("DSPSDataManager: Could not open file %s\n", fname);
+//  }
+//
+//  if (fp != NULL)
+//  {
+//      for (int i = 0; i < MAX_PULSE_TYPES; i++)
+//      {
+//          fscanf(fp, "%f", &dspsSap.dcOffsets[i]);
+//      }
+//      fclose(fp);
+//  }
 
     return status;
 }

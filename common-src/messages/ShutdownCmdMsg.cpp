@@ -2,7 +2,6 @@
 * $Id: ShutdownCmdMsg.cpp 5101 2009-12-04 20:55:24Z nei18232 $
 */
 #include "ShutdownCmdMsg.h"
-#include "SWCMsgTypes.h"
 
 ShutdownCmdMsg::ShutdownCmdMsg(char *buffer, int bufSize) :
 CommandMessage(buffer, bufSize),

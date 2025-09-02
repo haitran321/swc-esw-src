@@ -1,18 +1,18 @@
 /**
-* $Id: TUCmdMgr.h 6399 2010-12-28 16:29:28Z tra18693 $
+* $Id: TUCmdMgr.h 6399 2010-12-28 16:29:28Z tra18693 
 */
 #ifndef TUCmdMgr_H
 #define TUCmdMgr_H
 
 #include "EventProcessor.h"
 #include "UDPNetworkDevice.h"
-#include "DevMemDevice.h"
-#include "WriteRegCmdMsg.h"
-#include "LEDDevice.h"
+#include "SWCMsgTypes.h"
 #include "TUHWMgr.h"
 #include "UIODevice.h"
+#include "TimerDevice.h"
 #include "Logger.h"
 #include "ElapsedTimer.h"
+#include "Timestamp.h"
 
 class TUCmdMgr : public EventProcessor
 {
@@ -44,7 +44,6 @@ class TUCmdMgr : public EventProcessor
          * UDP device for receiving Ent Network Msgs
          */
         Device* _udpFromRIMS;
-        // UDPNetworkDevice* _udpOut;
 
         // Warm Restart Device
         UDPNetworkDevice* _udpWarmRestart;
@@ -58,19 +57,19 @@ class TUCmdMgr : public EventProcessor
 
         void processIncomingMsg();
 
-        // Variables for TWGS Timing Triggers
-        UDPNetworkDevice* _udpFromTWGS;
-        TimingTriggersMsg _triggerMsgBuf[4];
-        int triggerBufCounter;
-
         TUHWMgr &_tuHWMgr;
 
-//      UIODevice* _uio1Dev;
+        UIODevice* _uio1Dev;
+        TimerDevice* _timerDev;
         void processInterrupt();
+        void processTimer();
         ElapsedTimer eInterruptProcessing;
+        Timestamp ts;
 
         // For status report
         UDPNetworkDevice* _statusRptToTWGS;
+
+        int runSWScanLimitCheck(float alpha, float beta);
 
 };
 

@@ -58,12 +58,12 @@ STATUS DUHWMgr::initialize()
     brdCtrVal = DeviceUtilities::readMask(DU_BRD_CTRL_MASK, _duDev->getBrdCtrlReg());
 
     // Set Test mode
-    brdCtrVal = DeviceUtilities::updateReg(DU_MODE_MASK, brdCtrVal, TEST);
+    brdCtrVal = DeviceUtilities::updateReg(DU_FORCE_TEST_MODE_MASK, brdCtrVal, TEST);
     brdCtrVal = DeviceUtilities::updateReg(DU_STEERING_WORD_SRC_MASK, brdCtrVal, ARM);
     _duDev->setBrdCtrlReg(brdCtrVal);
 
-//  getRegs(0x8, 0x8);
-//  _logger.logInfo("Board control reg = 0x%x", getBoardControl());
+    getRegs(0x0, 0x24);
+    printf("getBoardControlReg = 0x%x\n", _duDev->getBrdCtrlReg());
 
     return OK;
 }

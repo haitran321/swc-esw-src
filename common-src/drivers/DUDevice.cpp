@@ -90,39 +90,20 @@ int DUDevice::getSLStatusReg()
     return (regs->slResult);
 }
 
-
 int DUDevice::getDiagInfoReg()
 {
     return (regs->diagInfo);
 }
 
-// STATUS DUDevice::setDMAControllerReg(int val)
-// {
-//     STATUS rc = OK;
+int DUDevice::getDCUStatusReg(int dcuNum)
+{
+    return (regs->dcuStatus[dcuNum]);
+}
 
-//     regs->dmaControlleReg = val;
-
-//     return rc;
-// }
-
-// void DUDevice::readFeedbackRegs(int numRegs)
-// {
-//     for (int i = 0; i < numRegs; i++)
-//     {
-//         printf("spare[%d] = 0x%x\n", i, regs->spare3[i]);
-//     }
-// }
-
-// void DUDevice::readDMAReg()
-// {
-//     writeReg(0x9C, 0x8);
-//     sleep(0.1);
-//     writeReg(0x9C, 0x0);
-//     printf("Write control reg = 0x%x\n", readReg(0x90));
-//     printf("Write status reg = 0x%x\n", readReg(0x24));
-//     printf("Read control reg = 0x%x\n", readReg(0x4C));
-//     printf("Read status reg = 0x%x\n", readReg(0x28));
-// } 
+void DUDevice::setDCUSCLKReg(int dcuNum, int val)
+{
+    regs->dcuSCLKDelay[dcuNum] = val;
+}
 
 void DUDevice::getRegs(int startReg, int endReg)
 {

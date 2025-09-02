@@ -7,7 +7,6 @@
 #include <cmath>
 #include <sys/reboot.h>
 #include "DUCmdMgr.h"
-#include "WriteRegCmdMsg.h"
 #include "ShutdownCmdMsg.h"
 #include "SteeringCmdMsg.h"
 #include "ConfigDataManager.h"
@@ -26,9 +25,8 @@
  */
 DUCmdMgr::DUCmdMgr() :
     _logger(Logger::getInstance()),
-    _udpFromRIMS(NULL),
+    _udpIncoming(NULL),
     _udpWarmRestart(NULL),
-    _udpFromTWGS(NULL),
     _duHWMgr(DUHWMgr::getInstance()),
     _uio1Dev(NULL),
     _timerDev(NULL),
@@ -42,11 +40,8 @@ DUCmdMgr::DUCmdMgr() :
 DUCmdMgr::~DUCmdMgr()
 {
     // Delete all devices
-    delete _udpFromRIMS;
-    _udpFromRIMS = NULL;
-
-    delete _udpFromTWGS;
-    _udpFromTWGS = NULL;
+    delete _udpIncoming;
+    _udpIncoming = NULL;
 
     delete _udpWarmRestart;
     _udpWarmRestart = NULL;
@@ -70,13 +65,8 @@ STATUS DUCmdMgr::start()
     STATUS rc = OK;
 
     string SOC_IP_ADDRESS;
-    int FROM_RIMS_PORT;
-    int FROM_TWGS_PORT;
+    int INCOMING_PORT;
     int WARM_RESTART_PORT;
-    string DEV_PC_IP_ADDRESS;
-    int DEV_INCOMING_PORT;
-    string TWGS_STATUS_IP_ADDRESS;
-    int STATUS_TO_TWGS_PORT;
 
     printf("\nLoading Config file\n");
     if (ConfigDataManager::getInstance().load() != OK)
@@ -87,13 +77,8 @@ STATUS DUCmdMgr::start()
     ConfigDataManager& configs = ConfigDataManager::getInstance();
 
     rc = rc || configs.get("SOC_IP_ADDRESS", SOC_IP_ADDRESS);
-    rc = rc || configs.get("FROM_RIMS_PORT", FROM_RIMS_PORT);
-    rc = rc || configs.get("FROM_TWGS_PORT", FROM_TWGS_PORT);
+    rc = rc || configs.get("INCOMING_PORT", INCOMING_PORT);
     rc = rc || configs.get("WARM_RESTART_PORT", WARM_RESTART_PORT);
-    rc = rc || configs.get("DEV_PC_IP_ADDRESS", DEV_PC_IP_ADDRESS);
-    rc = rc || configs.get("DEV_INCOMING_PORT", DEV_INCOMING_PORT);
-    rc = rc || configs.get("TWGS_STATUS_IP_ADDRESS", TWGS_STATUS_IP_ADDRESS);
-    rc = rc || configs.get("STATUS_TO_TWGS_PORT", STATUS_TO_TWGS_PORT);
     rc = rc || configs.get("MODULE_TYPE", MODULE_TYPE);
 
     rc = rc || configs.get("TEST_STATUS", TEST_STATUS);
@@ -113,23 +98,23 @@ STATUS DUCmdMgr::start()
     // From RIMS device for commands
     stringstream devName;
     devName << "UDP Server ";
-    devName << SOC_IP_ADDRESS << ":" << FROM_RIMS_PORT;
+    devName << SOC_IP_ADDRESS << ":" << INCOMING_PORT;
 
-    _udpFromRIMS = new UDPNetworkDevice(NetworkServer, SOC_IP_ADDRESS, FROM_RIMS_PORT, false);
-    _udpFromRIMS->setName(devName.str());
+    _udpIncoming = new UDPNetworkDevice(NetworkServer, SOC_IP_ADDRESS, INCOMING_PORT, false);
+    _udpIncoming->setName(devName.str());
 
-    if (_udpFromRIMS->open() != OK)
+    if (_udpIncoming->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _udpFromRIMS->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _udpIncoming->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_udpFromRIMS, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processIncomingMsg)) != OK)
+    if (addEvent(*_udpIncoming, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processIncomingMsg)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _udpFromRIMS->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _udpIncoming->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _udpFromRIMS device");
-    printf("Successfully created _udpFromRIMS device\n");
+    _logger.logInfo("Successfully created _udpIncoming device");
+    printf("Successfully created _udpIncoming device\n");
 
     // Warm Restart device
     stringstream warmRestartDevName;
@@ -155,7 +140,7 @@ STATUS DUCmdMgr::start()
     _duHWMgr.initialize();
 
     // Open UIO device
-    _uio1Dev = new UIODevice(AXI_INT_OFFSET, 0);
+    _uio1Dev = new UIODevice(AXI_INT_121_OFFSET, 0);
 
     if (_uio1Dev->open() != OK)
     {
@@ -211,7 +196,7 @@ void DUCmdMgr::processInterrupt()
     int pending = 0;
 
     _uio1Dev->read((char *)&pending, sizeof(int), bytesRead);
-//  printf("Reading interrupt, number of interrupt = %d\n", pending);
+    printf("Reading interrupt, number of interrupt = %d\n", pending);
     _uio1Dev->clearInterrupt();
 
     // Get FW SL check status
@@ -258,9 +243,9 @@ void DUCmdMgr::processIncomingMsg()
     CommandMessage *msg = new CommandMessage();
 
     // Read UDP data
-    if (_udpFromRIMS->read(msg->getBuf(), MAX_MSG_SIZE, bytesRead) != OK)
+    if (_udpIncoming->read(msg->getBuf(), MAX_MSG_SIZE, bytesRead) != OK)
     {
-        printf("error reading from _udpFromRIMS\n");
+        printf("error reading from _udpIncoming\n");
         return;
     }
     else
@@ -332,22 +317,6 @@ void DUCmdMgr::processIncomingMsg()
         // printf("Successfully write from readUdpData\n");
     }
 }
-
-// _logger.logInfo("Received Status Request");
-//        //      printf("Received Status Request\n");
-//if ((MODULE_TYPE == WG1) || (MODULE_TYPE == WG2))
-//{
-//    _logger.logInfo("Sending Status Rpt To TU");
-//    // Send status report to TU
-//    WGStatusRptMsg wgStatusRptMsg;
-//    wgStatusRptMsg.msgID = (InternalMsgID)toNetworkInt(STATUS_RPT);
-//    wgStatusRptMsg.status = toNetworkInt(_duHWMgr.getBoardStatus());
-//
-//    // For testing to be removed
-//    wgStatusRptMsg.status = toNetworkInt(TEST_STATUS);
-//
-//    _statusRptToTWGS->write(&wgStatusRptMsg, sizeof(wgStatusRptMsg));
-//}
 
 void DUCmdMgr::processWarmRestartMsg()
 {

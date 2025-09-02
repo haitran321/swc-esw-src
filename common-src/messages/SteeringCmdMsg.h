@@ -15,60 +15,72 @@ class SteeringCmdMsg : public CommandMessage
 {
 public:
 
-   /**
-   * Constructor
-   *
-   * @param buffer Raw message buffer
-   * @param bufSize Raw message buffer size
-   */
-   SteeringCmdMsg(char *buffer, int bufSize);
+    /**
+    * Constructor
+    *
+    * @param buffer Raw message buffer
+    * @param bufSize Raw message buffer size
+    */
+    SteeringCmdMsg(char *buffer, int bufSize);
 
-   /**
-   * Destructor
-   *
-   */
-   virtual ~SteeringCmdMsg(){};
+    /**
+    * Destructor
+    *
+    */
+    virtual ~SteeringCmdMsg() { };
 
-   /**
-   * Method validateData validates data from the data section of 
-   * the raw message to the member variables. 
-   *
-   * @return Status of operation
-   */
-   virtual STATUS validateData();
+    /**
+    * Method validateData validates data from the data section of 
+    * the raw message to the member variables. 
+    *
+    * @return Status of operation
+    */
+    virtual STATUS validateData();
 
-   /**
-   * Method getAlpha returns the KSineAlpha.
-   *
-   * @return KSineAlpha value
-   */
-   inline int getAlpha();
+    /**
+    * Method getTestOption returns the test option.
+    *
+    * @return testOption value
+    */
+    inline int getTestOption();
 
-   /**
-   * Method getBeta returns the KSineBeta.
-   *
-   * @return KSineBeta value
-   */
-   inline int getBeta();
+    /**
+    * Method getAlpha returns the KSineAlpha.
+    *
+    * @return KSineAlpha value
+    */
+    inline int getAlpha();
 
-   void byteSwapToLocal();
+    /**
+    * Method getBeta returns the KSineBeta.
+    *
+    * @return KSineBeta value
+    */
+    inline int getBeta();
+
+    void byteSwapToLocal();
 
 private:
 
-   /** Shutodown command data */
+    /** Steering Command data */
 
-   SteeringCmdDataType *_data;
+    SteeringCmdDataType *_data;
 
 };
 
+int SteeringCmdMsg::getTestOption()
+{
+    return (_data->testOption);
+}
+
 int SteeringCmdMsg::getAlpha()
 {
-   return(_data->alpha);
+    return (_data->alpha);
 }
 
 int SteeringCmdMsg::getBeta()
 {
-   return(_data->beta);
+    return (_data->beta);
 }
 
 

@@ -8,7 +8,6 @@
 #include <cstring>
 #include <cmath>
 #include "Uncopyable.h"
-#include "InternalMsgTypes.h"
 #include "DefineUtils.h"
 
 #define INT_TYPE        1        ///< Integer data type used for extract value from a sap/config file
@@ -34,7 +33,7 @@ struct DspsSap
     int    chassisFanUpperLimit;
     int    chassisFanLowerLimit;
  
-    float  dcOffsets[MAX_PULSE_TYPES];
+    //float  dcOffsets[MAX_PULSE_TYPES];
 };
 
 #define DSPS_SAP_BYTES     sizeof(DspsSap)

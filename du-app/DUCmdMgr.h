@@ -6,10 +6,7 @@
 
 #include "EventProcessor.h"
 #include "UDPNetworkDevice.h"
-#include "DevMemDevice.h"
-#include "InternalMsgTypes.h"
-#include "WriteRegCmdMsg.h"
-#include "LEDDevice.h"
+#include "SWCMsgTypes.h"
 #include "DUHWMgr.h"
 #include "UIODevice.h"
 #include "TimerDevice.h"
@@ -46,7 +43,7 @@ class DUCmdMgr : public EventProcessor
         /**
          * UDP device for receiving Ent Network Msgs
          */
-        Device* _udpFromRIMS;
+        Device* _udpIncoming;
 
         // Warm Restart Device
         UDPNetworkDevice* _udpWarmRestart;
@@ -59,11 +56,6 @@ class DUCmdMgr : public EventProcessor
         int TEST_STATUS;
 
         void processIncomingMsg();
-
-        // Variables for TWGS Timing Triggers
-        UDPNetworkDevice* _udpFromTWGS;
-        TimingTriggersMsg _triggerMsgBuf[4];
-        int triggerBufCounter;
 
         DUHWMgr &_duHWMgr;
 

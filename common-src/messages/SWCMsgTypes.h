@@ -22,9 +22,8 @@ typedef enum
 {
     STEERING_CMD_MSG_ID             = 1,
     SHUTDOWN_CMD_MSG_ID             = 2,
-    STATUS_CMD_MSG_ID               = 3,
-    TOD_CMD_MSG_ID                  = 4,
-    STATUS_RPT_MSG_ID               = 11,
+    STATUS_REQUEST_CMD_MSG_ID       = 3,
+    LRU_STATUS_RPT_MSG_ID           = 11,
     DCU_DETAILED_STATUS_RPT_MSG_ID  = 12,
     CONFIG_MODE_STATUS_RPT_MSG_ID   = 13,
 
@@ -56,58 +55,17 @@ typedef struct
     char msg[MAX_TEXT_FIELD_SIZE];
 } AlertDataType;
 
-/** Mode values */
-
 typedef enum
 {
-   Offline = 1,
-   Mission,
-   TestAssist
-} Mode;
-
-/** Operational states */
-
-typedef enum
-{
-    Live = 1,
-    Simulation
-} OpState;
-
-#ifndef _CVI_
-
-typedef enum
-{
-    Green = 1,
-    White,
-    Yellow,
-    Red
+    Go = 1,
+    No_Go
 } HealthState;
 
-/** Summary Status Report message data */
-
-// typedef struct
-// {
-//    HealthState overallHealth        :8;
-//    Mode mode                        :8;
-//    SubsystemState subsystemState    :8;
-//    HealthState cornerChannelStatus  :8;
-// } SummaryStatusDataType;
-
-/** Mode Command message data */
-
-typedef struct
-{
-   Mode mode;
-   OpState opState;
-} ModeCmdDataType;
-
-#endif
-
 /** Shutdown Command message data  */
-
 typedef enum
 {
-    Reboot = 1,
+    RestartApp = 1,
+    Reboot,
     PowerOff
 } ShutdownOption;
 
@@ -116,20 +74,49 @@ typedef struct
     ShutdownOption type;
 } ShutdownCmdDataType;
 
+typedef enum
+{
+    Analog = 1,
+    Digital
+} TestOption;
+
 /** Steering message data  */
 typedef struct
 {
-   int alpha;
-   int beta;
+    TestOption testOption;
+    int alpha;
+    int beta;
 } SteeringCmdDataType;
 
+typedef enum
+{
+    SWCRDetailedStatus      = 1,
+    AlphaDCUDetailedStatus  = 2,
+    BetaDCUDetailedStatus   = 3,
+} StatusRequestType;
+
+/** Status Request message data  */
+typedef struct
+{
+    StatusRequestType requestType;
+    int dcuNum;
+} StatusRequestCmdDataType;
+
+/** LRU Status Report message data  */
+typedef struct
+{
+    LRUOption lruOption;
+    HealthState health;
+} LRUStatusRptDataType;
+
+///** Config Mode Status Reporrt message data  */
+//typedef struct
+//{
+//    LRUOption lruOption;
+//    HealthState health;
+//} LRUStatusRptDataType;
+
 /** SW Exception Report message data */
-
-#ifndef _CVI_
-
-// Labwindows/CVI compiler used to compile the PXI code is a C compiler
-// only. It does not support using a const as an  array size. This type
-// is not used by the PXI code.
 
 static const unsigned int MAX_TASK_NAME = 60;
 
@@ -141,15 +128,8 @@ typedef struct
     char text[MAX_TEXT_FIELD_SIZE];
 } SWExceptionDataType;
 
-#endif
 
 /** Common alert definitions */
-
-#ifndef _CVI_
-
-// Labwindows/CVI compiler used to compile the PXI code is a C compiler
-// only. It does not support namespaces. This type is not used by the
-// PXI code.
 
 namespace CommonAlerts
 {
@@ -173,8 +153,13 @@ enum
     RadarNetRptError,
     ShutdownError
 };
-}
 
-#endif
+typedef struct
+{
+    int reg;
+    int val;
+} RegCmdDataType;
+
+}
 
 #endif
