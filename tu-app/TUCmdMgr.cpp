@@ -292,12 +292,12 @@ void TUCmdMgr::processIncomingMsg()
 
             static int SteeringCmdCounter = 0;
             SteeringCmdCounter++;
-            if ((SteeringCmdCounter % 100) == 0)
-            {
-                printf("RFG_CMD_MSG_ID: pbpId = %d, SteeringCmdCounter = %d\n", cloneSteeringCmdMsg->getPBPId(), SteeringCmdCounter);
-            }
+//          if ((SteeringCmdCounter % 100) == 0)
+//          {
+                printf("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d\n", SteeringCmdCounter);
+//          }
 
-            _logger.logInfo("In RFG_CMD_MSG_ID pbpId = %d", cloneSteeringCmdMsg->getPBPId());
+            _logger.logInfo("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d", SteeringCmdCounter);
 
             SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(cloneSteeringCmdMsg->getDataBufPos());
 

@@ -55,11 +55,9 @@ bool Message::isHeaderValid()
 void Message::byteSwapHeaderToLocal()
 {
    _header->msgId = (MessageId)fromNetworkInt(_header->msgId);
-   _header->pbpId = (int)fromNetworkInt(_header->pbpId);
    _header->msgLen = (int)fromNetworkInt(_header->msgLen);
    _header->recNum = (int)fromNetworkInt(_header->recNum);
    _header->recLen = (int)fromNetworkInt(_header->recLen);
-   _header->recvId = (int)fromNetworkInt(_header->recvId);
 }
 
 

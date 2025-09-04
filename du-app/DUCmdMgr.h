@@ -53,8 +53,6 @@ class DUCmdMgr : public EventProcessor
 
         int MODULE_TYPE;
 
-        int TEST_STATUS;
-
         void processIncomingMsg();
 
         DUHWMgr &_duHWMgr;
@@ -67,7 +65,7 @@ class DUCmdMgr : public EventProcessor
         Timestamp ts;
 
         // For status report
-        UDPNetworkDevice* _statusRptToTWGS;
+        UDPNetworkDevice* _udpOutToTestServer;
 
         int runSWScanLimitCheck(float alpha, float beta);
 

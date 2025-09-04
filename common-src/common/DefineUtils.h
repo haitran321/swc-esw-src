@@ -29,13 +29,9 @@ typedef int (*FUNCPTR)(...);
 #define DU_MAP_SIZE 2200
 #define TU_MAP_SIZE 2200
 
-#define APB_REG_1 0x00       
-#define APB_REG_2 0x04
-#define APB_REG_3 0x08
-#define APB_REG_4 0x0C
-#define APB_REG_5 0x10
-
 #define MAX_ACTION 50
+
+#define NUM_DCU 152
 
 typedef enum
 {
@@ -55,12 +51,12 @@ typedef enum
     SWCR  = 0,
     SWC   = 1,
     JOINT = 2,
-} SCWR_CONFIG;
+} SWC_CONFIG;
 
 typedef enum
 {
     ONLINE = 0,
     TEST_ENABLE = 1,
-} SCWR_MODE;
+} SWC_MODE;
 
 #endif

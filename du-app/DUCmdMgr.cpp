@@ -9,6 +9,8 @@
 #include "DUCmdMgr.h"
 #include "ShutdownCmdMsg.h"
 #include "SteeringCmdMsg.h"
+#include "StatusRequestCmdMsg.h"
+#include "SWCStatusRptMsg.h"
 #include "ConfigDataManager.h"
 #include "DeviceFactory.h"
 #include "EndianUtils.h"
@@ -30,7 +32,7 @@ DUCmdMgr::DUCmdMgr() :
     _duHWMgr(DUHWMgr::getInstance()),
     _uio1Dev(NULL),
     _timerDev(NULL),
-    _statusRptToTWGS(NULL)
+    _udpOutToTestServer(NULL)
 {
 }
 
@@ -52,8 +54,8 @@ DUCmdMgr::~DUCmdMgr()
     delete _timerDev;
     _timerDev = NULL;
 
-    delete _statusRptToTWGS;
-    _statusRptToTWGS = NULL;
+    delete _udpOutToTestServer;
+    _udpOutToTestServer = NULL;
 }
 
 /** 
@@ -67,6 +69,8 @@ STATUS DUCmdMgr::start()
     string SOC_IP_ADDRESS;
     int INCOMING_PORT;
     int WARM_RESTART_PORT;
+    string TEST_SERVER_IP_ADDRESS;
+    int TO_TEST_SERVER_PORT;
 
     printf("\nLoading Config file\n");
     if (ConfigDataManager::getInstance().load() != OK)
@@ -81,7 +85,8 @@ STATUS DUCmdMgr::start()
     rc = rc || configs.get("WARM_RESTART_PORT", WARM_RESTART_PORT);
     rc = rc || configs.get("MODULE_TYPE", MODULE_TYPE);
 
-    rc = rc || configs.get("TEST_STATUS", TEST_STATUS);
+    rc = rc || configs.get("TEST_SERVER_IP_ADDRESS", TEST_SERVER_IP_ADDRESS);
+    rc = rc || configs.get("TO_TEST_SERVER_PORT", TO_TEST_SERVER_PORT);
 
     // Setup Logger
     _logger.initialize();
@@ -135,6 +140,20 @@ STATUS DUCmdMgr::start()
     }
     _logger.logInfo("Successfully created _udpWarmRestart device");
     printf("Successfully created _udpWarmRestart device\n");
+
+    stringstream toTSDevName;
+    toTSDevName << "UDP Client For Test Server";
+    toTSDevName << TEST_SERVER_IP_ADDRESS << ":" << TO_TEST_SERVER_PORT;
+    _udpOutToTestServer = new UDPNetworkDevice(NetworkClient, TEST_SERVER_IP_ADDRESS, TO_TEST_SERVER_PORT, false);
+    _udpOutToTestServer->setName(toTSDevName.str());
+
+    if (_udpOutToTestServer->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _udpOutToTestServer->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _udpOutToTestServer device");
+    printf("Successfully created _udpOutToTestServer device\n");
 
     // Initialize rf generator
     _duHWMgr.initialize();
@@ -237,7 +256,7 @@ void DUCmdMgr::processTimer()
 
 void DUCmdMgr::processIncomingMsg()
 {
-    // printf("In processIncomingMsg()\n");
+    printf("In processIncomingMsg()\n");
     size_t bytesRead = 0;
 
     CommandMessage *msg = new CommandMessage();
@@ -250,14 +269,14 @@ void DUCmdMgr::processIncomingMsg()
     }
     else
     {
-//      printf("Successfully read %d bytes\n", (int)bytesRead);
+        printf("Successfully read %d bytes\n", (int)bytesRead);
     }
 
     msg->setTotalMsgSize(bytesRead);
     msg->byteSwapHeaderToLocal();
 
     _logger.logInfo("Processing incoming messages: msgId = %d", msg->getMsgId());
-//  printf("Processing incoming messages: msgId = %d\n", msg->getMsgId());
+    printf("Processing incoming messages: msgId = %d\n", msg->getMsgId());
 
     switch (msg->getMsgId())
     {
@@ -292,16 +311,16 @@ void DUCmdMgr::processIncomingMsg()
 
             static int SteeringCmdCounter = 0;
             SteeringCmdCounter++;
-            if ((SteeringCmdCounter % 100) == 0)
-            {
-                printf("RFG_CMD_MSG_ID: pbpId = %d, SteeringCmdCounter = %d\n", cloneSteeringCmdMsg->getPBPId(), SteeringCmdCounter);
-            }
+//          if ((SteeringCmdCounter % 100) == 0)
+//          {
+                printf("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d\n", SteeringCmdCounter);
+//          }
 
-            _logger.logInfo("In RFG_CMD_MSG_ID pbpId = %d", cloneSteeringCmdMsg->getPBPId());
+            _logger.logInfo("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d", SteeringCmdCounter);
 
             SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(cloneSteeringCmdMsg->getDataBufPos());
 
-//          printf("Alpha = %d, Beta = %d\n", params->alpha, params->beta);
+            printf("Alpha = %d, Beta = %d\n", params->alpha, params->beta);
 
             // Set KSine Regs
             _duHWMgr.setArmKSine(ALPHA, params->alpha);
@@ -311,6 +330,41 @@ void DUCmdMgr::processIncomingMsg()
 
             // Toggle the Scan Limit check 
             _duHWMgr.runFWScanLimitCheck();
+
+            break;
+        }
+    case STATUS_REQUEST_CMD_MSG_ID:
+        {
+            StatusRequestCmdMsg *cloneStatusRequestCmdMsg = new StatusRequestCmdMsg(msg->getBuf(), msg->getBufSize());
+            cloneStatusRequestCmdMsg->byteSwapToLocal();
+            int numActions = cloneStatusRequestCmdMsg->getDataSize() / sizeof(StatusRequestCmdDataType);
+
+            static int StatusRequestCmdCounter = 0;
+            StatusRequestCmdCounter++;
+//          if ((StatusRequestCmdCounter % 100) == 0)
+//          {
+                printf("===> STATUS_REQUEST_CMD_MSG_ID: StatusRequestCmdCounter = %d\n", StatusRequestCmdCounter);
+//          }
+
+            _logger.logInfo("===> STATUS_REQUEST_CMD_MSG_ID: StatusRequestCmdCounter = %d", StatusRequestCmdCounter);
+
+            StatusRequestCmdDataType *params = reinterpret_cast<StatusRequestCmdDataType *>(cloneStatusRequestCmdMsg->getDataBufPos());
+
+            printf("requestType = %d, Beta = %d\n", params->requestType, params->dcuNum);
+
+            if (params->requestType == SWCDetailedStatus)
+            {
+                _logger.logInfo("Sending SWCDetailedStatus Rpt To Test Server");
+                printf("Sending SWCDetailedStatus Rpt To Test Server\n");
+                SWCStatusRptMsg swcStatusRptMsg;
+                swcStatusRptMsg.setSWCStatus(Go);
+                swcStatusRptMsg.setSWCConfig(SWCR);
+                swcStatusRptMsg.setSWCMode(TEST_ENABLE);
+                swcStatusRptMsg.buildMsg();
+                int msgSize = swcStatusRptMsg.getBufSize();
+                swcStatusRptMsg.headerByteSwapToNetwork();
+                _udpOutToTestServer->write(swcStatusRptMsg.getBuf(), sizeof(SWCStatusRptMsg));
+            }
 
             break;
         }

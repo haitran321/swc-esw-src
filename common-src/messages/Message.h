@@ -124,14 +124,6 @@ public:
      */
     bool isHeaderValid();
 
-    /**
-     * Method getPBPId returns the PBP id as reported in the message
-     * header.
-     *
-     * @return PBP id
-     */
-    inline int getPBPId();
-
     void byteSwapHeaderToLocal();
     
     /**
@@ -193,11 +185,6 @@ const char* Message::getDataBufPos() const
 unsigned int Message::getDataSize()
 {
     return(_header->msgLen - getHeaderSize());
-}
-
-inline int Message::getPBPId()
-{
-    return(_header->pbpId);
 }
 
 inline int Message::getRecNum()

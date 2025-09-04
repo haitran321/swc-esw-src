@@ -37,13 +37,6 @@ public:
    */
    virtual STATUS buildMsg();
 
-   /**
-   * Method setPBPId sets the PBP id in the RIMS Report header.
-   *
-   * @param pbpId PBP id
-   */
-   inline void setPBPId(int pbpId);
-
    void headerByteSwapToNetwork();
 
 protected:
@@ -60,10 +53,5 @@ protected:
    STATUS addData(const char *data, int size);
 
 };
-
-inline void ReportMessage::setPBPId(int pbpId)
-{
-   _header->pbpId = pbpId;
-}
 
 #endif

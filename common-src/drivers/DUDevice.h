@@ -3,8 +3,6 @@
 
 #include "Device.h"
 
-#define NUM_DCU 152
-
 typedef struct
 {
     int fwVer;

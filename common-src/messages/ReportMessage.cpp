@@ -20,7 +20,6 @@ STATUS ReportMessage::buildMsg()
    // IRIGDevice::getTime(_header->time);
    _header->recNum = 0;
    _header->recLen = 0;
-   _header->recvId = 0;
 
    return(OK);
 }
@@ -62,12 +61,10 @@ STATUS ReportMessage::addData(const char *data, int size)
 void ReportMessage::headerByteSwapToNetwork()
 {
     _header->msgId = (MessageId)toNetworkInt(_header->msgId);
-    _header->pbpId = toNetworkInt(_header->pbpId);
     // WARNING:  This will make the message incorrect
     _header->msgLen = toNetworkInt(_header->msgLen);    
     _header->recNum = toNetworkInt(_header->recNum);
     _header->recLen = toNetworkInt(_header->recLen);
-    _header->recvId = toNetworkInt(_header->recvId);
 
     // What about time, does it need to be swapped?
 }

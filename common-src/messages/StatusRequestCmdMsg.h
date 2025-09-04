@@ -69,9 +69,9 @@ private:
 
 };
 
-LRUOption StatusRequestCmdMsg::getStatusRequestType()
+StatusRequestType StatusRequestCmdMsg::getStatusRequestType()
 {
-    return (_data->lruOption);
+    return (_data->requestType);
 }
 
 int StatusRequestCmdMsg::getDCUNum()

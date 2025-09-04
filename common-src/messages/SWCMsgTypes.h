@@ -26,7 +26,6 @@ typedef enum
     LRU_STATUS_RPT_MSG_ID           = 11,
     DCU_DETAILED_STATUS_RPT_MSG_ID  = 12,
     CONFIG_MODE_STATUS_RPT_MSG_ID   = 13,
-
 } MessageId;
 
 /** RIMS message header */
@@ -34,12 +33,10 @@ typedef enum
 typedef struct
 {
     MessageId msgId;
-    int pbpId;
     int msgLen;
     UTCTimeType time;
     int recNum;
     int recLen;
-    int recvId;
 } MsgHeaderType;
 
 /** Maximum text field size in RIMS messages */
@@ -90,7 +87,7 @@ typedef struct
 
 typedef enum
 {
-    SWCRDetailedStatus      = 1,
+    SWCDetailedStatus      = 1,
     AlphaDCUDetailedStatus  = 2,
     BetaDCUDetailedStatus   = 3,
 } StatusRequestType;
@@ -102,19 +99,19 @@ typedef struct
     int dcuNum;
 } StatusRequestCmdDataType;
 
-/** LRU Status Report message data  */
+/** Status Report message data  */
 typedef struct
 {
-    LRUOption lruOption;
-    HealthState health;
-} LRUStatusRptDataType;
-
-///** Config Mode Status Reporrt message data  */
-//typedef struct
-//{
-//    LRUOption lruOption;
-//    HealthState health;
-//} LRUStatusRptDataType;
+    HealthState swcStatus;
+    SWC_CONFIG  swcConfig;
+    SWC_MODE    swcMode;
+    HealthState swcAlphaDUStatus;
+    HealthState swcAlphaPSStatus;
+    HealthState swcBetaDUStatus;
+    HealthState swcBetaPSStatus;
+    HealthState alphaDCU[NUM_DCU];
+    HealthState betaDCU[NUM_DCU];
+} SWCStatusRptDataType;
 
 /** SW Exception Report message data */
 
