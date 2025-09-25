@@ -620,7 +620,7 @@ void DUCmdMgr::processDEVPCMsg()
 
 //  self.wcStatusRpt = pack(">llllllllllll", error, scan_limit, swcr_overall, config, mode, \
 //                                       alpha_status, beta_status, temp_status, pwr_status, \
-//                                       dcu_type, dcu_num, dcu_status)
+//                                       dcu_type, dcu_status, dcu_num)
 
     // Read UDP data
     if (_udpFromDevPC->read((char *)&status[0], sizeof(int)*12, bytesRead) != OK)
@@ -633,10 +633,49 @@ void DUCmdMgr::processDEVPCMsg()
         printf("processDEVPCMsg Successfully read %d bytes\n", (int)bytesRead);
     }
 
-    printf("SWC status to TWGS before: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+    printf("Before setting bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
 
     // Set status reg based on what received from the emulator
-    _duHWMgr.setOverallStatusBit(swcr_overall);
+    printf("Setting swcr_overall to %d\n", status[2]);
+    _duHWMgr.setOverallStatusBit(status[2]);
+    printf("after swcr_overall : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+    printf("Setting config to %d\n", status[3]);
+    _duHWMgr.setConfigBit(status[3]);
+    printf("after config : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+    printf("Setting mode to %d\n", status[4]);
+    _duHWMgr.setModeBit(status[4]);
+    printf("after mode : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+    printf("Setting alpha_status to %d\n", status[5]);
+    _duHWMgr.setAlphaOverallStatusBit(status[5]);
+    printf("after alpha_status : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+    printf("Setting beta_status to %d\n", status[6]);
+    _duHWMgr.setBetaOverallStatusBit(status[6]);
+    printf("after beta_status : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+    printf("Setting temp_status to %d\n", status[7]);
+    _duHWMgr.setTempStatusBit(status[7]);
+    printf("after temp_status : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+    printf("Setting pwr_status to %d\n", status[8]);
+    _duHWMgr.setPwrSuppliesStatusBit(status[8]);
+    printf("after pwr_status : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+    printf("Setting dcu_type to %d\n", status[9]);
+    _duHWMgr.setDCUGroupStatusBit(status[9]);
+    printf("after dcu_type : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+    printf("Setting dcu_status to %d\n", status[10]);
+    _duHWMgr.setDCUHealthStatusBit(status[10]);
+    printf("after dcu_status : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+     printf("Setting dcu_num to %d\n", status[11]);
+     _duHWMgr.setDCUNumberStatusBit(status[11]);
+    printf("after dcu_num : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
 
 }
 

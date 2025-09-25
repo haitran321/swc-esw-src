@@ -13,7 +13,8 @@ typedef struct
     int slResult;
     int sysConfigStatus;
     int swcStatusToTwgs;
-    int spare1[17];
+    int cableDelayComp;
+    int spare1[16];
     int fpgaDieTemp;
     int vccIntVoltage;
     int vccAuxVoltage;
@@ -101,12 +102,12 @@ typedef enum
     DU_CONFIG_STATUS_MASK           = 0x00000006,    /* Bit 1..2 */
     DU_MODE_STATUS_MASK             = 0x00000008,    /* Bit 3 */
     DU_ALPHA_OVERALL_STATUS_MASK    = 0x00000010,    /* Bit 4 */
-    DU_ALPHA_PS_STATUS_MASK         = 0x00000020,    /* Bit 5 */
-    DU_BETA_OVERALL_STATUS_MASK     = 0x00000040,    /* Bit 6 */
-    DU_BETA_PS_STATUS_MASK          = 0x00000080,    /* Bit 7 */
+    DU_BETA_OVERALL_STATUS_MASK     = 0x00000020,    /* Bit 5 */
+    DU_TEMP_STATUS_MASK             = 0x00000040,    /* Bit 6 */
+    DU_PS_STATUS_MASK               = 0x00000080,    /* Bit 7 */
     DU_DCU_GROUP_STATUS_MASK        = 0x00000100,    /* Bit 8 */
-    DU_DCU_NUMBER_STATUS_MASK       = 0x0001FE00,    /* Bit 9..16 */
-    DU_DCU_HEALTH_STATUS_MASK       = 0x00020000,    /* Bit 17 */
+    DU_DCU_HEALTH_STATUS_MASK       = 0x00000200,    /* Bit 9 */
+    DU_DCU_NUMBER_STATUS_MASK       = 0x0003FC00,    /* Bit 10..17 */
 }SWC_STATUS_TO_TWGS_ENUM;
 
 class DUDevice : public Device

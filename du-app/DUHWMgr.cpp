@@ -89,14 +89,14 @@ STATUS DUHWMgr::initialize()
     }
 
     // Set default SWC status to TWGS
-    statusToTwgs = getSwcStatusToTwgs();
+    statusToTwgs = 0x0;
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 
-    getRegs(0x0, 0x24);
+    getRegs(0x0, 0x28);
     printf("getBoardControlReg = 0x%x\n", _duDev->getBrdCtrlReg());
 
-    setReg(0x408, 12);
-    getRegs(0x408, 0x408);
-    getRegs(0x1A8, 0x1AC);
+    getRegs(0x380, 0x380);
+    getRegs(0x120, 0x120);
 
     return OK;
 }
@@ -153,58 +153,65 @@ int DUHWMgr::getSysConfigStatus()
 
 int DUHWMgr::getSwcStatusToTwgs()
 {
-    int status = _duDev->getSwcStatusToTwgsReg();
-    return (status)
+    return (_duDev->getSwcStatusToTwgsReg());
 }
 
 void DUHWMgr::setOverallStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_OVERALL_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
 
 void DUHWMgr::setConfigBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_CONFIG_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
 
 void DUHWMgr::setModeBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_MODE_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
 
 void DUHWMgr::setAlphaOverallStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_ALPHA_OVERALL_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
 
 void DUHWMgr::setBetaOverallStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_BETA_OVERALL_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
 
-// TODO: Change to Temp status Mask
 void DUHWMgr::setTempStatusBit(int val)
 {
-    statusToTwgs = DeviceUtilities::updateReg(DU_ALPHA_PS_STATUS_MASK, statusToTwgs, val);
+    statusToTwgs = DeviceUtilities::updateReg(DU_TEMP_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
 
-// TODO: Change to Pwr Supply status Mask
 void DUHWMgr::setPwrSuppliesStatusBit(int val)
 {
-    statusToTwgs = DeviceUtilities::updateReg(DU_BETA_PS_STATUS_MASK, statusToTwgs, val);
+    statusToTwgs = DeviceUtilities::updateReg(DU_PS_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
 
 void DUHWMgr::setDCUGroupStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_DCU_GROUP_STATUS_MASK, statusToTwgs, val);
-}
-
-void DUHWMgr::setDCUNumberStatusBit(int val)
-{
-    statusToTwgs = DeviceUtilities::updateReg(DU_DCU_NUMBER_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
 
 void DUHWMgr::setDCUHealthStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_DCU_HEALTH_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+}
+
+void DUHWMgr::setDCUNumberStatusBit(int val)
+{
+    statusToTwgs = DeviceUtilities::updateReg(DU_DCU_NUMBER_STATUS_MASK, statusToTwgs, val);
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
