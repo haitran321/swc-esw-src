@@ -29,11 +29,26 @@ class DUHWMgr : public Uncopyable
 
         int getArmKSine(RFCC_CH ch);
         void setArmKSine(RFCC_CH ch, int val);
-        void runFWScanLimitCheck();
+        void toggleSWTrigger();
         int getFWScanLimitCheckStatus();
 
         int getAtbKSine(RFCC_CH ch);
         void setAtbKSine(RFCC_CH ch, int val);
+
+        int sysConfig;
+        int statusToTwgs;
+        int getSysConfigStatus();
+        int getSwcStatusToTwgs();
+        void setOverallStatusBit(int val);
+        void setConfigBit(int val);
+        void setModeBit(int val);
+        void setAlphaOverallStatusBit(int val);
+        void setBetaOverallStatusBit(int val);
+        void setTempStatusBit(int val);
+        void setPwrSuppliesStatusBit(int val);
+        void setDCUGroupStatusBit(int val);
+        void setDCUNumberStatusBit(int val);
+        void setDCUHealthStatusBit(int val);
 
     protected:
         /**
@@ -54,8 +69,6 @@ class DUHWMgr : public Uncopyable
 
         int diagRegVal;
 
-        /* Common config parameters */
-        int MODULE_TYPE;
 };
 
 

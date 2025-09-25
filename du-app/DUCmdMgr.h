@@ -51,7 +51,10 @@ class DUCmdMgr : public EventProcessor
         int warmRestartBufCounter;
         void processWarmRestartMsg();
 
+        /* Common config parameters */
         int MODULE_TYPE;
+        int FORCE_TEST_MODE;
+        int STEERING_WORD_SRC;
 
         void processIncomingMsg();
 
@@ -68,6 +71,18 @@ class DUCmdMgr : public EventProcessor
         UDPNetworkDevice* _udpOutToTestServer;
 
         int runSWScanLimitCheck(float alpha, float beta);
+
+        DCUStatusParamsType alphaDCU[NUM_DCU];
+        DCUStatusParamsType betaDCU[NUM_DCU];
+        void processDCUStatus();
+
+        UDPNetworkDevice* _udpFromDevPC;
+        UDPNetworkDevice* _udpToDevPC;
+        void processDEVPCMsg();
+
+        int lastAlpha;
+        int lastBeta;
+
 
 };
 

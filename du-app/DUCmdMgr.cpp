@@ -32,7 +32,9 @@ DUCmdMgr::DUCmdMgr() :
     _duHWMgr(DUHWMgr::getInstance()),
     _uio1Dev(NULL),
     _timerDev(NULL),
-    _udpOutToTestServer(NULL)
+    _udpOutToTestServer(NULL),
+    _udpFromDevPC(NULL),
+    _udpToDevPC(NULL)
 {
 }
 
@@ -56,6 +58,12 @@ DUCmdMgr::~DUCmdMgr()
 
     delete _udpOutToTestServer;
     _udpOutToTestServer = NULL;
+
+    delete _udpFromDevPC;
+    _udpFromDevPC = NULL;
+
+    delete _udpToDevPC;
+    _udpToDevPC = NULL;
 }
 
 /** 
@@ -87,6 +95,16 @@ STATUS DUCmdMgr::start()
 
     rc = rc || configs.get("TEST_SERVER_IP_ADDRESS", TEST_SERVER_IP_ADDRESS);
     rc = rc || configs.get("TO_TEST_SERVER_PORT", TO_TEST_SERVER_PORT);
+
+    string DEV_PC_IP_ADDRESS;
+    int FROM_DEV_PC_PORT;
+    int TO_DEV_PC_PORT;
+    rc = rc || configs.get("DEV_PC_IP_ADDRESS", DEV_PC_IP_ADDRESS);
+    rc = rc || configs.get("FROM_DEV_PC_PORT", FROM_DEV_PC_PORT);
+    rc = rc || configs.get("TO_DEV_PC_PORT", TO_DEV_PC_PORT);
+
+    rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
+    rc = rc || configs.get("STEERING_WORD_SRC", STEERING_WORD_SRC);
 
     // Setup Logger
     _logger.initialize();
@@ -193,8 +211,41 @@ STATUS DUCmdMgr::start()
     }
     _logger.logInfo("Successfully created _timerDev device");
 
-    // printEventList();
+    // Incoming from Dev PC device
+    stringstream incomingDevPCName;
+    incomingDevPCName << "UDP Server From Dev PC";
+    incomingDevPCName << SOC_IP_ADDRESS << ":" << FROM_DEV_PC_PORT;
 
+    _udpFromDevPC = new UDPNetworkDevice(NetworkServer, SOC_IP_ADDRESS, FROM_DEV_PC_PORT, false);
+    _udpFromDevPC->setName(incomingDevPCName.str());
+
+    if (_udpFromDevPC->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _udpFromDevPC->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_udpFromDevPC, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processDEVPCMsg)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _udpFromDevPC->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _udpFromDevPC device");
+    printf("Successfully created _udpFromDevPC device\n");
+
+    // To Dev PC device
+    stringstream toDevPCName;
+    toDevPCName << "UDP Client To Dev PC";
+    toDevPCName << DEV_PC_IP_ADDRESS << ":" << _udpToDevPC;
+    _udpToDevPC = new UDPNetworkDevice(NetworkClient, DEV_PC_IP_ADDRESS, TO_DEV_PC_PORT, false);
+    _udpToDevPC->setName(toDevPCName.str());
+
+    if (_udpToDevPC->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _udpToDevPC->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _udpToDevPC device");
+    printf("Successfully created _udpToDevPC device\n");
     EventProcessor::start();
 
     return OK;
@@ -220,13 +271,66 @@ void DUCmdMgr::processInterrupt()
 
     // Get FW SL check status
 //  printf("FW SL status = 0x%x\n", _duHWMgr.getFWScanLimitCheckStatus());
-    int alpha = _duHWMgr.getArmKSine(ALPHA);
-    int beta = _duHWMgr.getArmKSine(BETA);
 
-    int swSLResult = runSWScanLimitCheck(float(alpha), float(beta));
+    int armAlpha = _duHWMgr.getArmKSine(ALPHA);
+    // 10-bit signed 2-complement integer
+    if ((armAlpha & 0x200) != 0)
+    {
+       armAlpha |= 0xfffffc00;
+    }
+
+    int armBeta = _duHWMgr.getArmKSine(BETA);
+    // 10-bit signed 2-complement integer
+    if ((armBeta & 0x200) != 0)
+    {
+       armBeta |= 0xfffffc00;
+    }
+
+    int atbAlpha = _duHWMgr.getAtbKSine(ALPHA);
+    // 10-bit signed 2-complement integer
+    if ((atbAlpha & 0x200) != 0)
+    {
+       atbAlpha |= 0xfffffc00;
+    }
+
+    int atbBeta = _duHWMgr.getAtbKSine(BETA);
+    // 10-bit signed 2-complement integer
+    if ((atbBeta & 0x200) != 0)
+    {
+       atbBeta |= 0xfffffc00;
+    }
+
+    printf("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d\n", atbAlpha, atbBeta, armAlpha, armBeta);
+
+    int armSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(armBeta));
+    int atbSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
     int fwSLResult = _duHWMgr.getFWScanLimitCheckStatus();
 
-    printf("%d,%d,0x%x,%d,%d\n", alpha, beta, fwSLResult, fwSLResult & 0x1, swSLResult);
+    printf("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d\n", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
+
+    // Set last K Sine processed
+    if (STEERING_WORD_SRC == ARM)
+    {
+        lastAlpha = armAlpha;
+        lastBeta = armBeta;
+    }
+    else
+    {
+        lastAlpha = atbAlpha;
+        lastBeta = atbBeta;
+    }
+
+    // Send to Dev PC for display
+    int devPCData[8];
+    devPCData[0] = 1; // for Ksine
+    devPCData[1] = atbAlpha;
+    devPCData[2] = atbBeta;
+    devPCData[3] = armAlpha;
+    devPCData[4] = armBeta;
+    devPCData[5] = fwSLResult;
+    devPCData[6] = atbSWSLResult;
+    devPCData[7] = armSWSLResult;
+    _udpToDevPC->write(&devPCData[0], sizeof(int)*8);
 
 //  eInterruptProcessing.stop();
 //  printf("SW Scan Limit Check took %f\n", eInterruptProcessing.secs());
@@ -323,13 +427,19 @@ void DUCmdMgr::processIncomingMsg()
             printf("Alpha = %d, Beta = %d\n", params->alpha, params->beta);
 
             // Set KSine Regs
-            _duHWMgr.setArmKSine(ALPHA, params->alpha);
-            _duHWMgr.setArmKSine(BETA, params->beta);
+            if (STEERING_WORD_SRC == ARM)
+            {
+                _duHWMgr.setArmKSine(ALPHA, params->alpha);
+                _duHWMgr.setArmKSine(BETA, params->beta);
+            }
 
 //          _duHWMgr.getRegs(0xC, 0x10);
 
             // Toggle the Scan Limit check 
-            _duHWMgr.runFWScanLimitCheck();
+            if (FORCE_TEST_MODE == TEST)
+            {
+                _duHWMgr.toggleSWTrigger();
+            }
 
             break;
         }
@@ -360,10 +470,24 @@ void DUCmdMgr::processIncomingMsg()
                 swcStatusRptMsg.setSWCStatus(Go);
                 swcStatusRptMsg.setSWCConfig(SWCR);
                 swcStatusRptMsg.setSWCMode(TEST_ENABLE);
+                swcStatusRptMsg.setLastAlpha(lastAlpha);
+                swcStatusRptMsg.setLastBeta(lastBeta);
                 swcStatusRptMsg.buildMsg();
                 int msgSize = swcStatusRptMsg.getBufSize();
                 swcStatusRptMsg.headerByteSwapToNetwork();
                 _udpOutToTestServer->write(swcStatusRptMsg.getBuf(), sizeof(SWCStatusRptMsg));
+            }
+
+            if (params->requestType == AlphaDCUDetailedStatus)
+            {
+                _logger.logInfo("Sending AlphaDCUDetailedStatus Rpt To Test Server");
+                printf("Sending AlphaDCUDetailedStatus Rpt for DCU %d To Test Server\n", params->dcuNum);
+            }
+
+            if (params->requestType == BetaDCUDetailedStatus)
+            {
+                _logger.logInfo("Sending BetaDCUDetailedStatus Rpt To Test Server");
+                printf("Sending BetaDCUDetailedStatus Rpt for DCU %d To Test Server\n", params->dcuNum);
             }
 
             break;
@@ -478,6 +602,45 @@ int DUCmdMgr::runSWScanLimitCheck(float alpha, float beta)
 
     return slResult;
 }
+
+void DUCmdMgr::processDCUStatus()
+{
+    // For now just sent the register
+    for (int i = 0; i < NUM_DCU; i++)
+    {
+//      alphaDCU[i].statusReg = _duDev->getDCUStatusReg();
+    }
+}
+
+void DUCmdMgr::processDEVPCMsg()
+{
+    size_t bytesRead = 0;
+
+    int status[12];
+
+//  self.wcStatusRpt = pack(">llllllllllll", error, scan_limit, swcr_overall, config, mode, \
+//                                       alpha_status, beta_status, temp_status, pwr_status, \
+//                                       dcu_type, dcu_num, dcu_status)
+
+    // Read UDP data
+    if (_udpFromDevPC->read((char *)&status[0], sizeof(int)*12, bytesRead) != OK)
+    {
+        printf("error reading from _udpFromDevPC\n");
+        return;
+    }
+    else
+    {
+        printf("processDEVPCMsg Successfully read %d bytes\n", (int)bytesRead);
+    }
+
+    printf("SWC status to TWGS before: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+
+    // Set status reg based on what received from the emulator
+    _duHWMgr.setOverallStatusBit(swcr_overall);
+
+}
+
+
 
 
 

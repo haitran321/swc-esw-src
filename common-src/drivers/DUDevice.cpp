@@ -90,6 +90,21 @@ int DUDevice::getSLStatusReg()
     return (regs->slResult);
 }
 
+int DUDevice::getSysConfigStatusReg()
+{
+    return (regs->sysConfigStatus);
+}
+
+int DUDevice::getSwcStatusToTwgsReg()
+{
+    return (regs->swcStatusToTwgs);
+}
+
+void DUDevice::setSwcStatusToTwgsReg(int val)
+{
+    regs->swcStatusToTwgs = val;
+}
+
 int DUDevice::getDiagInfoReg()
 {
     return (regs->diagInfo);

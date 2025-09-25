@@ -23,7 +23,7 @@ typedef enum
     STEERING_CMD_MSG_ID             = 1,
     SHUTDOWN_CMD_MSG_ID             = 2,
     STATUS_REQUEST_CMD_MSG_ID       = 3,
-    LRU_STATUS_RPT_MSG_ID           = 11,
+    SWC_STATUS_RPT_MSG_ID           = 11,
     DCU_DETAILED_STATUS_RPT_MSG_ID  = 12,
     CONFIG_MODE_STATUS_RPT_MSG_ID   = 13,
 } MessageId;
@@ -54,8 +54,8 @@ typedef struct
 
 typedef enum
 {
-    Go = 1,
-    No_Go
+    No_Go = 0,
+    Go    = 1
 } HealthState;
 
 /** Shutdown Command message data  */
@@ -106,9 +106,11 @@ typedef struct
     SWC_CONFIG  swcConfig;
     SWC_MODE    swcMode;
     HealthState swcAlphaDUStatus;
-    HealthState swcAlphaPSStatus;
     HealthState swcBetaDUStatus;
-    HealthState swcBetaPSStatus;
+    HealthState swcTempStatus;
+    HealthState swcPwrSuppliesStatus;
+    int lastAlpha;
+    int lastBeta;
     HealthState alphaDCU[NUM_DCU];
     HealthState betaDCU[NUM_DCU];
 } SWCStatusRptDataType;

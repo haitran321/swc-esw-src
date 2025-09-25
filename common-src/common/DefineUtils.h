@@ -48,9 +48,10 @@ typedef enum
 
 typedef enum
 {
-    SWCR  = 0,
-    SWC   = 1,
-    JOINT = 2,
+    CONFIG_ERR = 0,
+    SWCR  = 1,
+    SWC   = 2,
+    JOINT = 3
 } SWC_CONFIG;
 
 typedef enum
@@ -58,5 +59,16 @@ typedef enum
     ONLINE = 0,
     TEST_ENABLE = 1,
 } SWC_MODE;
+
+typedef struct
+{
+    int statusReg;
+    int overallStatus;
+    int group;
+    int location;
+    int bitResults;
+    int ySwitchLoc;
+    int crcCount;
+} DCUStatusParamsType;
 
 #endif

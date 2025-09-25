@@ -12,7 +12,7 @@ typedef struct
     int atbKSine[NUM_RFCC_CH];
     int slResult;
     int sysConfigStatus;
-    int swcrStatusToTwgs;
+    int swcStatusToTwgs;
     int spare1[17];
     int fpgaDieTemp;
     int vccIntVoltage;
@@ -27,7 +27,7 @@ typedef struct
 
 typedef enum
 {
-    DU_OVERALL_STATUS_MASK      = 0x8000001F,    /* Bits 0..4, and 31 */
+    DU_HW_OVERALL_STATUS_MASK   = 0x8000001F,    /* Bits 0..4, and 31 */
     DU_READY_STATUS_MASK        = 0x80000001,    /* Bit 0 */
     DU_HIGH_TEMP_ALARM_MASK     = 0x00000002,    /* Bit 1 */
     DU_VCC_INT_ALARM_MASK       = 0x00000004,    /* Bit 2 */
@@ -41,7 +41,7 @@ typedef enum
     DU_BRD_CTRL_MASK            = 0x8000001F,    /* Bits 0..4, and 31 */
     DU_UNIT_TYPE_MASK           = 0x00000001,    /* Bit 0 */
     DU_STEERING_WORD_SRC_MASK   = 0x00000002,    /* Bit 1 */
-    DU_NEW_STEERING_WORD_MASK   = 0x00000004,    /* Bit 2 */
+    DU_SW_TRIGGER_MASK          = 0x00000004,    /* Bit 2 */
     DU_FORCE_TEST_MODE_MASK     = 0x00000008,    /* Bit 3 */
     DU_RESET_CRC_MASK           = 0x00000010,    /* Bit 4 */
     DU_SOFT_RESET_MASK          = 0x80000000,    /* Bit 31 */
@@ -97,17 +97,17 @@ typedef enum
 typedef enum
 {
     DU_SYSTEM_CONFIG_STATUS_MASK    = 0x0003FFFF,    /* Bits 0..17 */
-    DU_SWCR_OVERALL_STATUS_MASK     = 0x00000001,    /* Bit 0 */
-    DU_SWCR_CONFIG_MASK             = 0x00000006,    /* Bit 1..2 */
-    DU_SWCR_MODE_MASK               = 0x00000008,    /* Bit 3 */
+    DU_OVERALL_STATUS_MASK          = 0x00000001,    /* Bit 0 */
+    DU_CONFIG_STATUS_MASK           = 0x00000006,    /* Bit 1..2 */
+    DU_MODE_STATUS_MASK             = 0x00000008,    /* Bit 3 */
     DU_ALPHA_OVERALL_STATUS_MASK    = 0x00000010,    /* Bit 4 */
     DU_ALPHA_PS_STATUS_MASK         = 0x00000020,    /* Bit 5 */
     DU_BETA_OVERALL_STATUS_MASK     = 0x00000040,    /* Bit 6 */
     DU_BETA_PS_STATUS_MASK          = 0x00000080,    /* Bit 7 */
-    DU_DCU_STATUS_GROUP_MASK        = 0x00000100,    /* Bit 8 */
-    DU_DCU_STATUS_NUMBER_MASK       = 0x0001FE00,    /* Bit 9..16 */
-    DU_DCU_STATUS_HEALTH_MASK       = 0x00020000,    /* Bit 17 */
-}SWCR_STATUS_TO_TWGS_ENUM;
+    DU_DCU_GROUP_STATUS_MASK        = 0x00000100,    /* Bit 8 */
+    DU_DCU_NUMBER_STATUS_MASK       = 0x0001FE00,    /* Bit 9..16 */
+    DU_DCU_HEALTH_STATUS_MASK       = 0x00020000,    /* Bit 17 */
+}SWC_STATUS_TO_TWGS_ENUM;
 
 class DUDevice : public Device
 {
@@ -129,13 +129,18 @@ public:
     void setBrdCtrlReg(int val);
     int getBrdCtrlReg();
 
-    void setArmKSineReg(RFCC_CH ch, int val);
     int getArmKSineReg(RFCC_CH ch);
+    void setArmKSineReg(RFCC_CH ch, int val);
 
-    void setAtbKSineReg(RFCC_CH ch, int val);
     int getAtbKSineReg(RFCC_CH ch);
+    void setAtbKSineReg(RFCC_CH ch, int val);
 
     int getSLStatusReg();
+
+    int getSysConfigStatusReg();
+
+    int getSwcStatusToTwgsReg();
+    void setSwcStatusToTwgsReg(int val);
 
     void setDiagInfoReg(int val);
     int getDiagInfoReg();

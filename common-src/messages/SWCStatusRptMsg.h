@@ -38,6 +38,14 @@ public:
 
     inline void setSWCMode(SWC_MODE mode);
 
+    inline void setAlphaDCUStatus(int dcu, HealthState health);
+
+    inline void setBetaDCUStatus(int dcu, HealthState health);
+
+    inline void setLastAlpha(int alpha);
+
+    inline void setLastBeta(int beta);
+
 private:
 
     /** Status Report data */
@@ -59,6 +67,28 @@ void SWCStatusRptMsg::setSWCConfig(SWC_CONFIG config)
 void SWCStatusRptMsg::setSWCMode(SWC_MODE mode)
 {
     _data.swcMode = mode;
+}
+
+void SWCStatusRptMsg::setAlphaDCUStatus(int dcu, HealthState health)
+{
+    _data.alphaDCU[dcu] = health;
+}
+
+void SWCStatusRptMsg::setBetaDCUStatus(int dcu, HealthState health)
+{
+    _data.betaDCU[dcu] = health;
+}
+
+void SWCStatusRptMsg::setLastAlpha(int alpha)
+{
+    _data.lastAlpha = alpha;
+    printf("lastAlpha = %d\n", _data.lastAlpha);
+}
+
+void SWCStatusRptMsg::setLastBeta(int beta)
+{
+    _data.lastBeta = beta;
+    printf("lastBeta = %d\n", _data.lastBeta);
 }
 
 #endif
