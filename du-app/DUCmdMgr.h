@@ -60,10 +60,13 @@ class DUCmdMgr : public EventProcessor
 
         DUHWMgr &_duHWMgr;
 
-        UIODevice* _uio1Dev;
-        TimerDevice* _timerDev;
-        void processInterrupt();
-        void processTimer();
+        UIODevice* _uioDevSL;
+        void processSLInterrupt();
+        UIODevice* _uioDevConfig;
+        void processConfigInterrupt();
+        TimerDevice* _timerDevStatus;
+        void processStatusTimer();
+        void calcStatus();
         ElapsedTimer eInterruptProcessing;
         Timestamp ts;
 

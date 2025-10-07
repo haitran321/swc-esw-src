@@ -24,6 +24,7 @@ STATUS SWCStatusRptMsg::buildMsg()
     _data.swcBetaDUStatus = (HealthState)toNetworkInt(_data.swcBetaDUStatus);
     _data.swcTempStatus = (HealthState)toNetworkInt(_data.swcTempStatus);
     _data.swcPwrSuppliesStatus = (HealthState)toNetworkInt(_data.swcPwrSuppliesStatus);
+    _data.testUnitHWStatus = (HealthState)toNetworkInt(_data.testUnitHWStatus);
     _data.lastAlpha = (int)toNetworkInt(_data.lastAlpha);
     _data.lastBeta = (int)toNetworkInt(_data.lastBeta);
     for (int i = 0; i < NUM_DCU; i++)

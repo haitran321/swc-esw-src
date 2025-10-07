@@ -30,8 +30,9 @@ DUCmdMgr::DUCmdMgr() :
     _udpIncoming(NULL),
     _udpWarmRestart(NULL),
     _duHWMgr(DUHWMgr::getInstance()),
-    _uio1Dev(NULL),
-    _timerDev(NULL),
+    _uioDevSL(NULL),
+    _uioDevConfig(NULL),
+    _timerDevStatus(NULL),
     _udpOutToTestServer(NULL),
     _udpFromDevPC(NULL),
     _udpToDevPC(NULL)
@@ -50,11 +51,14 @@ DUCmdMgr::~DUCmdMgr()
     delete _udpWarmRestart;
     _udpWarmRestart = NULL;
 
-    delete _uio1Dev;
-    _uio1Dev = NULL;
+    delete _uioDevSL;
+    _uioDevSL = NULL;
 
-    delete _timerDev;
-    _timerDev = NULL;
+    delete _uioDevConfig;
+    _uioDevConfig = NULL;
+
+    delete _timerDevStatus;
+    _timerDevStatus = NULL;
 
     delete _udpOutToTestServer;
     _udpOutToTestServer = NULL;
@@ -79,6 +83,7 @@ STATUS DUCmdMgr::start()
     int WARM_RESTART_PORT;
     string TEST_SERVER_IP_ADDRESS;
     int TO_TEST_SERVER_PORT;
+    int STATUS_TIMER_INTERVAL_SECONDS;
 
     printf("\nLoading Config file\n");
     if (ConfigDataManager::getInstance().load() != OK)
@@ -105,6 +110,8 @@ STATUS DUCmdMgr::start()
 
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
     rc = rc || configs.get("STEERING_WORD_SRC", STEERING_WORD_SRC);
+
+    rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
 
     // Setup Logger
     _logger.initialize();
@@ -173,43 +180,61 @@ STATUS DUCmdMgr::start()
     _logger.logInfo("Successfully created _udpOutToTestServer device");
     printf("Successfully created _udpOutToTestServer device\n");
 
-    // Initialize rf generator
+    // Initialize DU HW Manager
     _duHWMgr.initialize();
 
-    // Open UIO device
-    _uio1Dev = new UIODevice(AXI_INT_121_OFFSET, 0);
+    // Open UIO device for Scan Limit HW Interrupt
+    _uioDevSL = new UIODevice(AXI_INT_121_OFFSET, 0);
 
-    if (_uio1Dev->open() != OK)
+    if (_uioDevSL->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _uio1Dev->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _uioDevSL->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_uio1Dev, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processInterrupt)) != OK)
+    if (addEvent(*_uioDevSL, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processSLInterrupt)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _uio1Dev->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _uioDevSL->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _uio1Dev device");
+    _logger.logInfo("Successfully created _uioDevSL device");
 
     // Map UIO address
-    _uio1Dev->mmap();
+    _uioDevSL->mmap();
 
-    // Timer testing
-    timespec init = { 0, 0 };
-    timespec timeout = { 0, 0 };
-    _timerDev = new TimerDevice(init, timeout);
+    // Open UIO device for HW Config Changed Interrupt
+    _uioDevConfig = new UIODevice(AXI_INT_122_OFFSET, 0);
 
-    if (_timerDev->open() != OK)
+    if (_uioDevConfig->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _timerDev->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _uioDevConfig->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_timerDev, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processTimer)) != OK)
+    if (addEvent(*_uioDevConfig, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processConfigInterrupt)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _timerDev->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _uioDevConfig->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _timerDev device");
+    _logger.logInfo("Successfully created _uioDevConfig device");
+
+    // Map UIO address
+    _uioDevConfig->mmap();
+
+    // Status Timer
+    timespec init = { STATUS_TIMER_INTERVAL_SECONDS, 0 };
+    timespec timeout = { STATUS_TIMER_INTERVAL_SECONDS, 0 };
+    _timerDevStatus = new TimerDevice(init, timeout);
+
+    if (_timerDevStatus->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _timerDevStatus->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_timerDevStatus, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgr::processStatusTimer)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _timerDevStatus->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _timerDevStatus device");
 
     // Incoming from Dev PC device
     stringstream incomingDevPCName;
@@ -251,7 +276,7 @@ STATUS DUCmdMgr::start()
     return OK;
 }
 
-void DUCmdMgr::processInterrupt()
+void DUCmdMgr::processSLInterrupt()
 {
 //  eInterruptProcessing.reset();
 //  eInterruptProcessing.start();
@@ -259,15 +284,16 @@ void DUCmdMgr::processInterrupt()
     uint64_t startTimeNSec = ts.GetNanoSecondsSinceMidnight();
 
 #ifdef PRINT_DEBUG
-    printf("In processInterrupt()\n");
+    printf("In processSLInterrupt()\n");
 #endif
 
     size_t bytesRead = 0;
     int pending = 0;
 
-    _uio1Dev->read((char *)&pending, sizeof(int), bytesRead);
-    printf("Reading interrupt, number of interrupt = %d\n", pending);
-    _uio1Dev->clearInterrupt();
+    _uioDevSL->read((char *)&pending, sizeof(int), bytesRead);
+    printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
+    _logger.logDebug("Reading scan limit interrupt, number of interrupt = %d", pending);
+    _uioDevSL->clearInterrupt();
 
     // Get FW SL check status
 //  printf("FW SL status = 0x%x\n", _duHWMgr.getFWScanLimitCheckStatus());
@@ -301,12 +327,14 @@ void DUCmdMgr::processInterrupt()
     }
 
     printf("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d\n", atbAlpha, atbBeta, armAlpha, armBeta);
+    _logger.logDebug("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d", atbAlpha, atbBeta, armAlpha, armBeta);
 
     int armSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(armBeta));
     int atbSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
     int fwSLResult = _duHWMgr.getFWScanLimitCheckStatus();
 
     printf("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d\n", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
+    _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
 
     // Set last K Sine processed
     if (STEERING_WORD_SRC == ARM)
@@ -340,7 +368,24 @@ void DUCmdMgr::processInterrupt()
 
 }
 
-void DUCmdMgr::processTimer()
+void DUCmdMgr::processConfigInterrupt()
+{
+#ifdef PRINT_DEBUG
+    printf("In processConfigInterrupt()\n");
+#endif
+
+    size_t bytesRead = 0;
+    int pending = 0;
+
+    _uioDevConfig->read((char *)&pending, sizeof(int), bytesRead);
+    printf("Reading config changed interrupt, number of interrupt = %d\n", pending);
+    _logger.logDebug("Reading config changed interrupt, number of interrupt = %d", pending);
+    _uioDevConfig->clearInterrupt();
+
+    _duHWMgr.calcStatus();
+}
+
+void DUCmdMgr::processStatusTimer()
 {
     static int timerCounter = 0;
 
@@ -353,9 +398,9 @@ void DUCmdMgr::processTimer()
 
     // Set Diag bit to generate interrupt
 
-//  _duHWMgr.toggleInterruptBit();
+    //DUCmdMgr.calcStatus();
 
-    _timerDev->read();
+    _timerDevStatus->read();
 }
 
 void DUCmdMgr::processIncomingMsg()
@@ -425,6 +470,7 @@ void DUCmdMgr::processIncomingMsg()
             SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(cloneSteeringCmdMsg->getDataBufPos());
 
             printf("Alpha = %d, Beta = %d\n", params->alpha, params->beta);
+            _logger.logDebug("Alpha = %d, Beta = %d", params->alpha, params->beta);
 
             // Set KSine Regs
             if (STEERING_WORD_SRC == ARM)
@@ -460,7 +506,8 @@ void DUCmdMgr::processIncomingMsg()
 
             StatusRequestCmdDataType *params = reinterpret_cast<StatusRequestCmdDataType *>(cloneStatusRequestCmdMsg->getDataBufPos());
 
-            printf("requestType = %d, Beta = %d\n", params->requestType, params->dcuNum);
+            printf("requestType = %d, dcuNum = %d\n", params->requestType, params->dcuNum);
+            _logger.logDebug("requestType = %d, dcuNum = %d", params->requestType, params->dcuNum);
 
             if (params->requestType == SWCDetailedStatus)
             {
@@ -675,8 +722,6 @@ void DUCmdMgr::processDEVPCMsg()
      printf("Setting dcu_num to %d\n", status[11]);
      _duHWMgr.setDCUNumberStatusBit(status[11]);
     printf("after dcu_num : 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
-
-
 }
 
 

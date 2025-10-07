@@ -24,8 +24,7 @@ typedef enum
     SHUTDOWN_CMD_MSG_ID             = 2,
     STATUS_REQUEST_CMD_MSG_ID       = 3,
     SWC_STATUS_RPT_MSG_ID           = 11,
-    DCU_DETAILED_STATUS_RPT_MSG_ID  = 12,
-    CONFIG_MODE_STATUS_RPT_MSG_ID   = 13,
+    DCU_STATUS_RPT_MSG_ID           = 12,
 } MessageId;
 
 /** RIMS message header */
@@ -51,12 +50,6 @@ typedef struct
     int actionId;
     char msg[MAX_TEXT_FIELD_SIZE];
 } AlertDataType;
-
-typedef enum
-{
-    No_Go = 0,
-    Go    = 1
-} HealthState;
 
 /** Shutdown Command message data  */
 typedef enum
@@ -109,6 +102,7 @@ typedef struct
     HealthState swcBetaDUStatus;
     HealthState swcTempStatus;
     HealthState swcPwrSuppliesStatus;
+    HealthState testUnitHWStatus;
     int lastAlpha;
     int lastBeta;
     HealthState alphaDCU[NUM_DCU];

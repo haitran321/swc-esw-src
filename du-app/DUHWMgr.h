@@ -35,10 +35,9 @@ class DUHWMgr : public Uncopyable
         int getAtbKSine(RFCC_CH ch);
         void setAtbKSine(RFCC_CH ch, int val);
 
-        int sysConfig;
-        int statusToTwgs;
         int getSysConfigStatus();
         int getSwcStatusToTwgs();
+        void setSwcStatusToTwgs();
         void setOverallStatusBit(int val);
         void setConfigBit(int val);
         void setModeBit(int val);
@@ -49,6 +48,8 @@ class DUHWMgr : public Uncopyable
         void setDCUGroupStatusBit(int val);
         void setDCUNumberStatusBit(int val);
         void setDCUHealthStatusBit(int val);
+
+        void calcStatus();
 
     protected:
         /**
@@ -66,8 +67,21 @@ class DUHWMgr : public Uncopyable
         DUDevice* _duDev;
 
         int brdCtrVal;
-
         int diagRegVal;
+        int sysConfigReg;
+        int statusToTwgs;
+
+        int USE_STATUS_EMULATOR;
+        HealthState swcrOverall;
+        SWC_CONFIG sysConfig;
+        SWC_MODE mode;
+        int testEnabled;
+        HealthState alphaDUStatus;
+        HealthState betaDUStatus;
+        HealthState tempStatus;
+        HealthState pwrStatus;
+        DCUStatusType alphaDCUStatus[NUM_DCU];
+        DCUStatusType betaDCUStatus[NUM_DCU];
 
 };
 

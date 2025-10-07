@@ -60,6 +60,12 @@ typedef enum
     TEST_ENABLE = 1,
 } SWC_MODE;
 
+typedef enum
+{
+    No_Go = 0,
+    Go    = 1
+} HealthState;
+
 typedef struct
 {
     int statusReg;

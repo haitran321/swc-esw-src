@@ -47,6 +47,9 @@ STATUS DUHWMgr::initialize()
     rc = rc || configs.get("STEERING_WORD_SRC", STEERING_WORD_SRC);
     rc = rc || configs.get("DCU_SCLK_READBACK_DELAY", DCU_SCLK_READBACK_DELAY);
 
+    // For testing.  To be removed
+    rc = rc || configs.get("USE_STATUS_EMULATOR", USE_STATUS_EMULATOR);
+
     // Open /dev/mem device
     _duDev = new DUDevice(APB_BUS_OFFSET);
     if (_duDev->open() == ERROR)
@@ -90,7 +93,7 @@ STATUS DUHWMgr::initialize()
 
     // Set default SWC status to TWGS
     statusToTwgs = 0x0;
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 
     getRegs(0x0, 0x28);
     printf("getBoardControlReg = 0x%x\n", _duDev->getBrdCtrlReg());
@@ -146,14 +149,19 @@ void DUHWMgr::toggleSWTrigger()
 
 int DUHWMgr::getSysConfigStatus()
 {
-    sysConfig = _duDev->getSysConfigStatusReg();
-
-    return sysConfig;
+    sysConfigReg = _duDev->getSysConfigStatusReg();
+    return sysConfigReg;
 }
 
 int DUHWMgr::getSwcStatusToTwgs()
 {
-    return (_duDev->getSwcStatusToTwgsReg());
+    statusToTwgs = _duDev->getSwcStatusToTwgsReg();
+    return statusToTwgs;
+}
+
+void DUHWMgr::setSwcStatusToTwgs()
+{
+    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
 }
 
 void DUHWMgr::setOverallStatusBit(int val)
@@ -165,53 +173,92 @@ void DUHWMgr::setOverallStatusBit(int val)
 void DUHWMgr::setConfigBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_CONFIG_STATUS_MASK, statusToTwgs, val);
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 }
 
 void DUHWMgr::setModeBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_MODE_STATUS_MASK, statusToTwgs, val);
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 }
 
 void DUHWMgr::setAlphaOverallStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_ALPHA_OVERALL_STATUS_MASK, statusToTwgs, val);
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 }
 
 void DUHWMgr::setBetaOverallStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_BETA_OVERALL_STATUS_MASK, statusToTwgs, val);
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 }
 
 void DUHWMgr::setTempStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_TEMP_STATUS_MASK, statusToTwgs, val);
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 }
 
 void DUHWMgr::setPwrSuppliesStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_PS_STATUS_MASK, statusToTwgs, val);
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 }
 
 void DUHWMgr::setDCUGroupStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_DCU_GROUP_STATUS_MASK, statusToTwgs, val);
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 }
 
 void DUHWMgr::setDCUHealthStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_DCU_HEALTH_STATUS_MASK, statusToTwgs, val);
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 }
 
 void DUHWMgr::setDCUNumberStatusBit(int val)
 {
     statusToTwgs = DeviceUtilities::updateReg(DU_DCU_NUMBER_STATUS_MASK, statusToTwgs, val);
-    _duDev->setSwcStatusToTwgsReg(statusToTwgs);
+    setSwcStatusToTwgs();
 }
+
+void DUHWMgr::calcStatus()
+{
+    getSysConfigStatus();
+
+    // Translate system config reg
+    sysConfig = (SWC_CONFIG)(DeviceUtilities::readMask(DU_CONFIG_MASK, sysConfigReg));
+    mode = (SWC_MODE)(DeviceUtilities::readMask(DU_MODE_MASK, sysConfigReg));
+    testEnabled = DeviceUtilities::readMask(DU_OFFLINE_TEST_ENABLED_MASK, sysConfigReg);
+
+    // TO DO: How do we get these status
+    alphaDUStatus = Go;
+    betaDUStatus = Go;
+    tempStatus = Go;
+    pwrStatus = Go;
+
+    // Compute swcr overall status
+    swcrOverall = Go;
+    if ((alphaDUStatus == No_Go) || (betaDUStatus == No_Go) || (tempStatus == No_Go) || (pwrStatus == No_Go))
+    {
+        // Should DCU status be included in the SWCR overall rolled up?
+        swcrOverall = No_Go;
+    }
+
+    // Update status to twgs reg
+    if (!USE_STATUS_EMULATOR)
+    {
+        getSwcStatusToTwgs();
+
+        setConfigBit(sysConfig);
+        setModeBit(mode);
+        setOverallStatusBit(swcrOverall);
+        setAlphaOverallStatusBit(alphaDUStatus);
+        setBetaOverallStatusBit(betaDUStatus);
+        setTempStatusBit(tempStatus);
+        setPwrSuppliesStatusBit(pwrStatus);
+    }
+}
+

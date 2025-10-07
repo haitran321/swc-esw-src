@@ -110,6 +110,18 @@ typedef enum
     DU_DCU_NUMBER_STATUS_MASK       = 0x0003FC00,    /* Bit 10..17 */
 }SWC_STATUS_TO_TWGS_ENUM;
 
+typedef struct
+{
+    int regData;
+    int regLoc;
+    int crcStatus;
+    int location;
+    int bitResult;
+    int mode;
+    int bypass;
+    HealthState status;
+} DCUStatusType;
+
 class DUDevice : public Device
 {
 public:
