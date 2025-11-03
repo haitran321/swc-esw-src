@@ -3,8 +3,6 @@
 
 #include "Device.h"
 
-#define NUM_DCU 152
-
 typedef struct
 {
     int fwVer;
@@ -23,7 +21,7 @@ typedef struct
     int vccAuxVoltage;
     int vbramVoltage;
     int diagInfo;
-    int dcuStatus[NUM_DCU];
+    int dcuStatus[NUM_DCU-1];
 }TURegType;
 
 //#define TU_CMD_STARTING_ADDR_OFFSET 0x0100

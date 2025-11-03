@@ -31,12 +31,13 @@ typedef int (*FUNCPTR)(...);
 
 #define MAX_ACTION 50
 
-#define NUM_DCU 152
+#define NUM_DCU 153
 
 typedef enum
 {
-    DU    = 0,
-    TU    = 1,
+    DU_ALPHA    = 0,
+    DU_BETA     = 1,
+    TU          = 2,
 } MODULE_TYPE;
 
 typedef enum
@@ -62,19 +63,16 @@ typedef enum
 
 typedef enum
 {
-    No_Go = 0,
-    Go    = 1
+    NO_GO = 0,
+    GO    = 1
 } HealthState;
 
-typedef struct
+typedef enum
 {
-    int statusReg;
-    int overallStatus;
-    int group;
-    int location;
-    int bitResults;
-    int ySwitchLoc;
-    int crcCount;
-} DCUStatusParamsType;
+    DCU_ROLLED_UP_ERROR    = 0,
+    DCU_ROLLED_UP_RED      = 1,
+    DCU_ROLLED_UP_YELLOW   = 2,
+    DCU_ROLLED_UP_GREEN    = 3
+} DCURolledUpStatus;
 
 #endif

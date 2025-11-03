@@ -6,7 +6,8 @@
 #include <sys/mman.h>
 #include <sstream>
 #include "ConfigDataManager.h"
-#include "DUCmdMgr.h"
+#include "DUACmdMgr.h"
+#include "DUBCmdMgr.h"
 #include "TUCmdMgr.h"
 
 int main(int argc, char *argv[])
@@ -20,14 +21,29 @@ int main(int argc, char *argv[])
         printf("\n*******************************************************\n");
         printf("MODULE_TYPE = %s\n", MODULE_TYPE);
 
-        if ((strcmp(MODULE_TYPE, "DU") == 0) || (strcmp(MODULE_TYPE, "du") == 0))
+        if ((strcmp(MODULE_TYPE, "DUA") == 0) || (strcmp(MODULE_TYPE, "dua") == 0))
         {
-            printf("******This is DU Application******\n");
+            printf("******This is DU Alpha Application******\n");
         
-            DUCmdMgr * cmdMgr = new DUCmdMgr();
+            DUACmdMgr * cmdMgr = new DUACmdMgr();
             if(cmdMgr == NULL)
             {
-                printf("DUCmdMgr task is NULL\n");
+                printf("DUACmdMgr task is NULL\n");
+                return ERROR;
+            }
+            else
+            {
+                cmdMgr->start();
+            }
+        }
+        else if ((strcmp(MODULE_TYPE, "DUB") == 0) || (strcmp(MODULE_TYPE, "dub") == 0))
+        {
+            printf("******This is DU Beta Application******\n");
+        
+            DUBCmdMgr * cmdMgr = new DUBCmdMgr();
+            if(cmdMgr == NULL)
+            {
+                printf("DUBCmdMgr task is NULL\n");
                 return ERROR;
             }
             else

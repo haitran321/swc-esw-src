@@ -25,6 +25,7 @@ typedef enum
     STATUS_REQUEST_CMD_MSG_ID       = 3,
     SWC_STATUS_RPT_MSG_ID           = 11,
     DCU_STATUS_RPT_MSG_ID           = 12,
+    SWC_ACK_RPT_MSG_ID              = 13,
 } MessageId;
 
 /** RIMS message header */
@@ -100,6 +101,8 @@ typedef struct
     SWC_MODE    swcMode;
     HealthState swcAlphaDUStatus;
     HealthState swcBetaDUStatus;
+    DCURolledUpStatus swcAlphaDCURolledUpStatus;
+    DCURolledUpStatus swcBetaDCURolledUpStatus;
     HealthState swcTempStatus;
     HealthState swcPwrSuppliesStatus;
     HealthState testUnitHWStatus;
@@ -107,7 +110,38 @@ typedef struct
     int lastBeta;
     HealthState alphaDCU[NUM_DCU];
     HealthState betaDCU[NUM_DCU];
-} SWCStatusRptDataType;
+} SWCStatusDataType;
+
+typedef struct
+{
+    int bypassStatus;
+    int modeStatus;
+    HealthState overallStatus;
+    HealthState clockStatus;
+    HealthState locValid;
+    HealthState spiCommStatus;
+    HealthState steeringWordCompare;
+    int fwLoc;
+    int crcStatus;
+} DCUStatus;
+
+typedef struct
+{
+    RFCC_CH group;
+    int number;
+    int fwStatusReg;
+    DCUStatus dcuStatus;
+} DCUStatusParamsType;
+
+typedef enum
+{
+    ShutdownCmdAck      = 1,
+} SWCAckType;
+
+typedef struct
+{
+    SWCAckType ackType;
+} SWCAckDataType;
 
 /** SW Exception Report message data */
 
@@ -123,11 +157,6 @@ typedef struct
 
 
 /** Common alert definitions */
-
-namespace CommonAlerts
-{
-// This cannot be a named enumeration type because it is extended by
-// the individual subsystems to add subsystem specific alerts.
 
 enum
 {
@@ -146,13 +175,5 @@ enum
     RadarNetRptError,
     ShutdownError
 };
-
-typedef struct
-{
-    int reg;
-    int val;
-} RegCmdDataType;
-
-}
 
 #endif

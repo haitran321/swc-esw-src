@@ -45,12 +45,6 @@ class TUCmdMgr : public EventProcessor
          */
         Device* _udpFromRIMS;
 
-        // Warm Restart Device
-        UDPNetworkDevice* _udpWarmRestart;
-        MsgHeaderType _msgHeaderBuf[4];
-        int warmRestartBufCounter;
-        void processWarmRestartMsg();
-
         int MODULE_TYPE;
 
         int TEST_STATUS;

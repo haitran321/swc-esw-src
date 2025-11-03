@@ -26,7 +26,6 @@
 TUCmdMgr::TUCmdMgr() :
     _logger(Logger::getInstance()),
     _udpFromRIMS(NULL),
-    _udpWarmRestart(NULL),
     _tuHWMgr(TUHWMgr::getInstance()),
     _uio1Dev(NULL),
     _timerDev(NULL),
@@ -42,9 +41,6 @@ TUCmdMgr::~TUCmdMgr()
     // Delete all devices
     delete _udpFromRIMS;
     _udpFromRIMS = NULL;
-
-    delete _udpWarmRestart;
-    _udpWarmRestart = NULL;
 
     delete _uio1Dev;
     _uio1Dev = NULL;
@@ -115,26 +111,6 @@ STATUS TUCmdMgr::start()
     }
     _logger.logInfo("Successfully created _udpIncoming device");
     printf("Successfully created _udpIncoming device\n");
-
-    // Warm Restart device
-    stringstream warmRestartDevName;
-    warmRestartDevName << "UDP Server For Warm Restart";
-    warmRestartDevName << SOC_IP_ADDRESS << ":" << WARM_RESTART_PORT;
-    _udpWarmRestart = new UDPNetworkDevice(NetworkServer, SOC_IP_ADDRESS, WARM_RESTART_PORT, false);
-    _udpWarmRestart->setName(warmRestartDevName.str());
-
-    if (_udpWarmRestart->open() != OK)
-    {
-        _logger.logInfo("ERROR openning dev %s", _udpWarmRestart->getName().c_str());
-        return ERROR;
-    }
-    if (addEvent(*_udpWarmRestart, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processWarmRestartMsg)) != OK)
-    {
-        _logger.logInfo("ERROR adding event to dev %s", _udpWarmRestart->getName().c_str());
-        return ERROR;
-    }
-    _logger.logInfo("Successfully created _udpWarmRestart device");
-    printf("Successfully created _udpWarmRestart device\n");
 
     // Initialize rf generator
     _tuHWMgr.initialize();
@@ -333,44 +309,6 @@ void TUCmdMgr::processIncomingMsg()
 //
 //    _statusRptToTWGS->write(&wgStatusRptMsg, sizeof(wgStatusRptMsg));
 //}
-
-void TUCmdMgr::processWarmRestartMsg()
-{
-    size_t bytesRead = 0;
-
-    MsgHeaderType *msgHeaderPtr;
-    msgHeaderPtr = &_msgHeaderBuf[warmRestartBufCounter];
-    warmRestartBufCounter++;
-
-    if (warmRestartBufCounter >= 4)
-    {
-        warmRestartBufCounter = 0;
-    }
-
-    // Read UDP data
-    if (_udpWarmRestart->read((char *)msgHeaderPtr, sizeof(MsgHeaderType), bytesRead) != OK)
-    {
-        printf("error reading from _udpWarmRestart\n");
-        return;
-    }
-    else
-    {
-        // printf("Successfully read %d bytes\n", (int)bytesRead);
-    }
-
-    // Convert to Little Endian
-    msgHeaderPtr->msgId = (MessageId)fromNetworkInt(msgHeaderPtr->msgId);
-
-    _logger.logInfo("Processing incoming Warm Restart messages");
-
-    if (msgHeaderPtr->msgId == 2003)
-    {
-        printf("****Calling System Reboot****\n");
-        _logger.logInfo("****Calling System Reboot****");
-        sleep(3);
-        reboot(RB_AUTOBOOT);
-    }
-}
 
 #define GAMMA 1.207234
 #define CENTER_FREQ 442.0

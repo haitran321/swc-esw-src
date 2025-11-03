@@ -38,6 +38,20 @@ public:
 
     inline void setSWCMode(SWC_MODE mode);
 
+    inline void setAlphaDUStatus(HealthState health);
+
+    inline void setBetaDUStatus(HealthState health);
+
+    inline void setAlphaDCURolledUpStatus(DCURolledUpStatus status);
+
+    inline void setBetaDCURolledUpStatus(DCURolledUpStatus status);
+
+    inline void setTempStatus(HealthState health);
+
+    inline void setPwrSuppliesStatus(HealthState health);
+
+    inline void setTUHWStatus(HealthState health);
+
     inline void setAlphaDCUStatus(int dcu, HealthState health);
 
     inline void setBetaDCUStatus(int dcu, HealthState health);
@@ -50,7 +64,7 @@ private:
 
     /** Status Report data */
 
-    SWCStatusRptDataType _data;
+    SWCStatusDataType _data;
 
 };
 
@@ -67,6 +81,41 @@ void SWCStatusRptMsg::setSWCConfig(SWC_CONFIG config)
 void SWCStatusRptMsg::setSWCMode(SWC_MODE mode)
 {
     _data.swcMode = mode;
+}
+
+void SWCStatusRptMsg::setAlphaDUStatus(HealthState health)
+{
+    _data.swcAlphaDUStatus = health;
+}
+
+void SWCStatusRptMsg::setBetaDUStatus(HealthState health)
+{
+    _data.swcBetaDUStatus = health;
+}
+
+void SWCStatusRptMsg::setAlphaDCURolledUpStatus(DCURolledUpStatus status)
+{
+    _data.swcAlphaDCURolledUpStatus = status;
+}
+
+void SWCStatusRptMsg::setBetaDCURolledUpStatus(DCURolledUpStatus status)
+{
+    _data.swcBetaDCURolledUpStatus = status;
+}
+
+void SWCStatusRptMsg::setTempStatus(HealthState health)
+{
+    _data.swcTempStatus = health;
+}
+
+void SWCStatusRptMsg::setPwrSuppliesStatus(HealthState health)
+{
+    _data.swcPwrSuppliesStatus = health;
+}
+
+void SWCStatusRptMsg::setTUHWStatus(HealthState health)
+{
+    _data.testUnitHWStatus = health;
 }
 
 void SWCStatusRptMsg::setAlphaDCUStatus(int dcu, HealthState health)

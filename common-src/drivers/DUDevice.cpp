@@ -110,9 +110,9 @@ int DUDevice::getDiagInfoReg()
     return (regs->diagInfo);
 }
 
-int DUDevice::getDCUStatusReg(int dcuNum)
+int DUDevice::getDCUStatusReg(int regNum)
 {
-    return (regs->dcuStatus[dcuNum]);
+    return (regs->dcuStatus[regNum]);
 }
 
 void DUDevice::setDCUSCLKReg(int dcuNum, int val)
