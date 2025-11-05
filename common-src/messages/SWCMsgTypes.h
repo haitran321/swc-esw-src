@@ -26,6 +26,10 @@ typedef enum
     SWC_STATUS_RPT_MSG_ID           = 11,
     DCU_STATUS_RPT_MSG_ID           = 12,
     SWC_ACK_RPT_MSG_ID              = 13,
+    DUA_STATUS_RPT_MSG_ID           = 14,
+    DUB_STATUS_RPT_MSG_ID           = 15,
+    PS_STATUS_RPT_MSG_ID            = 16,
+    TEMP_STATUS_RPT_MSG_ID          = 17,
 } MessageId;
 
 /** RIMS message header */
@@ -81,9 +85,13 @@ typedef struct
 
 typedef enum
 {
-    SWCDetailedStatus      = 1,
+    SWCDetailedStatus       = 1,
     AlphaDCUDetailedStatus  = 2,
     BetaDCUDetailedStatus   = 3,
+    AlphaDUDetailedStatus   = 4,
+    BetaDUDetailedStatus    = 4,
+    PSDetailedStatus        = 5,
+    TempDetailedStatus      = 6
 } StatusRequestType;
 
 /** Status Request message data  */
@@ -105,6 +113,7 @@ typedef struct
     DCURolledUpStatus swcBetaDCURolledUpStatus;
     HealthState swcTempStatus;
     HealthState swcPwrSuppliesStatus;
+    HealthState swcATBStatus;
     HealthState testUnitHWStatus;
     int lastAlpha;
     int lastBeta;
@@ -142,6 +151,46 @@ typedef struct
 {
     SWCAckType ackType;
 } SWCAckDataType;
+
+typedef struct
+{
+    HealthState overall;
+    HealthState status1;
+    HealthState status2;
+    HealthState status3;
+    HealthState status4;
+    HealthState status5;
+} DUAStatusParamsType;
+
+typedef struct
+{
+    HealthState overall;
+    HealthState status1;
+    HealthState status2;
+    HealthState status3;
+    HealthState status4;
+    HealthState status5;
+} DUBStatusParamsType;
+
+typedef struct
+{
+    HealthState overall;
+    HealthState status1;
+    HealthState status2;
+    HealthState status3;
+    HealthState status4;
+    HealthState status5;
+} PSStatusParamsType;
+
+typedef struct
+{
+    HealthState overall;
+    HealthState status1;
+    HealthState status2;
+    HealthState status3;
+    HealthState status4;
+    HealthState status5;
+} TempStatusParamsType;
 
 /** SW Exception Report message data */
 

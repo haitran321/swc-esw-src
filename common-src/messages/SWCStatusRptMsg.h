@@ -50,6 +50,8 @@ public:
 
     inline void setPwrSuppliesStatus(HealthState health);
 
+    inline void setATBStatus(HealthState health);
+
     inline void setTUHWStatus(HealthState health);
 
     inline void setAlphaDCUStatus(int dcu, HealthState health);
@@ -111,6 +113,11 @@ void SWCStatusRptMsg::setTempStatus(HealthState health)
 void SWCStatusRptMsg::setPwrSuppliesStatus(HealthState health)
 {
     _data.swcPwrSuppliesStatus = health;
+}
+
+void SWCStatusRptMsg::setATBStatus(HealthState health)
+{
+    _data.swcATBStatus = health;
 }
 
 void SWCStatusRptMsg::setTUHWStatus(HealthState health)

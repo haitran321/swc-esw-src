@@ -404,8 +404,8 @@ void DUACmdMgr::processStatusTimer()
     else
     {
         customStatus = true;
-        _duHWMgr.readSWCStatus(DATA_TYPE_COTS_STATUS);
-        printf("DATA_TYPE_COTS_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+        _duHWMgr.readSWCStatus(DATA_TYPE_IO_MODULE_STATUS);
+        printf("DATA_TYPE_IO_MODULE_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
     }
 
     printf("Read all DCUs status to update local queue.\n");
@@ -545,6 +545,7 @@ void DUACmdMgr::processTestServerMsg()
                 swcStatusRptMsg.setBetaDCURolledUpStatus(swcStatus.swcBetaDCURolledUpStatus);
                 swcStatusRptMsg.setTempStatus(swcStatus.swcTempStatus);
                 swcStatusRptMsg.setPwrSuppliesStatus(swcStatus.swcPwrSuppliesStatus);
+                swcStatusRptMsg.setATBStatus(swcStatus.swcATBStatus);
                 swcStatusRptMsg.setTUHWStatus(swcStatus.testUnitHWStatus);
                 for (int dcu = 0; dcu < NUM_DCU; dcu++)
                 {
@@ -563,7 +564,7 @@ void DUACmdMgr::processTestServerMsg()
                 _toTestServer->write(swcStatusRptMsg.getBuf(), sizeof(SWCStatusRptMsg));
             }
 
-            if ((params->requestType == AlphaDCUDetailedStatus) || (params->requestType == BetaDCUDetailedStatus))
+            else if ((params->requestType == AlphaDCUDetailedStatus) || (params->requestType == BetaDCUDetailedStatus))
             {
                 RFCC_CH type;
                 if (params->requestType == AlphaDCUDetailedStatus)
@@ -585,6 +586,32 @@ void DUACmdMgr::processTestServerMsg()
                 int msgSize = dcuStatusRptMsg.getBufSize();
                 dcuStatusRptMsg.headerByteSwapToNetwork();
                 _toTestServer->write(dcuStatusRptMsg.getBuf(), sizeof(DCUStatusRptMsg));
+            }
+
+            else if (params->requestType == AlphaDUDetailedStatus)
+            {
+                printf("Received AlphaDUDetailedStatus request\n");
+            }
+
+            else if (params->requestType == BetaDUDetailedStatus)
+            {
+                printf("Received AlphaDUDetailedStatus request\n");
+            }
+
+            else if (params->requestType == PSDetailedStatus)
+            {
+                printf("Received PSDetailedStatus request\n");
+            }
+
+            else if (params->requestType == TempDetailedStatus)
+            {
+                printf("Received TempDetailedStatus request\n");
+            }
+
+            else
+            {
+                printf("ERROR: Invalid status request of %d\n", params->requestType);
+                _logger.logError("ERROR: Invalid status request of %d", params->requestType);
             }
 
             break;
@@ -625,10 +652,10 @@ void DUACmdMgr::processDEVPCMsg()
 {
     size_t bytesRead = 0;
 
-    int status[13];
+    int status[14];
 
     // Read UDP data
-    if (_udpFromDevPC->read((char *)&status[0], sizeof(int)*13, bytesRead) != OK)
+    if (_udpFromDevPC->read((char *)&status[0], sizeof(int)*14, bytesRead) != OK)
     {
         printf("error reading from _udpFromDevPC\n");
         return;
@@ -647,9 +674,10 @@ void DUACmdMgr::processDEVPCMsg()
                                    DCURolledUpStatus(status[7]),
                                    HealthState(status[8]),
                                    HealthState(status[9]),
-                                   RFCC_CH(status[10]),
-                                   HealthState(status[11]),
-                                   status[12]);
+                                   HealthState(status[10]),
+                                   RFCC_CH(status[11]),
+                                   HealthState(status[12]),
+                                   status[13]);
 
 }
 

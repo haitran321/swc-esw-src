@@ -70,7 +70,7 @@ typedef enum
     STATUS_DATA_TYPE_ERROR      = 0,
     DATA_TYPE_CONFIG_STATUS     = 1,
     DATA_TYPE_CUSTOM_STATUS     = 2,
-    DATA_TYPE_COTS_STATUS       = 3
+    DATA_TYPE_IO_MODULE_STATUS  = 3
 }SWC_STATUS_DATA_TYPE;
 
 typedef enum
@@ -85,8 +85,10 @@ typedef enum
 
 typedef enum
 {
-    DCU_STATUS_MASK                 = 0x00FFFF01,    /* Bits 0, 8..23 */
+    DCU_STATUS_MASK                 = 0x00FFFFFD,    /* Bits 0, 2..23 */
     DCU_CRC_STATUS_MASK             = 0x00000001,    /* Bit 0 */
+    DCU_FW_MINOR_REV_MASK           = 0x0000003C,    /* Bit 2..5 */
+    DCU_FW_MAJOR_REV_MASK           = 0x000000C0,    /* Bit 6..7 */
     DCU_LOCATION_STATUS_MASK        = 0x0000FF00,    /* Bit 8..15 */
     DCU_BIT_TBD_STATUS_MASK         = 0x00010000,    /* Bit 16 */
     DCU_BIT_COMPARE_STATUS_MASK     = 0x00020000,    /* Bit 17 */
@@ -100,49 +102,42 @@ typedef enum
 
 typedef enum
 {
-    DU_SYSTEM_CONFIG_MASK            = 0x8000003F,    /* Bits 0..5 */
-    DU_CONFIG_MASK                   = 0x00000003,    /* Bit 0..1 */
+    DU_SYSTEM_STATUS_MASK            = 0x8000003F,    /* Bits 0..5 */
+    DU_SYSTEM_CONFIG_MASK            = 0x00000003,    /* Bit 0..1 */
     DU_MODE_MASK                     = 0x00000004,    /* Bit 2 */
     DU_OFFLINE_TEST_ENABLED_MASK     = 0x00000008,    /* Bit 3 */
     DU_BORESIGHT_CMD_MASK            = 0x00000010,    /* Bit 4 */
     DU_CAL_CMD_MASK                  = 0x00000020,    /* Bit 5 */
-}DU_SYSTEM_CONFIG_ENUM;
-
-//typedef enum
-//{
-//    DU_SYSTEM_CONFIG_STATUS_MASK    = 0x0003FFFF,    /* Bits 0..17 */
-//    DU_OVERALL_STATUS_MASK          = 0x00000001,    /* Bit 0 */
-//    DU_CONFIG_STATUS_MASK           = 0x00000006,    /* Bit 1..2 */
-//    DU_MODE_STATUS_MASK             = 0x00000008,    /* Bit 3 */
-//    DU_ALPHA_OVERALL_STATUS_MASK    = 0x00000010,    /* Bit 4 */
-//    DU_BETA_OVERALL_STATUS_MASK     = 0x00000020,    /* Bit 5 */
-//    DU_TEMP_STATUS_MASK             = 0x00000040,    /* Bit 6 */
-//    DU_PS_STATUS_MASK               = 0x00000080,    /* Bit 7 */
-//    DU_DCU_GROUP_STATUS_MASK        = 0x00000100,    /* Bit 8 */
-//    DU_DCU_HEALTH_STATUS_MASK       = 0x00000200,    /* Bit 9 */
-//    DU_DCU_NUMBER_STATUS_MASK       = 0x0003FC00,    /* Bit 10..17 */
-//}SWC_STATUS_TO_TWGS_ENUM;
+    DU_SPI_HEALTH_MASK               = 0x00000100,    /* Bit 8 */
+}DU_SYSTEM_STATUS_ENUM;
 
 typedef enum
 {
-    DU_SYSTEM_CONFIG_STATUS_MASK        = 0x0003FFFF,    /* Bits 0..17 */
+    WITH_CRC_ERROR      = 0,
+    WITHOUT_CRC_ERROR   = 1
+}LAST_ACTION_CRC_STATUS;
+
+typedef enum
+{
+    DU_SYSTEM_CONFIG_STATUS_MASK        = 0x7FFFFFFF,    /* Bits 0..30 */
     DU_OVERALL_STATUS_MASK              = 0x00000001,    /* Bit 0 */
     DU_DATA_TYPE_MASK                   = 0x00000006,    /* Bit 1..2 */
     // Data Type = Config Status
     DU_CONFIG_STATUS_MASK               = 0x00000018,    /* Bit 3..4 */
     DU_MODE_STATUS_MASK                 = 0x00000020,    /* Bit 5 */
     // Data Type = Custom Status
-    DU_ALPHA_OVERALL_STATUS_MASK        = 0x00000008,    /* Bit 3 */
-    DU_BETA_OVERALL_STATUS_MASK         = 0x00000010,    /* Bit 4 */
-    DU_ALPHA_DCU_ROLLED_UP_STATUS_MASK  = 0x00000060,    /* Bit 5..6 */
-    DU_BETA_DCU_ROLLED_UP_STATUS_MASK   = 0x00000180,    /* Bit 7..8 */
+    DU_ALPHA_OVERALL_STATUS_MASK        = 0x00000200,    /* Bit 9 */
+    DU_BETA_OVERALL_STATUS_MASK         = 0x00000400,    /* Bit 10 */
+    DU_ALPHA_DCU_ROLLED_UP_STATUS_MASK  = 0x00001800,    /* Bit 11..12 */
+    DU_BETA_DCU_ROLLED_UP_STATUS_MASK   = 0x00006000,    /* Bit 13..14 */
     // Data Type = COTS Status
-    DU_TEMP_STATUS_MASK                 = 0x00000008,    /* Bit 3 */
-    DU_PS_STATUS_MASK                   = 0x00000010,    /* Bit 4 */
+    DU_TEMP_STATUS_MASK                 = 0x00008000,    /* Bit 15 */
+    DU_PS_STATUS_MASK                   = 0x00010000,    /* Bit 16 */
+    DU_ATB_STATUS_MASK                  = 0x00020000,    /* Bit 17 */
     // DCU Status
-    DU_DCU_GROUP_STATUS_MASK            = 0x00000200,    /* Bit 9 */
-    DU_DCU_HEALTH_STATUS_MASK           = 0x00000400,    /* Bit 10 */
-    DU_DCU_NUMBER_STATUS_MASK           = 0x0007F800,    /* Bit 11..18 */
+    DU_DCU_GROUP_STATUS_MASK            = 0x002000000,    /* Bit 21 */
+    DU_DCU_HEALTH_STATUS_MASK           = 0x00400000,    /* Bit 22 */
+    DU_DCU_NUMBER_STATUS_MASK           = 0x7F800000,    /* Bit 11..18 */  /* Bit 23..30 */
 }SWC_STATUS_TO_TWGS_ENUM;
 
 class DUDevice : public Device

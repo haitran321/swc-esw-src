@@ -49,10 +49,10 @@ typedef enum
 
 typedef enum
 {
-    CONFIG_ERR = 0,
-    SWCR  = 1,
-    SWC   = 2,
-    JOINT = 3
+    CONFIG_ERR  = 0,
+    SWC         = 1,
+    JOINT       = 2,
+    SWCR        = 3
 } SWC_CONFIG;
 
 typedef enum

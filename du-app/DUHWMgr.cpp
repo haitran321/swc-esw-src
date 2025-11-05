@@ -191,6 +191,11 @@ void DUHWMgr::setOverallStatusBit(int val)
     _statusToTwgs = DeviceUtilities::updateReg(DU_OVERALL_STATUS_MASK, _statusToTwgs, val);
 }
 
+void DUHWMgr::setDataTypeBit(SWC_STATUS_DATA_TYPE val)
+{
+    _statusToTwgs = DeviceUtilities::updateReg(DU_DATA_TYPE_MASK, _statusToTwgs, val);
+}
+
 void DUHWMgr::setConfigBit(int val)
 {
     _statusToTwgs = DeviceUtilities::updateReg(DU_CONFIG_STATUS_MASK, _statusToTwgs, val);
@@ -213,12 +218,12 @@ void DUHWMgr::setBetaOverallStatusBit(int val)
 
 void DUHWMgr::setAlphaDCURolledUpStatusBit(int val)
 {
-//  _statusToTwgs = DeviceUtilities::updateReg(DU_ALPHA_OVERALL_STATUS_MASK, _statusToTwgs, val);
+    _statusToTwgs = DeviceUtilities::updateReg(DU_ALPHA_DCU_ROLLED_UP_STATUS_MASK, _statusToTwgs, val);
 }
 
 void DUHWMgr::setBetaDCURolledUpStatusBit(int val)
 {
-//  _statusToTwgs = DeviceUtilities::updateReg(DU_ALPHA_OVERALL_STATUS_MASK, _statusToTwgs, val);
+    _statusToTwgs = DeviceUtilities::updateReg(DU_BETA_DCU_ROLLED_UP_STATUS_MASK, _statusToTwgs, val);
 }
 
 void DUHWMgr::setTempStatusBit(int val)
@@ -229,6 +234,11 @@ void DUHWMgr::setTempStatusBit(int val)
 void DUHWMgr::setPwrSuppliesStatusBit(int val)
 {
     _statusToTwgs = DeviceUtilities::updateReg(DU_PS_STATUS_MASK, _statusToTwgs, val);
+}
+
+void DUHWMgr::setATBStatusBit(int val)
+{
+    _statusToTwgs = DeviceUtilities::updateReg(DU_ATB_STATUS_MASK, _statusToTwgs, val);
 }
 
 void DUHWMgr::setDCUGroupStatusBit(RFCC_CH val)
@@ -262,7 +272,7 @@ void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
         getSysConfigStatus();
 
         // Translate system config reg
-        _sysConfig = (SWC_CONFIG)(DeviceUtilities::readMask(DU_CONFIG_MASK, _sysConfigReg));
+        _sysConfig = (SWC_CONFIG)(DeviceUtilities::readMask(DU_SYSTEM_CONFIG_MASK, _sysConfigReg));
         _mode = (SWC_MODE)(DeviceUtilities::readMask(DU_MODE_MASK, _sysConfigReg));
         _testEnabled = DeviceUtilities::readMask(DU_OFFLINE_TEST_ENABLED_MASK, _sysConfigReg);
 
@@ -273,6 +283,7 @@ void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
         _betaDCURolledUpStatus = DCU_ROLLED_UP_GREEN;
         _tempStatus = GO;
         _pwrStatus = GO;
+        _atbStatus = GO;
 
         // Compute swcr overall status
         _swcrOverall = GO;
@@ -290,26 +301,24 @@ void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
 
     if (dataType == DATA_TYPE_CONFIG_STATUS)
     {
-        // To do Set dataType bits
-
+        setDataTypeBit(DATA_TYPE_CONFIG_STATUS);
         setConfigBit(_sysConfig);
         setModeBit(_mode);
     }
     else if (dataType == DATA_TYPE_CUSTOM_STATUS)
     {
-        // To do Set dataType bits
-
+        setDataTypeBit(DATA_TYPE_CUSTOM_STATUS);
         setAlphaOverallStatusBit(_alphaDUStatus);
         setBetaOverallStatusBit(_betaDUStatus); 
         setAlphaDCURolledUpStatusBit(_alphaDCURolledUpStatus);
         setBetaDCURolledUpStatusBit(_betaDCURolledUpStatus);
     }
-    else    // dataType == DATA_TYPE_COTS_STATUS
+    else    // dataType == DATA_TYPE_IO_MODULE_STATUS
     {
-        // To do Set dataType bits
-
+        setDataTypeBit(DATA_TYPE_IO_MODULE_STATUS);
         setTempStatusBit(_tempStatus);
         setPwrSuppliesStatusBit(_pwrStatus);
+        setATBStatusBit(_atbStatus);
     }
 
     setSwcStatusToTwgs();
@@ -328,6 +337,7 @@ SWCStatusDataType DUHWMgr::getSWCStatus()
     status.swcBetaDCURolledUpStatus = _betaDCURolledUpStatus;
     status.swcTempStatus = _tempStatus;
     status.swcPwrSuppliesStatus = _pwrStatus;
+    status.swcATBStatus = _atbStatus;
     status.testUnitHWStatus = GO;
 
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
@@ -578,6 +588,7 @@ void DUHWMgr::processEmulatorStatus(HealthState swcrOverall_,
                                    DCURolledUpStatus betaDCURolledUpStatus_,
                                    HealthState tempStatus_,
                                    HealthState pwrStatus_,
+                                   HealthState atbStatus_,
                                    RFCC_CH dcuGroup_,
                                    HealthState dcuStatus_,
                                    int dcuNum_)
@@ -591,6 +602,7 @@ void DUHWMgr::processEmulatorStatus(HealthState swcrOverall_,
     _betaDCURolledUpStatus = betaDCURolledUpStatus_;
     _tempStatus = tempStatus_;
     _pwrStatus = pwrStatus_;
+    _atbStatus = atbStatus_;
     printf("From Emulator: setting rfcc %d dcu %d to %d\n", dcuGroup_, dcuNum_, dcuStatus_);
     _dcuStatus[dcuGroup_][dcuNum_].dcuStatus.overallStatus = dcuStatus_;
 }

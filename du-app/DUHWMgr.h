@@ -58,6 +58,7 @@ class DUHWMgr : public Uncopyable
                                    DCURolledUpStatus betaDCURolledUpStatus_,
                                    HealthState tempStatus_,
                                    HealthState pwrStatus_,
+                                   HealthState atbStatus_,
                                    RFCC_CH dcuGroup_,
                                    HealthState dcuStatus_,
                                    int dcuNum_);
@@ -108,12 +109,14 @@ class DUHWMgr : public Uncopyable
         DCURolledUpStatus _betaDCURolledUpStatus;
         HealthState _tempStatus;
         HealthState _pwrStatus;
+        HealthState _atbStatus;
 
         std::queue<DCUStatusParamsType> _dcuSendQueue;
         // This store the dcu data at index based on the dcu number from the FW
         DCUStatusParamsType _dcuStatus[NUM_RFCC_CH][NUM_DCU];
 
         void setOverallStatusBit(int val);
+        void setDataTypeBit(SWC_STATUS_DATA_TYPE val);
         void setConfigBit(int val);
         void setModeBit(int val);
         void setAlphaOverallStatusBit(int val);
@@ -122,6 +125,7 @@ class DUHWMgr : public Uncopyable
         void setBetaDCURolledUpStatusBit(int val);
         void setTempStatusBit(int val);
         void setPwrSuppliesStatusBit(int val);
+        void setATBStatusBit(int val);
         void setDCUGroupStatusBit(RFCC_CH val);
         void setDCUHealthStatusBit(HealthState val);
         void setDCUNumberStatusBit(int val);
