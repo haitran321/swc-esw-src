@@ -110,6 +110,8 @@ class DUHWMgr : public Uncopyable
         HealthState _tempStatus;
         HealthState _pwrStatus;
         HealthState _atbStatus;
+        RFCC_CH _dcuGroup;
+        int _dcuNum;
 
         std::queue<DCUStatusParamsType> _dcuSendQueue;
         // This store the dcu data at index based on the dcu number from the FW

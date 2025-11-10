@@ -309,7 +309,7 @@ void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
     {
         setDataTypeBit(DATA_TYPE_CUSTOM_STATUS);
         setAlphaOverallStatusBit(_alphaDUStatus);
-        setBetaOverallStatusBit(_betaDUStatus); 
+        setBetaOverallStatusBit(_betaDUStatus);
         setAlphaDCURolledUpStatusBit(_alphaDCURolledUpStatus);
         setBetaDCURolledUpStatusBit(_betaDCURolledUpStatus);
     }
@@ -320,6 +320,19 @@ void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
         setPwrSuppliesStatusBit(_pwrStatus);
         setATBStatusBit(_atbStatus);
     }
+
+//  setDataTypeBit(DATA_TYPE_IO_MODULE_STATUS);
+//  setConfigBit(_sysConfig);
+//  setModeBit(_mode);
+//  setAlphaOverallStatusBit(_alphaDUStatus);
+//  setBetaOverallStatusBit(_betaDUStatus);
+//  setAlphaDCURolledUpStatusBit(_alphaDCURolledUpStatus);
+//  setBetaDCURolledUpStatusBit(_betaDCURolledUpStatus);
+//  setTempStatusBit(_tempStatus);
+//  setPwrSuppliesStatusBit(_pwrStatus);
+//  setATBStatusBit(_atbStatus);
+//
+//  setDCUStatusToTwgs(_dcuGroup, _dcuStatus[_dcuGroup][_dcuNum].dcuStatus.overallStatus, _dcuNum);
 
     setSwcStatusToTwgs();
 }
@@ -359,7 +372,7 @@ void DUHWMgr::readDCUStatus()
 
     for (int reg = 0; reg < NUM_DCU-1; reg++)
     {
-        printf("Reg: %d: ", reg);
+//      printf("Reg: %d: ", reg);
 
         // Read DCU status registers
         status = readDCUFWStatus(reg);
@@ -368,7 +381,7 @@ void DUHWMgr::readDCUStatus()
             processDCUStatus(status);
         }
     }
-    printf("Queue Size = %d\n", _dcuSendQueue.size());
+//  printf("Queue Size = %d\n", _dcuSendQueue.size());
 
     return;
 }
@@ -410,7 +423,7 @@ DCUStatusParamsType DUHWMgr::readDCUFWStatus(int reg)
     }
     else
     {
-        printf("fwStatus = 0x%x, dcuNum = %d\n", fwStatus, dcuNum);
+//      printf("fwStatus = 0x%x, dcuNum = %d\n", fwStatus, dcuNum);
 
         // Check for duplicate dcuNum
         // For init only
@@ -478,7 +491,7 @@ void DUHWMgr::processDCUStatus(DCUStatusParamsType status)
             }
             else
             {
-                printf("No status changes for rfccType = %d, dcuNum = %d\n", rfccType, dcuNum);
+                // printf("No status changes for rfccType = %d, dcuNum = %d\n", rfccType, dcuNum);
             }
         }
     }
@@ -596,6 +609,7 @@ void DUHWMgr::processEmulatorStatus(HealthState swcrOverall_,
     _swcrOverall = swcrOverall_;
     _sysConfig = sysConfig_;
     _mode = mode_;
+    printf("From Emulator: overall = %d, config = %d, mode = %d\n", _swcrOverall, _sysConfig, _mode);
     _alphaDUStatus = alphaDUStatus_;
     _betaDUStatus = betaDUStatus_;
     _alphaDCURolledUpStatus = alphaDCURolledUpStatus_;
@@ -603,6 +617,9 @@ void DUHWMgr::processEmulatorStatus(HealthState swcrOverall_,
     _tempStatus = tempStatus_;
     _pwrStatus = pwrStatus_;
     _atbStatus = atbStatus_;
+    printf("_atbStatus = %d\n", _atbStatus);
+    _dcuGroup = dcuGroup_;
+    _dcuNum = dcuNum_;
     printf("From Emulator: setting rfcc %d dcu %d to %d\n", dcuGroup_, dcuNum_, dcuStatus_);
     _dcuStatus[dcuGroup_][dcuNum_].dcuStatus.overallStatus = dcuStatus_;
 }

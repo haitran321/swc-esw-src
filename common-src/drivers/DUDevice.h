@@ -65,11 +65,19 @@ typedef enum
     DU_KSINE_MASK               = 0x000003FF,    /* Bits 0..9 */
 }DU_KSINE_ENUM;
 
+//typedef enum
+//{
+//    STATUS_DATA_TYPE_ERROR      = 0,
+//    DATA_TYPE_CONFIG_STATUS     = 1,
+//    DATA_TYPE_CUSTOM_STATUS     = 2,
+//    DATA_TYPE_IO_MODULE_STATUS  = 3
+//}SWC_STATUS_DATA_TYPE;
+
 typedef enum
 {
     STATUS_DATA_TYPE_ERROR      = 0,
-    DATA_TYPE_CONFIG_STATUS     = 1,
-    DATA_TYPE_CUSTOM_STATUS     = 2,
+    DATA_TYPE_CONFIG_STATUS     = 2,
+    DATA_TYPE_CUSTOM_STATUS     = 1,
     DATA_TYPE_IO_MODULE_STATUS  = 3
 }SWC_STATUS_DATA_TYPE;
 
@@ -135,7 +143,7 @@ typedef enum
     DU_PS_STATUS_MASK                   = 0x00010000,    /* Bit 16 */
     DU_ATB_STATUS_MASK                  = 0x00020000,    /* Bit 17 */
     // DCU Status
-    DU_DCU_GROUP_STATUS_MASK            = 0x002000000,    /* Bit 21 */
+    DU_DCU_GROUP_STATUS_MASK            = 0x00200000,    /* Bit 21 */
     DU_DCU_HEALTH_STATUS_MASK           = 0x00400000,    /* Bit 22 */
     DU_DCU_NUMBER_STATUS_MASK           = 0x7F800000,    /* Bit 11..18 */  /* Bit 23..30 */
 }SWC_STATUS_TO_TWGS_ENUM;

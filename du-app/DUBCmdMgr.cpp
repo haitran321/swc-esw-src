@@ -189,6 +189,7 @@ STATUS DUBCmdMgr::start()
         {
             DCUStatusParamsType status = _duHWMgr.getDCUStatusFromQueue();
             sendDCUStatusToDUA(status);
+            usleep(1*1000);   // Sleep 1 msecs
         }
     }
 
@@ -369,6 +370,7 @@ void DUBCmdMgr::processStatusTimer()
         {
             DCUStatusParamsType status = _duHWMgr.getDCUStatusFromQueue();
             sendDCUStatusToDUA(status);
+            usleep(1*1000);   // Sleep 1 msecs
         }
     }
 

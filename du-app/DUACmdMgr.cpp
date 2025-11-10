@@ -11,6 +11,10 @@
 #include "StatusRequestCmdMsg.h"
 #include "SWCStatusRptMsg.h"
 #include "DCUStatusRptMsg.h"
+#include "DUAStatusRptMsg.h"
+#include "DUBStatusRptMsg.h"
+#include "PSStatusRptMsg.h"
+#include "TempStatusRptMsg.h"
 #include "SWCAckRptMsg.h"
 #include "ConfigDataManager.h"
 #include "DeviceFactory.h"
@@ -591,21 +595,86 @@ void DUACmdMgr::processTestServerMsg()
             else if (params->requestType == AlphaDUDetailedStatus)
             {
                 printf("Received AlphaDUDetailedStatus request\n");
+
+                DUAStatusParamsType duaStatus;
+                duaStatus.overall = GO;
+                duaStatus.status1 = NO_GO;
+                duaStatus.status2 = GO;
+                duaStatus.status3 = GO;
+                duaStatus.status4 = GO;
+                duaStatus.status5 = GO;
+
+                DUAStatusRptMsg duaStatusRptMsg;
+//              duaStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
+                duaStatusRptMsg.setDUAStatus(duaStatus);
+                duaStatusRptMsg.buildMsg();
+                int msgSize = duaStatusRptMsg.getBufSize();
+                duaStatusRptMsg.headerByteSwapToNetwork();
+                _toTestServer->write(duaStatusRptMsg.getBuf(), sizeof(DUAStatusRptMsg));
             }
 
             else if (params->requestType == BetaDUDetailedStatus)
             {
-                printf("Received AlphaDUDetailedStatus request\n");
+                printf("Received BetaDUDetailedStatus request\n");
+
+                DUBStatusParamsType dubStatus;
+                dubStatus.overall = GO;
+                dubStatus.status1 = GO;
+                dubStatus.status2 = NO_GO;
+                dubStatus.status3 = GO;
+                dubStatus.status4 = GO;
+                dubStatus.status5 = GO;
+
+                DUBStatusRptMsg dubStatusRptMsg;
+//              duaStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
+                dubStatusRptMsg.setDUBStatus(dubStatus);
+                dubStatusRptMsg.buildMsg();
+                int msgSize = dubStatusRptMsg.getBufSize();
+                dubStatusRptMsg.headerByteSwapToNetwork();
+                _toTestServer->write(dubStatusRptMsg.getBuf(), sizeof(DUBStatusRptMsg));
+
             }
 
             else if (params->requestType == PSDetailedStatus)
             {
                 printf("Received PSDetailedStatus request\n");
+
+                PSStatusParamsType psStatus;
+                psStatus.overall = GO;
+                psStatus.status1 = GO;
+                psStatus.status2 = GO;
+                psStatus.status3 = NO_GO;
+                psStatus.status4 = GO;
+                psStatus.status5 = GO;
+
+                PSStatusRptMsg psStatusRptMsg;
+//              duaStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
+                psStatusRptMsg.setPSStatus(psStatus);
+                psStatusRptMsg.buildMsg();
+                int msgSize = psStatusRptMsg.getBufSize();
+                psStatusRptMsg.headerByteSwapToNetwork();
+                _toTestServer->write(psStatusRptMsg.getBuf(), sizeof(PSStatusRptMsg));
             }
 
             else if (params->requestType == TempDetailedStatus)
             {
                 printf("Received TempDetailedStatus request\n");
+
+                TempStatusParamsType tempStatus;
+                tempStatus.overall = GO;
+                tempStatus.status1 = GO;
+                tempStatus.status2 = GO;
+                tempStatus.status3 = NO_GO;
+                tempStatus.status4 = GO;
+                tempStatus.status5 = GO;
+
+                TempStatusRptMsg tempStatusRptMsg;
+//              duaStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
+                tempStatusRptMsg.setTempStatus(tempStatus);
+                tempStatusRptMsg.buildMsg();
+                int msgSize = tempStatusRptMsg.getBufSize();
+                tempStatusRptMsg.headerByteSwapToNetwork();
+                _toTestServer->write(tempStatusRptMsg.getBuf(), sizeof(TempStatusRptMsg));
             }
 
             else
@@ -622,7 +691,9 @@ void DUACmdMgr::processTestServerMsg()
 
 void DUACmdMgr::processLocalHWStatusMsg()
 {
-    printf("Received Beta DCU data\n");
+    static int counter = 0;
+    counter++;
+    printf("Received Beta DCU data %d\n", counter);
     size_t bytesRead = 0;
 
     DCUStatusParamsType *betaDCUStatus;

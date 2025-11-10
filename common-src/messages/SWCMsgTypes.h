@@ -89,9 +89,9 @@ typedef enum
     AlphaDCUDetailedStatus  = 2,
     BetaDCUDetailedStatus   = 3,
     AlphaDUDetailedStatus   = 4,
-    BetaDUDetailedStatus    = 4,
-    PSDetailedStatus        = 5,
-    TempDetailedStatus      = 6
+    BetaDUDetailedStatus    = 5,
+    PSDetailedStatus        = 6,
+    TempDetailedStatus      = 7
 } StatusRequestType;
 
 /** Status Request message data  */
