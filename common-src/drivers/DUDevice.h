@@ -24,8 +24,6 @@ typedef struct
     int dcuSCLKDelay[NUM_DCU-1];
 }DURegType;
 
-//#define DU_CMD_STARTING_ADDR_OFFSET 0x0100
-
 typedef enum
 {
     DU_HW_OVERALL_STATUS_MASK   = 0x8000001F,    /* Bits 0..4, and 31 */
@@ -64,14 +62,6 @@ typedef enum
 {
     DU_KSINE_MASK               = 0x000003FF,    /* Bits 0..9 */
 }DU_KSINE_ENUM;
-
-//typedef enum
-//{
-//    STATUS_DATA_TYPE_ERROR      = 0,
-//    DATA_TYPE_CONFIG_STATUS     = 1,
-//    DATA_TYPE_CUSTOM_STATUS     = 2,
-//    DATA_TYPE_IO_MODULE_STATUS  = 3
-//}SWC_STATUS_DATA_TYPE;
 
 typedef enum
 {
@@ -154,8 +144,6 @@ public:
     DUDevice(unsigned int offset);
 
     STATUS mmap();
-
-//  DUFWActionType* getCmdStartingAddress();
 
     int readReg(int offset);
 

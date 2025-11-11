@@ -398,23 +398,42 @@ void DUACmdMgr::processStatusTimer()
 //  }
 
     // Alternalte status between custom components and COTS
-    static bool customStatus = true;
-    if (customStatus)
+    static int statusCounter = 0;
+    if (statusCounter == 0)
     {
-        customStatus = false;
         _duHWMgr.readSWCStatus(DATA_TYPE_CUSTOM_STATUS);
         printf("DATA_TYPE_CUSTOM_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
     }
-    else
+    else if (statusCounter == 1)
     {
-        customStatus = true;
         _duHWMgr.readSWCStatus(DATA_TYPE_IO_MODULE_STATUS);
         printf("DATA_TYPE_IO_MODULE_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+    }
+    else
+    {
+        _duHWMgr.readSWCStatus(DATA_TYPE_CONFIG_STATUS);
+        printf("DATA_TYPE_CONFIG_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+    }
+    statusCounter++;
+    if (statusCounter >= 3)
+    {
+        statusCounter = 0;
     }
 
     printf("Read all DCUs status to update local queue.\n");
     _logger.logDebug("Read all DCUs status to update local queue.");
     _duHWMgr.readDCUStatus();
+
+    // For testing to be removed
+    int queueSize = _duHWMgr.getDCUStatusQueueSize();
+    printf("DCU status queue size = %d\n", queueSize);
+    _logger.logDebug("DCU status queue size = %d", queueSize);
+    if (queueSize > 0)
+    {
+        DCUStatusParamsType status = _duHWMgr.getDCUStatusFromQueue();
+        _duHWMgr.setDCUStatusToTwgs(status.group, status.dcuStatus.overallStatus, status.number);
+    }
+    // End For testing
 
     _timerDevStatus->read();
 }

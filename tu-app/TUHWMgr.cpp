@@ -6,7 +6,7 @@
 TUHWMgr::TUHWMgr() :
 _logger(Logger::getInstance()),
 _tuDev(NULL),
-brdCtrVal(-1)
+_brdCtrVal(-1)
 {
 }
 
@@ -22,9 +22,6 @@ TUHWMgr &TUHWMgr::getInstance()
 
 void TUHWMgr::close()
 {
-    // 	delete _tuDev;
-	// _tuDev = NULL;
-
     _tuDev->close();
 }
 
@@ -55,12 +52,10 @@ STATUS TUHWMgr::initialize()
     printf("getBoardStatusReg = 0x%x\n", _tuDev->getBrdStatusReg());
     printf("getBoardControlReg = 0x%x\n", _tuDev->getBrdCtrlReg());
     
-    brdCtrVal = DeviceUtilities::readMask(TU_BRD_CTRL_MASK, _tuDev->getBrdCtrlReg());
+    _brdCtrVal = DeviceUtilities::readMask(TU_BRD_CTRL_MASK, _tuDev->getBrdCtrlReg());
 
     // Set Test mode
-    // brdCtrVal = DeviceUtilities::updateReg(TU_MODE_MASK, brdCtrVal, TEST);
-    // brdCtrVal = DeviceUtilities::updateReg(TU_STEERING_WORD_SRC_MASK, brdCtrVal, ARM);
-    _tuDev->setBrdCtrlReg(brdCtrVal);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
 
 //  getRegs(0x8, 0x8);
 //  _logger.logInfo("Board control reg = 0x%x", getBoardControl());
@@ -88,26 +83,31 @@ void TUHWMgr::setArmKSine(RFCC_CH ch, int val)
     _tuDev->setArmKSineReg(ch, val);
 }
 
-int TUHWMgr::getAtbKSine(RFCC_CH ch)
-{
-    return(_tuDev->getAtbKSineReg(ch));
-}
-
-void TUHWMgr::setAtbKSine(RFCC_CH ch, int val)
-{
-    _tuDev->setAtbKSineReg(ch, val);
-}
-
 int TUHWMgr::getFWScanLimitCheckStatus()
 {
     return (_tuDev->getSLStatusReg());
 }
 
-void TUHWMgr::runFWScanLimitCheck()
+void TUHWMgr::toggleRLTDSignal()
 {
-    brdCtrVal = DeviceUtilities::updateReg(TU_NEW_STEERING_WORD_MASK, brdCtrVal, 1);
-    _tuDev->setBrdCtrlReg(brdCtrVal);
-    brdCtrVal = DeviceUtilities::updateReg(TU_NEW_STEERING_WORD_MASK, brdCtrVal, 0);
-    _tuDev->setBrdCtrlReg(brdCtrVal);
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLTD_SIGNAL_MASK, _brdCtrVal, 1);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLTD_SIGNAL_MASK, _brdCtrVal, 0);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
 }
 
+void TUHWMgr::toggleRLCPSignal()
+{
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLCP_SIGNAL_MASK, _brdCtrVal, 1);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLCP_SIGNAL_MASK, _brdCtrVal, 0);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
+}
+
+void TUHWMgr::toggleRLSCSignal()
+{
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLSC_SIGNAL_MASK, _brdCtrVal, 1);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLSC_SIGNAL_MASK, _brdCtrVal, 0);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
+}

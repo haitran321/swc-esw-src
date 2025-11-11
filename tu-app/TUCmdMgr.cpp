@@ -285,30 +285,14 @@ void TUCmdMgr::processIncomingMsg()
 
 //          _tuHWMgr.getRegs(0xC, 0x10);
 
-            // Toggle the Scan Limit check 
-            _tuHWMgr.runFWScanLimitCheck();
+            // Toggle RLTD signal to start steering words processing 
+            _tuHWMgr.toggleRLTDSignal();
 
             break;
         }
         // printf("Successfully write from readUdpData\n");
     }
 }
-
-// _logger.logInfo("Received Status Request");
-//        //      printf("Received Status Request\n");
-//if ((MODULE_TYPE == WG1) || (MODULE_TYPE == WG2))
-//{
-//    _logger.logInfo("Sending Status Rpt To TU");
-//    // Send status report to TU
-//    WGStatusRptMsg wgStatusRptMsg;
-//    wgStatusRptMsg.msgID = (InternalMsgID)toNetworkInt(STATUS_RPT);
-//    wgStatusRptMsg.status = toNetworkInt(_tuHWMgr.getBoardStatus());
-//
-//    // For testing to be removed
-//    wgStatusRptMsg.status = toNetworkInt(TEST_STATUS);
-//
-//    _statusRptToTWGS->write(&wgStatusRptMsg, sizeof(wgStatusRptMsg));
-//}
 
 #define GAMMA 1.207234
 #define CENTER_FREQ 442.0

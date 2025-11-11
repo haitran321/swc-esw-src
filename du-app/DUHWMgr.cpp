@@ -321,19 +321,6 @@ void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
         setATBStatusBit(_atbStatus);
     }
 
-//  setDataTypeBit(DATA_TYPE_IO_MODULE_STATUS);
-//  setConfigBit(_sysConfig);
-//  setModeBit(_mode);
-//  setAlphaOverallStatusBit(_alphaDUStatus);
-//  setBetaOverallStatusBit(_betaDUStatus);
-//  setAlphaDCURolledUpStatusBit(_alphaDCURolledUpStatus);
-//  setBetaDCURolledUpStatusBit(_betaDCURolledUpStatus);
-//  setTempStatusBit(_tempStatus);
-//  setPwrSuppliesStatusBit(_pwrStatus);
-//  setATBStatusBit(_atbStatus);
-//
-//  setDCUStatusToTwgs(_dcuGroup, _dcuStatus[_dcuGroup][_dcuNum].dcuStatus.overallStatus, _dcuNum);
-
     setSwcStatusToTwgs();
 }
 
@@ -401,6 +388,8 @@ DCUStatusParamsType DUHWMgr::readDCUFWStatus(int reg)
     {
         fwStatus = 0xb86401;
         fwStatus = DeviceUtilities::updateReg(DCU_LOCATION_STATUS_MASK, fwStatus, reg+1);
+        // Alternate between Red and Green
+        fwStatus = DeviceUtilities::updateReg(DCU_BIT_OVERALL_STATUS_MASK, fwStatus, reg%2);
     }
     if ((reg == 99) && (MODULE_TYPE == DU_ALPHA))
     {
@@ -411,6 +400,8 @@ DCUStatusParamsType DUHWMgr::readDCUFWStatus(int reg)
     {
         fwStatus = 0xb86401;
         fwStatus = DeviceUtilities::updateReg(DCU_LOCATION_STATUS_MASK, fwStatus, reg+1);
+        // Alternate between Red and Green
+        fwStatus = DeviceUtilities::updateReg(DCU_BIT_OVERALL_STATUS_MASK, fwStatus, reg%2);
     }
 
     // Get location number from FW

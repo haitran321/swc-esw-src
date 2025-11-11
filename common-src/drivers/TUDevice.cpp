@@ -25,11 +25,6 @@ STATUS TUDevice::mmap()
     return OK;
 }
 
-//DUFWActionType * TUDevice::getCmdStartingAddress()
-//{
-//    return (DUFWActionType *)(_apbBusAddr + DU_CMD_STARTING_ADDR_OFFSET);
-//}
-
 int TUDevice::readReg(int offset)
 {
    return (*((unsigned *)(_apbBusAddr + offset)));
@@ -60,9 +55,9 @@ int TUDevice::getBrdCtrlReg()
     return (regs->brdCtrl);
 }
 
-void TUDevice::setDiagInfoReg(int val)
+void TUDevice::setArmKSineReg(RFCC_CH ch, int val)
 {
-    regs->diagInfo = val;
+    regs->armKSine[ch] = val;
 }
 
 int TUDevice::getArmKSineReg(RFCC_CH ch)
@@ -70,59 +65,20 @@ int TUDevice::getArmKSineReg(RFCC_CH ch)
     return (regs->armKSine[ch]);
 }
 
-void TUDevice::setArmKSineReg(RFCC_CH ch, int val)
-{
-    regs->armKSine[ch] = val;
-}
-
-int TUDevice::getAtbKSineReg(RFCC_CH ch)
-{
-    return (regs->atbKSine[ch]);
-}
-
-void TUDevice::setAtbKSineReg(RFCC_CH ch, int val)
-{
-    regs->atbKSine[ch] = val;
-}
-
 int TUDevice::getSLStatusReg()
 {
     return (regs->slResult);
 }
 
+void TUDevice::setDiagInfoReg(int val)
+{
+    regs->diagInfo = val;
+}
 
 int TUDevice::getDiagInfoReg()
 {
     return (regs->diagInfo);
 }
-
-// STATUS TUDevice::setDMAControllerReg(int val)
-// {
-//     STATUS rc = OK;
-
-//     regs->dmaControlleReg = val;
-
-//     return rc;
-// }
-
-// void TUDevice::readFeedbackRegs(int numRegs)
-// {
-//     for (int i = 0; i < numRegs; i++)
-//     {
-//         printf("spare[%d] = 0x%x\n", i, regs->spare3[i]);
-//     }
-// }
-
-// void TUDevice::readDMAReg()
-// {
-//     writeReg(0x9C, 0x8);
-//     sleep(0.1);
-//     writeReg(0x9C, 0x0);
-//     printf("Write control reg = 0x%x\n", readReg(0x90));
-//     printf("Write status reg = 0x%x\n", readReg(0x24));
-//     printf("Read control reg = 0x%x\n", readReg(0x4C));
-//     printf("Read status reg = 0x%x\n", readReg(0x28));
-// } 
 
 void TUDevice::getRegs(int startReg, int endReg)
 {

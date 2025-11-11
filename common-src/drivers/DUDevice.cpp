@@ -25,11 +25,6 @@ STATUS DUDevice::mmap()
     return OK;
 }
 
-//DUFWActionType * DUDevice::getCmdStartingAddress()
-//{
-//    return (DUFWActionType *)(_apbBusAddr + DU_CMD_STARTING_ADDR_OFFSET);
-//}
-
 int DUDevice::readReg(int offset)
 {
    return (*((unsigned *)(_apbBusAddr + offset)));

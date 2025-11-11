@@ -29,11 +29,12 @@ class TUHWMgr : public Uncopyable
 
         int getArmKSine(RFCC_CH ch);
         void setArmKSine(RFCC_CH ch, int val);
-        void runFWScanLimitCheck();
+
         int getFWScanLimitCheckStatus();
 
-        int getAtbKSine(RFCC_CH ch);
-        void setAtbKSine(RFCC_CH ch, int val);
+        void toggleRLTDSignal();
+        void toggleRLCPSignal();
+        void toggleRLSCSignal();
 
     protected:
         /**
@@ -50,9 +51,9 @@ class TUHWMgr : public Uncopyable
 
         TUDevice* _tuDev;
 
-        int brdCtrVal;
+        int _brdCtrVal;
 
-        int diagRegVal;
+        int _diagRegVal;
 
         /* Common config parameters */
         int MODULE_TYPE;
