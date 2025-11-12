@@ -38,30 +38,32 @@ class TUCmdMgr : public EventProcessor
 
     private:
 
+        int MODULE_TYPE;
         Logger &_logger;
 
-        /**
-         * UDP device for receiving Ent Network Msgs
-         */
-        Device* _udpFromRIMS;
+        // Test Server Device
+        UDPNetworkDevice* _fromTestServer;
+        UDPNetworkDevice* _toTestServer;
+        void processTestServerMsg();
 
-        int MODULE_TYPE;
+        UDPNetworkDevice* _localHWStatus;
 
-        int TEST_STATUS;
+        /* Common config parameters */
+        int FORCE_TEST_MODE;
+        int STEERING_WORD_SRC;
 
         void processIncomingMsg();
 
         TUHWMgr &_tuHWMgr;
 
-        UIODevice* _uio1Dev;
-        TimerDevice* _timerDev;
-        void processInterrupt();
-        void processTimer();
+        UIODevice* _uioDevSL;
+        void processSLInterrupt();
+        UIODevice* _uioDevConfig;
+        void processConfigInterrupt();
+        TimerDevice* _timerDevStatus;
+        void processStatusTimer();
         ElapsedTimer eInterruptProcessing;
         Timestamp ts;
-
-        // For status report
-        UDPNetworkDevice* _statusRptToTWGS;
 
         int runSWScanLimitCheck(float alpha, float beta);
 

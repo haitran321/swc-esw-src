@@ -9,6 +9,7 @@
 #include "TUCmdMgr.h"
 #include "ShutdownCmdMsg.h"
 #include "SteeringCmdMsg.h"
+#include "SWCAckRptMsg.h"
 #include "ConfigDataManager.h"
 #include "DeviceFactory.h"
 #include "EndianUtils.h"
@@ -24,12 +25,15 @@
  * Constructor
  */
 TUCmdMgr::TUCmdMgr() :
+    MODULE_TYPE(TU),
     _logger(Logger::getInstance()),
-    _udpFromRIMS(NULL),
+    _fromTestServer(NULL),
+    _toTestServer(NULL),
+    _localHWStatus(NULL),
     _tuHWMgr(TUHWMgr::getInstance()),
-    _uio1Dev(NULL),
-    _timerDev(NULL),
-    _statusRptToTWGS(NULL)
+    _uioDevSL(NULL),
+    _uioDevConfig(NULL),
+    _timerDevStatus(NULL)
 {
 }
 
@@ -38,18 +42,23 @@ TUCmdMgr::TUCmdMgr() :
  */
 TUCmdMgr::~TUCmdMgr()
 {
-    // Delete all devices
-    delete _udpFromRIMS;
-    _udpFromRIMS = NULL;
+    delete _fromTestServer;
+    _fromTestServer = NULL;
 
-    delete _uio1Dev;
-    _uio1Dev = NULL;
+    delete _toTestServer;
+    _toTestServer = NULL;
 
-    delete _timerDev;
-    _timerDev = NULL;
+    delete _localHWStatus;
+    _localHWStatus = NULL;
 
-    delete _statusRptToTWGS;
-    _statusRptToTWGS = NULL;
+    delete _uioDevSL;
+    _uioDevSL = NULL;
+
+    delete _uioDevConfig;
+    _uioDevConfig = NULL;
+
+    delete _timerDevStatus;
+    _timerDevStatus = NULL;
 }
 
 /** 
@@ -60,9 +69,15 @@ STATUS TUCmdMgr::start()
 {
     STATUS rc = OK;
 
-    string SOC_IP_ADDRESS;
-    int INCOMING_PORT;
+    string TEST_SERVER_IP_ADDRESS;
+    string ALPHA_IP_ADDRESS;
+    string BETA_IP_ADDRESS;
+    string TEST_UNIT_IP_ADDRESS;
+    int FROM_TEST_SERVER_PORT;
     int WARM_RESTART_PORT;
+    int LOCAL_HW_STATUS_PORT;
+    int TO_TEST_SERVER_PORT;
+    int STATUS_TIMER_INTERVAL_SECONDS;
 
     printf("\nLoading Config file\n");
     if (ConfigDataManager::getInstance().load() != OK)
@@ -72,12 +87,34 @@ STATUS TUCmdMgr::start()
 
     ConfigDataManager& configs = ConfigDataManager::getInstance();
 
-    rc = rc || configs.get("SOC_IP_ADDRESS", SOC_IP_ADDRESS);
-    rc = rc || configs.get("INCOMING_PORT", INCOMING_PORT);
-    rc = rc || configs.get("WARM_RESTART_PORT", WARM_RESTART_PORT);
-    rc = rc || configs.get("MODULE_TYPE", MODULE_TYPE);
+    // Get IP addresses
+    rc = rc || configs.get("TEST_SERVER_IP_ADDRESS", TEST_SERVER_IP_ADDRESS);
+    rc = rc || configs.get("ALPHA_IP_ADDRESS", ALPHA_IP_ADDRESS);
+    rc = rc || configs.get("BETA_IP_ADDRESS", BETA_IP_ADDRESS);
+    rc = rc || configs.get("TEST_UNIT_IP_ADDRESS", TEST_UNIT_IP_ADDRESS);
 
-    rc = rc || configs.get("TEST_STATUS", TEST_STATUS);
+    // Get port number to/from Test Server
+    rc = rc || configs.get("FROM_TEST_SERVER_PORT", FROM_TEST_SERVER_PORT);
+    rc = rc || configs.get("TO_TEST_SERVER_PORT", TO_TEST_SERVER_PORT);
+    rc = rc || configs.get("WARM_RESTART_PORT", WARM_RESTART_PORT);
+
+    // Get port number to/from Local HW devices
+    rc = rc || configs.get("LOCAL_HW_STATUS_PORT", LOCAL_HW_STATUS_PORT);
+
+    // For Dev PC  - TO BE REMOVED
+    string DEV_PC_IP_ADDRESS;
+    int FROM_DEV_PC_PORT;
+    int TO_DEV_PC_PORT;
+    rc = rc || configs.get("DEV_PC_IP_ADDRESS", DEV_PC_IP_ADDRESS);
+    rc = rc || configs.get("FROM_DEV_PC_PORT", FROM_DEV_PC_PORT);
+    rc = rc || configs.get("TO_DEV_PC_PORT", TO_DEV_PC_PORT);
+
+    // Configuration parameters
+    rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
+    rc = rc || configs.get("STEERING_WORD_SRC", STEERING_WORD_SRC);
+
+    // Status parameters
+    rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
 
     // Setup Logger
     _logger.initialize();
@@ -91,73 +128,122 @@ STATUS TUCmdMgr::start()
 
     _logger.logInfo("MODULE_TYPE = %d", MODULE_TYPE);
 
-    // From RIMS device for commands
     stringstream devName;
+
+    // From Test Server device for commands
+    devName.clear();
     devName << "UDP Server ";
-    devName << SOC_IP_ADDRESS << ":" << INCOMING_PORT;
+    devName << TEST_UNIT_IP_ADDRESS << ":" << FROM_TEST_SERVER_PORT;
 
-    _udpFromRIMS = new UDPNetworkDevice(NetworkServer, SOC_IP_ADDRESS, INCOMING_PORT, false);
-    _udpFromRIMS->setName(devName.str());
+    _fromTestServer = new UDPNetworkDevice(NetworkServer, TEST_UNIT_IP_ADDRESS, FROM_TEST_SERVER_PORT, false);
+    _fromTestServer->setName(devName.str());
 
-    if (_udpFromRIMS->open() != OK)
+    if (_fromTestServer->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _udpFromRIMS->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _fromTestServer->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_udpFromRIMS, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processIncomingMsg)) != OK)
+    if (addEvent(*_fromTestServer, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processTestServerMsg)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _udpFromRIMS->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _fromTestServer->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _udpIncoming device");
-    printf("Successfully created _udpIncoming device\n");
+    _logger.logInfo("Successfully created _fromTestServer device");
+    printf("Successfully created _fromTestServer device\n");
 
-    // Initialize rf generator
+    devName.clear();
+    devName << "UDP Client For Test Server";
+    devName << TEST_SERVER_IP_ADDRESS << ":" << TO_TEST_SERVER_PORT;
+    _toTestServer = new UDPNetworkDevice(NetworkClient, TEST_SERVER_IP_ADDRESS, TO_TEST_SERVER_PORT, false);
+    _toTestServer->setName(devName.str());
+
+    if (_toTestServer->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _toTestServer->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _toTestServer device");
+    printf("Successfully created _toTestServer device\n");
+
+    // From HW devices - Outbound for TU
+    devName.clear();
+    devName << "UDP Client ";
+    devName << ALPHA_IP_ADDRESS << ":" << LOCAL_HW_STATUS_PORT;
+    _localHWStatus = new UDPNetworkDevice(NetworkClient, ALPHA_IP_ADDRESS, LOCAL_HW_STATUS_PORT, false);
+    _localHWStatus->setName(devName.str());
+
+    if (_localHWStatus->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _localHWStatus->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _localHWStatus device");
+    printf("Successfully created _localHWStatus device\n");
+
+    // Initialize HW Manager
     _tuHWMgr.initialize();
 
-    // Open UIO device
-    _uio1Dev = new UIODevice(AXI_INT_121_OFFSET, 0);
+    // Open UIO device for Scan Limit HW Interrupt
+    _uioDevSL = new UIODevice(AXI_INT_121_OFFSET, 0);
 
-    if (_uio1Dev->open() != OK)
+    if (_uioDevSL->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _uio1Dev->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _uioDevSL->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_uio1Dev, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processInterrupt)) != OK)
+    if (addEvent(*_uioDevSL, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processSLInterrupt)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _uio1Dev->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _uioDevSL->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _uio1Dev device");
+    _logger.logInfo("Successfully created _uioDevSL device");
 
     // Map UIO address
-    _uio1Dev->mmap();
+    _uioDevSL->mmap();
+    _uioDevSL->clearInterrupt();
 
-    // Timer testing
-    timespec init = { 0, 0 };
-    timespec timeout = { 0, 0 };
-    _timerDev = new TimerDevice(init, timeout);
+    // Open UIO device for HW Config Changed Interrupt
+    _uioDevConfig = new UIODevice(AXI_INT_122_OFFSET, 1);
 
-    if (_timerDev->open() != OK)
+    if (_uioDevConfig->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _timerDev->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _uioDevConfig->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_timerDev, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processTimer)) != OK)
+    if (addEvent(*_uioDevConfig, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processConfigInterrupt)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _timerDev->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _uioDevConfig->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _timerDev device");
+    _logger.logInfo("Successfully created _uioDevConfig device");
 
-    // printEventList();
+    // Map UIO address
+    _uioDevConfig->mmap();
+    _uioDevConfig->clearInterrupt();
+
+    // Status Timer
+    timespec init = { STATUS_TIMER_INTERVAL_SECONDS, 0 };
+    timespec timeout = { STATUS_TIMER_INTERVAL_SECONDS, 0 };
+    _timerDevStatus = new TimerDevice(init, timeout);
+
+    if (_timerDevStatus->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _timerDevStatus->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_timerDevStatus, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processStatusTimer)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _timerDevStatus->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _timerDevStatus device");
 
     EventProcessor::start();
 
     return OK;
 }
 
-void TUCmdMgr::processInterrupt()
+void TUCmdMgr::processSLInterrupt()
 {
 //  eInterruptProcessing.reset();
 //  eInterruptProcessing.start();
@@ -171,9 +257,10 @@ void TUCmdMgr::processInterrupt()
     size_t bytesRead = 0;
     int pending = 0;
 
-    _uio1Dev->read((char *)&pending, sizeof(int), bytesRead);
-//  printf("Reading interrupt, number of interrupt = %d\n", pending);
-    _uio1Dev->clearInterrupt();
+    _uioDevSL->read((char *)&pending, sizeof(int), bytesRead);
+    printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
+    _logger.logDebug("Reading scan limit interrupt, number of interrupt = %d", pending);
+    _uioDevSL->clearInterrupt();
 
     // Get FW SL check status
 //  printf("FW SL status = 0x%x\n", _tuHWMgr.getFWScanLimitCheckStatus());
@@ -193,7 +280,22 @@ void TUCmdMgr::processInterrupt()
 
 }
 
-void TUCmdMgr::processTimer()
+void TUCmdMgr::processConfigInterrupt()
+{
+#ifdef PRINT_DEBUG
+    printf("In processConfigInterrupt()\n");
+#endif
+
+    size_t bytesRead = 0;
+    int pending = 0;
+
+    _uioDevConfig->read((char *)&pending, sizeof(int), bytesRead);
+    printf("Reading config changed interrupt, number of interrupt = %d\n", pending);
+    _logger.logDebug("Reading config changed interrupt, number of interrupt = %d", pending);
+    _uioDevConfig->clearInterrupt();
+}
+
+void TUCmdMgr::processStatusTimer()
 {
     static int timerCounter = 0;
 
@@ -204,14 +306,12 @@ void TUCmdMgr::processTimer()
         printf("In processTimer: timerCounter = %d\n", timerCounter);
 //  }
 
-    // Set Diag bit to generate interrupt
+    // Send status to Alpha DU
 
-//  _tuHWMgr.toggleInterruptBit();
-
-    _timerDev->read();
+	_timerDevStatus->read();
 }
 
-void TUCmdMgr::processIncomingMsg()
+void TUCmdMgr::processTestServerMsg()
 {
     // printf("In processIncomingMsg()\n");
     size_t bytesRead = 0;
@@ -219,7 +319,7 @@ void TUCmdMgr::processIncomingMsg()
     CommandMessage *msg = new CommandMessage();
 
     // Read UDP data
-    if (_udpFromRIMS->read(msg->getBuf(), MAX_MSG_SIZE, bytesRead) != OK)
+    if (_fromTestServer->read(msg->getBuf(), MAX_MSG_SIZE, bytesRead) != OK)
     {
         printf("error reading from _udpFromRIMS\n");
         return;
