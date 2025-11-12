@@ -23,13 +23,10 @@ typedef enum
     STEERING_CMD_MSG_ID             = 1,
     SHUTDOWN_CMD_MSG_ID             = 2,
     STATUS_REQUEST_CMD_MSG_ID       = 3,
-    SWC_STATUS_RPT_MSG_ID           = 11,
-    DCU_STATUS_RPT_MSG_ID           = 12,
-    SWC_ACK_RPT_MSG_ID              = 13,
-    DUA_STATUS_RPT_MSG_ID           = 14,
-    DUB_STATUS_RPT_MSG_ID           = 15,
-    PS_STATUS_RPT_MSG_ID            = 16,
-    TEMP_STATUS_RPT_MSG_ID          = 17,
+    SWC_OVERALL_STATUS_RPT_MSG_ID   = 11,
+    SWC_DETAILED_STATUS_RPT_MSG_ID  = 12,
+    DCU_DETAILED_STATUS_RPT_MSG_ID  = 13,
+    SWC_ACK_RPT_MSG_ID              = 14,
 } MessageId;
 
 /** RIMS message header */
@@ -85,13 +82,10 @@ typedef struct
 
 typedef enum
 {
-    SWCDetailedStatus       = 1,
+    SWCOverallStatus       = 1,
     AlphaDCUDetailedStatus  = 2,
     BetaDCUDetailedStatus   = 3,
-    AlphaDUDetailedStatus   = 4,
-    BetaDUDetailedStatus    = 5,
-    PSDetailedStatus        = 6,
-    TempDetailedStatus      = 7
+    SWCDetailedStatus       = 4,
 } StatusRequestType;
 
 /** Status Request message data  */
@@ -119,7 +113,7 @@ typedef struct
     int lastBeta;
     HealthState alphaDCU[NUM_DCU];
     HealthState betaDCU[NUM_DCU];
-} SWCStatusDataType;
+} SWCOverallStatusDataType;
 
 typedef struct
 {
@@ -154,43 +148,35 @@ typedef struct
 
 typedef struct
 {
-    HealthState overall;
-    HealthState status1;
-    HealthState status2;
-    HealthState status3;
-    HealthState status4;
-    HealthState status5;
-} DUAStatusParamsType;
-
-typedef struct
-{
-    HealthState overall;
-    HealthState status1;
-    HealthState status2;
-    HealthState status3;
-    HealthState status4;
-    HealthState status5;
-} DUBStatusParamsType;
-
-typedef struct
-{
-    HealthState overall;
-    HealthState status1;
-    HealthState status2;
-    HealthState status3;
-    HealthState status4;
-    HealthState status5;
-} PSStatusParamsType;
-
-typedef struct
-{
-    HealthState overall;
-    HealthState status1;
-    HealthState status2;
-    HealthState status3;
-    HealthState status4;
-    HealthState status5;
-} TempStatusParamsType;
+    // Alpha
+    HealthState alphaOverall;
+    HealthState alphaStatus1;
+    HealthState alphaStatus2;
+    HealthState alphaStatus3;
+    HealthState alphaStatus4;
+    HealthState alphaStatus5;
+    // Beta
+    HealthState betaOverall;
+    HealthState betaStatus1;
+    HealthState betaStatus2;
+    HealthState betaStatus3;
+    HealthState betaStatus4;
+    HealthState betaStatus5;
+    // Pwr Supplies
+    HealthState psOverall;
+    HealthState psStatus1;
+    HealthState psStatus2;
+    HealthState psStatus3;
+    HealthState psStatus4;
+    HealthState psStatus5;
+    // Temp
+    HealthState tempOverall;
+    HealthState tempStatus1;
+    HealthState tempStatus2;
+    HealthState tempStatus3;
+    HealthState tempStatus4;
+    HealthState tempStatus5;
+} SWCDetailedStatusDataType;
 
 /** SW Exception Report message data */
 

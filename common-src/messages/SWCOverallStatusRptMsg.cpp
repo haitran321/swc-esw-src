@@ -1,12 +1,12 @@
-#include "SWCStatusRptMsg.h"
+#include "SWCOverallStatusRptMsg.h"
 
-SWCStatusRptMsg::SWCStatusRptMsg() :
-ReportMessage(SWC_STATUS_RPT_MSG_ID)
+SWCOverallStatusRptMsg::SWCOverallStatusRptMsg() :
+ReportMessage(SWC_OVERALL_STATUS_RPT_MSG_ID)
 {
     memset(&_data, 0, sizeof(_data));
 }
 
-STATUS SWCStatusRptMsg::buildMsg()
+STATUS SWCOverallStatusRptMsg::buildMsg()
 {
     STATUS rc = OK;
     // Build header.

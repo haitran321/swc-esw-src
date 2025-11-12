@@ -23,7 +23,7 @@ STATUS StatusRequestCmdMsg::validateData()
 
    // Validate data content.
 
-   if (_data->requestType < SWCDetailedStatus || _data->requestType > BetaDCUDetailedStatus)
+   if (_data->requestType < SWCOverallStatus || _data->requestType > SWCDetailedStatus)
    {
       printf("ERROR::InvalidCommandData, Request Type = %d)",
                 _data->requestType);

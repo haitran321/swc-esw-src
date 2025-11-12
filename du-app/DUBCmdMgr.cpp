@@ -12,6 +12,7 @@
 #include "ConfigDataManager.h"
 #include "DeviceFactory.h"
 #include "EndianUtils.h"
+#include "ScanLimitCheck.h"
 #include "DeviceUtilities.h"
 
 #include <sys/types.h>
@@ -303,8 +304,8 @@ void DUBCmdMgr::processSLInterrupt()
     printf("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d\n", atbAlpha, atbBeta, armAlpha, armBeta);
     _logger.logDebug("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d", atbAlpha, atbBeta, armAlpha, armBeta);
 
-    int armSWSLResult = _duHWMgr.runSWScanLimitCheck(float(atbAlpha), float(armBeta));
-    int atbSWSLResult = _duHWMgr.runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
+    int armSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(armBeta));
+    int atbSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
     int fwSLResult = _duHWMgr.getFWScanLimitCheckStatus();
 
     printf("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d\n", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);

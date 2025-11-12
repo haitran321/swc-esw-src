@@ -1,5 +1,5 @@
-#ifndef DCUStatusRptMsg_H
-#define DCUStatusRptMsg_H
+#ifndef DCUDetailedStatusRptMsg_H
+#define DCUDetailedStatusRptMsg_H
 
 #include <string>
 
@@ -8,7 +8,7 @@ using namespace std;
 #include "ReportMessage.h"
 #include "SWCMsgTypes.h"
 
-class DCUStatusRptMsg : public ReportMessage
+class DCUDetailedStatusRptMsg : public ReportMessage
 {
 public:
 
@@ -16,13 +16,13 @@ public:
     * Constructor
     *
     */
-    DCUStatusRptMsg();
+    DCUDetailedStatusRptMsg();
 
     /**
     * Destructor
     *
     */
-    virtual ~DCUStatusRptMsg(){};
+    virtual ~DCUDetailedStatusRptMsg(){};
 
     /**
     * Method buildMsg builds the message given the current member 
@@ -42,7 +42,7 @@ private:
 
 };
 
-void DCUStatusRptMsg::setDCUStatus(DCUStatusParamsType status)
+void DCUDetailedStatusRptMsg::setDCUStatus(DCUStatusParamsType status)
 {
     _data = status;
 }

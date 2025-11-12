@@ -64,9 +64,6 @@ class TUCmdMgr : public EventProcessor
         void processStatusTimer();
         ElapsedTimer eInterruptProcessing;
         Timestamp ts;
-
-        int runSWScanLimitCheck(float alpha, float beta);
-
 };
 
 

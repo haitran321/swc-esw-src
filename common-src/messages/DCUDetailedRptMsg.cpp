@@ -1,12 +1,12 @@
-#include "DCUStatusRptMsg.h"
+#include "DCUDetailedStatusRptMsg.h"
 
-DCUStatusRptMsg::DCUStatusRptMsg() :
-ReportMessage(DCU_STATUS_RPT_MSG_ID)
+DCUDetailedStatusRptMsg::DCUDetailedStatusRptMsg() :
+ReportMessage(DCU_DETAILED_STATUS_RPT_MSG_ID)
 {
     memset(&_data, 0, sizeof(_data));
 }
 
-STATUS DCUStatusRptMsg::buildMsg()
+STATUS DCUDetailedStatusRptMsg::buildMsg()
 {
     STATUS rc = OK;
     // Build header.

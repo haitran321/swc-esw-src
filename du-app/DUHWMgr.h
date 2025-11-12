@@ -63,7 +63,7 @@ class DUHWMgr : public Uncopyable
                                    HealthState dcuStatus_,
                                    int dcuNum_);
 
-        SWCStatusDataType getSWCStatus();
+        SWCOverallStatusDataType getSWCStatus();
 
         void processDCUStatus(DCUStatusParamsType status);
 
@@ -74,8 +74,6 @@ class DUHWMgr : public Uncopyable
         int getDCUStatusQueueSize();
 
         void addDCUStatusToQueue(DCUStatusParamsType status);
-
-        int runSWScanLimitCheck(float alpha, float beta);
 
     protected:
         /**

@@ -9,15 +9,13 @@
 #include "ShutdownCmdMsg.h"
 #include "SteeringCmdMsg.h"
 #include "StatusRequestCmdMsg.h"
-#include "SWCStatusRptMsg.h"
-#include "DCUStatusRptMsg.h"
-#include "DUAStatusRptMsg.h"
-#include "DUBStatusRptMsg.h"
-#include "PSStatusRptMsg.h"
-#include "TempStatusRptMsg.h"
+#include "SWCOverallStatusRptMsg.h"
+#include "DCUDetailedStatusRptMsg.h"
+#include "SWCDetailedStatusRptMsg.h"
 #include "SWCAckRptMsg.h"
 #include "ConfigDataManager.h"
 #include "DeviceFactory.h"
+#include "ScanLimitCheck.h"
 #include "EndianUtils.h"
 #include "DeviceUtilities.h"
 
@@ -330,8 +328,8 @@ void DUACmdMgr::processSLInterrupt()
     printf("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d\n", atbAlpha, atbBeta, armAlpha, armBeta);
     _logger.logDebug("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d", atbAlpha, atbBeta, armAlpha, armBeta);
 
-    int armSWSLResult = _duHWMgr.runSWScanLimitCheck(float(atbAlpha), float(armBeta));
-    int atbSWSLResult = _duHWMgr.runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
+    int armSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(armBeta));
+    int atbSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
     int fwSLResult = _duHWMgr.getFWScanLimitCheckStatus();
 
     printf("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d\n", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
@@ -553,38 +551,38 @@ void DUACmdMgr::processTestServerMsg()
             printf("requestType = %d, dcuNum = %d\n", params->requestType, params->dcuNum);
             _logger.logDebug("requestType = %d, dcuNum = %d", params->requestType, params->dcuNum);
 
-            if (params->requestType == SWCDetailedStatus)
+            if (params->requestType == SWCOverallStatus)
             {
                 _logger.logInfo("Sending SWCDetailedStatus Rpt To Test Server");
                 printf("Sending SWCDetailedStatus Rpt To Test Server\n");
-                SWCStatusDataType swcStatus = _duHWMgr.getSWCStatus();
-                SWCStatusRptMsg swcStatusRptMsg;
-                swcStatusRptMsg.setSWCStatus(swcStatus.swcStatus);
-                swcStatusRptMsg.setSWCConfig(swcStatus.swcConfig);
-                swcStatusRptMsg.setSWCMode(swcStatus.swcMode);
-                swcStatusRptMsg.setAlphaDUStatus(swcStatus.swcAlphaDUStatus);
-                swcStatusRptMsg.setBetaDUStatus(swcStatus.swcBetaDUStatus);
-                swcStatusRptMsg.setAlphaDCURolledUpStatus(swcStatus.swcAlphaDCURolledUpStatus);
-                swcStatusRptMsg.setBetaDCURolledUpStatus(swcStatus.swcBetaDCURolledUpStatus);
-                swcStatusRptMsg.setTempStatus(swcStatus.swcTempStatus);
-                swcStatusRptMsg.setPwrSuppliesStatus(swcStatus.swcPwrSuppliesStatus);
-                swcStatusRptMsg.setATBStatus(swcStatus.swcATBStatus);
-                swcStatusRptMsg.setTUHWStatus(swcStatus.testUnitHWStatus);
+                SWCOverallStatusDataType swcStatus = _duHWMgr.getSWCStatus();
+                SWCOverallStatusRptMsg swcOverallStatusRptMsg;
+                swcOverallStatusRptMsg.setSWCStatus(swcStatus.swcStatus);
+                swcOverallStatusRptMsg.setSWCConfig(swcStatus.swcConfig);
+                swcOverallStatusRptMsg.setSWCMode(swcStatus.swcMode);
+                swcOverallStatusRptMsg.setAlphaDUStatus(swcStatus.swcAlphaDUStatus);
+                swcOverallStatusRptMsg.setBetaDUStatus(swcStatus.swcBetaDUStatus);
+                swcOverallStatusRptMsg.setAlphaDCURolledUpStatus(swcStatus.swcAlphaDCURolledUpStatus);
+                swcOverallStatusRptMsg.setBetaDCURolledUpStatus(swcStatus.swcBetaDCURolledUpStatus);
+                swcOverallStatusRptMsg.setTempStatus(swcStatus.swcTempStatus);
+                swcOverallStatusRptMsg.setPwrSuppliesStatus(swcStatus.swcPwrSuppliesStatus);
+                swcOverallStatusRptMsg.setATBStatus(swcStatus.swcATBStatus);
+                swcOverallStatusRptMsg.setTUHWStatus(swcStatus.testUnitHWStatus);
                 for (int dcu = 0; dcu < NUM_DCU; dcu++)
                 {
-                    swcStatusRptMsg.setAlphaDCUStatus(dcu, swcStatus.alphaDCU[dcu]);
+                    swcOverallStatusRptMsg.setAlphaDCUStatus(dcu, swcStatus.alphaDCU[dcu]);
                 }
 
                 for (int dcu = 0; dcu < NUM_DCU; dcu++)
                 {
-                    swcStatusRptMsg.setBetaDCUStatus(dcu, swcStatus.betaDCU[dcu]);
+                    swcOverallStatusRptMsg.setBetaDCUStatus(dcu, swcStatus.betaDCU[dcu]);
                 }
-                swcStatusRptMsg.setLastAlpha(lastAlpha);
-                swcStatusRptMsg.setLastBeta(lastBeta);
-                swcStatusRptMsg.buildMsg();
-                int msgSize = swcStatusRptMsg.getBufSize();
-                swcStatusRptMsg.headerByteSwapToNetwork();
-                _toTestServer->write(swcStatusRptMsg.getBuf(), sizeof(SWCStatusRptMsg));
+                swcOverallStatusRptMsg.setLastAlpha(lastAlpha);
+                swcOverallStatusRptMsg.setLastBeta(lastBeta);
+                swcOverallStatusRptMsg.buildMsg();
+                int msgSize = swcOverallStatusRptMsg.getBufSize();
+                swcOverallStatusRptMsg.headerByteSwapToNetwork();
+                _toTestServer->write(swcOverallStatusRptMsg.getBuf(), sizeof(SWCOverallStatusRptMsg));
             }
 
             else if ((params->requestType == AlphaDCUDetailedStatus) || (params->requestType == BetaDCUDetailedStatus))
@@ -603,97 +601,54 @@ void DUACmdMgr::processTestServerMsg()
                     printf("Sending BetaDCUDetailedStatus Rpt for DCU %d To Test Server\n", params->dcuNum);
                 }
                 
-                DCUStatusRptMsg dcuStatusRptMsg;
-                dcuStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
-                dcuStatusRptMsg.buildMsg();
-                int msgSize = dcuStatusRptMsg.getBufSize();
-                dcuStatusRptMsg.headerByteSwapToNetwork();
-                _toTestServer->write(dcuStatusRptMsg.getBuf(), sizeof(DCUStatusRptMsg));
+                DCUDetailedStatusRptMsg dcuDetailedStatusRptMsg;
+                dcuDetailedStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
+                dcuDetailedStatusRptMsg.buildMsg();
+                int msgSize = dcuDetailedStatusRptMsg.getBufSize();
+                dcuDetailedStatusRptMsg.headerByteSwapToNetwork();
+                _toTestServer->write(dcuDetailedStatusRptMsg.getBuf(), sizeof(DCUDetailedStatusRptMsg));
             }
 
-            else if (params->requestType == AlphaDUDetailedStatus)
+            else if (params->requestType == SWCDetailedStatus)
             {
                 printf("Received AlphaDUDetailedStatus request\n");
 
-                DUAStatusParamsType duaStatus;
-                duaStatus.overall = GO;
-                duaStatus.status1 = NO_GO;
-                duaStatus.status2 = GO;
-                duaStatus.status3 = GO;
-                duaStatus.status4 = GO;
-                duaStatus.status5 = GO;
+                SWCDetailedStatusDataType swcDetailedStatus;
+                swcDetailedStatus.alphaOverall = GO;
+                swcDetailedStatus.alphaStatus1 = NO_GO;
+                swcDetailedStatus.alphaStatus2 = GO;
+                swcDetailedStatus.alphaStatus3 = GO;
+                swcDetailedStatus.alphaStatus4 = GO;
+                swcDetailedStatus.alphaStatus5 = GO;
 
-                DUAStatusRptMsg duaStatusRptMsg;
-//              duaStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
-                duaStatusRptMsg.setDUAStatus(duaStatus);
-                duaStatusRptMsg.buildMsg();
-                int msgSize = duaStatusRptMsg.getBufSize();
-                duaStatusRptMsg.headerByteSwapToNetwork();
-                _toTestServer->write(duaStatusRptMsg.getBuf(), sizeof(DUAStatusRptMsg));
-            }
+                swcDetailedStatus.betaOverall = GO;
+                swcDetailedStatus.betaStatus1 = GO;
+                swcDetailedStatus.betaStatus2 = NO_GO;
+                swcDetailedStatus.betaStatus3 = GO;
+                swcDetailedStatus.betaStatus4 = GO;
+                swcDetailedStatus.betaStatus5 = GO;
 
-            else if (params->requestType == BetaDUDetailedStatus)
-            {
-                printf("Received BetaDUDetailedStatus request\n");
+                swcDetailedStatus.psOverall = GO;
+                swcDetailedStatus.psStatus1 = GO;
+                swcDetailedStatus.psStatus2 = GO;
+                swcDetailedStatus.psStatus3 = NO_GO;
+                swcDetailedStatus.psStatus4 = GO;
+                swcDetailedStatus.psStatus5 = GO;
 
-                DUBStatusParamsType dubStatus;
-                dubStatus.overall = GO;
-                dubStatus.status1 = GO;
-                dubStatus.status2 = NO_GO;
-                dubStatus.status3 = GO;
-                dubStatus.status4 = GO;
-                dubStatus.status5 = GO;
+                swcDetailedStatus.tempOverall = GO;
+                swcDetailedStatus.tempStatus1 = GO;
+                swcDetailedStatus.tempStatus2 = GO;
+                swcDetailedStatus.tempStatus3 = GO;
+                swcDetailedStatus.tempStatus4 = NO_GO;
+                swcDetailedStatus.tempStatus5 = GO;
 
-                DUBStatusRptMsg dubStatusRptMsg;
-//              duaStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
-                dubStatusRptMsg.setDUBStatus(dubStatus);
-                dubStatusRptMsg.buildMsg();
-                int msgSize = dubStatusRptMsg.getBufSize();
-                dubStatusRptMsg.headerByteSwapToNetwork();
-                _toTestServer->write(dubStatusRptMsg.getBuf(), sizeof(DUBStatusRptMsg));
 
-            }
-
-            else if (params->requestType == PSDetailedStatus)
-            {
-                printf("Received PSDetailedStatus request\n");
-
-                PSStatusParamsType psStatus;
-                psStatus.overall = GO;
-                psStatus.status1 = GO;
-                psStatus.status2 = GO;
-                psStatus.status3 = NO_GO;
-                psStatus.status4 = GO;
-                psStatus.status5 = GO;
-
-                PSStatusRptMsg psStatusRptMsg;
-//              duaStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
-                psStatusRptMsg.setPSStatus(psStatus);
-                psStatusRptMsg.buildMsg();
-                int msgSize = psStatusRptMsg.getBufSize();
-                psStatusRptMsg.headerByteSwapToNetwork();
-                _toTestServer->write(psStatusRptMsg.getBuf(), sizeof(PSStatusRptMsg));
-            }
-
-            else if (params->requestType == TempDetailedStatus)
-            {
-                printf("Received TempDetailedStatus request\n");
-
-                TempStatusParamsType tempStatus;
-                tempStatus.overall = GO;
-                tempStatus.status1 = GO;
-                tempStatus.status2 = GO;
-                tempStatus.status3 = NO_GO;
-                tempStatus.status4 = GO;
-                tempStatus.status5 = GO;
-
-                TempStatusRptMsg tempStatusRptMsg;
-//              duaStatusRptMsg.setDCUStatus(_duHWMgr.getDCUStatusFromSW(type, params->dcuNum));
-                tempStatusRptMsg.setTempStatus(tempStatus);
-                tempStatusRptMsg.buildMsg();
-                int msgSize = tempStatusRptMsg.getBufSize();
-                tempStatusRptMsg.headerByteSwapToNetwork();
-                _toTestServer->write(tempStatusRptMsg.getBuf(), sizeof(TempStatusRptMsg));
+                SWCDetailedStatusRptMsg swcDetailedStatusRptMsg;
+                swcDetailedStatusRptMsg.setSWCDetailedStatus(swcDetailedStatus);
+                swcDetailedStatusRptMsg.buildMsg();
+                int msgSize = swcDetailedStatusRptMsg.getBufSize();
+                swcDetailedStatusRptMsg.headerByteSwapToNetwork();
+                _toTestServer->write(swcDetailedStatusRptMsg.getBuf(), sizeof(SWCDetailedStatusRptMsg));
             }
 
             else

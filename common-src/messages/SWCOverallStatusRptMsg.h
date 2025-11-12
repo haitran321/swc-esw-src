@@ -1,5 +1,5 @@
-#ifndef SWCStatusRptMsg_H
-#define SWCStatusRptMsg_H
+#ifndef SWCOverallStatusRptMsg_H
+#define SWCOverallStatusRptMsg_H
 
 #include <string>
 
@@ -8,7 +8,7 @@ using namespace std;
 #include "ReportMessage.h"
 #include "SWCMsgTypes.h"
 
-class SWCStatusRptMsg : public ReportMessage
+class SWCOverallStatusRptMsg : public ReportMessage
 {
 public:
 
@@ -16,13 +16,13 @@ public:
     * Constructor
     *
     */
-    SWCStatusRptMsg();
+    SWCOverallStatusRptMsg();
 
     /**
     * Destructor
     *
     */
-    virtual ~SWCStatusRptMsg(){};
+    virtual ~SWCOverallStatusRptMsg(){};
 
     /**
     * Method buildMsg builds the message given the current member 
@@ -66,82 +66,82 @@ private:
 
     /** Status Report data */
 
-    SWCStatusDataType _data;
+    SWCOverallStatusDataType _data;
 
 };
 
-void SWCStatusRptMsg::setSWCStatus(HealthState health)
+void SWCOverallStatusRptMsg::setSWCStatus(HealthState health)
 {
     _data.swcStatus = health;
 }
 
-void SWCStatusRptMsg::setSWCConfig(SWC_CONFIG config)
+void SWCOverallStatusRptMsg::setSWCConfig(SWC_CONFIG config)
 {
     _data.swcConfig = config;
 }
 
-void SWCStatusRptMsg::setSWCMode(SWC_MODE mode)
+void SWCOverallStatusRptMsg::setSWCMode(SWC_MODE mode)
 {
     _data.swcMode = mode;
 }
 
-void SWCStatusRptMsg::setAlphaDUStatus(HealthState health)
+void SWCOverallStatusRptMsg::setAlphaDUStatus(HealthState health)
 {
     _data.swcAlphaDUStatus = health;
 }
 
-void SWCStatusRptMsg::setBetaDUStatus(HealthState health)
+void SWCOverallStatusRptMsg::setBetaDUStatus(HealthState health)
 {
     _data.swcBetaDUStatus = health;
 }
 
-void SWCStatusRptMsg::setAlphaDCURolledUpStatus(DCURolledUpStatus status)
+void SWCOverallStatusRptMsg::setAlphaDCURolledUpStatus(DCURolledUpStatus status)
 {
     _data.swcAlphaDCURolledUpStatus = status;
 }
 
-void SWCStatusRptMsg::setBetaDCURolledUpStatus(DCURolledUpStatus status)
+void SWCOverallStatusRptMsg::setBetaDCURolledUpStatus(DCURolledUpStatus status)
 {
     _data.swcBetaDCURolledUpStatus = status;
 }
 
-void SWCStatusRptMsg::setTempStatus(HealthState health)
+void SWCOverallStatusRptMsg::setTempStatus(HealthState health)
 {
     _data.swcTempStatus = health;
 }
 
-void SWCStatusRptMsg::setPwrSuppliesStatus(HealthState health)
+void SWCOverallStatusRptMsg::setPwrSuppliesStatus(HealthState health)
 {
     _data.swcPwrSuppliesStatus = health;
 }
 
-void SWCStatusRptMsg::setATBStatus(HealthState health)
+void SWCOverallStatusRptMsg::setATBStatus(HealthState health)
 {
     _data.swcATBStatus = health;
 }
 
-void SWCStatusRptMsg::setTUHWStatus(HealthState health)
+void SWCOverallStatusRptMsg::setTUHWStatus(HealthState health)
 {
     _data.testUnitHWStatus = health;
 }
 
-void SWCStatusRptMsg::setAlphaDCUStatus(int dcu, HealthState health)
+void SWCOverallStatusRptMsg::setAlphaDCUStatus(int dcu, HealthState health)
 {
     _data.alphaDCU[dcu] = health;
 }
 
-void SWCStatusRptMsg::setBetaDCUStatus(int dcu, HealthState health)
+void SWCOverallStatusRptMsg::setBetaDCUStatus(int dcu, HealthState health)
 {
     _data.betaDCU[dcu] = health;
 }
 
-void SWCStatusRptMsg::setLastAlpha(int alpha)
+void SWCOverallStatusRptMsg::setLastAlpha(int alpha)
 {
     _data.lastAlpha = alpha;
     printf("lastAlpha = %d\n", _data.lastAlpha);
 }
 
-void SWCStatusRptMsg::setLastBeta(int beta)
+void SWCOverallStatusRptMsg::setLastBeta(int beta)
 {
     _data.lastBeta = beta;
     printf("lastBeta = %d\n", _data.lastBeta);

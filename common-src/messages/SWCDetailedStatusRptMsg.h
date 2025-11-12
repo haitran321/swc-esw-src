@@ -1,5 +1,5 @@
-#ifndef TempStatusRptMsg_H
-#define TempStatusRptMsg_H
+#ifndef SWCDetailedStatusRptMsg_H
+#define SWCDetailedStatusRptMsg_H
 
 #include <string>
 
@@ -8,7 +8,7 @@ using namespace std;
 #include "ReportMessage.h"
 #include "SWCMsgTypes.h"
 
-class TempStatusRptMsg : public ReportMessage
+class SWCDetailedStatusRptMsg : public ReportMessage
 {
 public:
 
@@ -16,13 +16,13 @@ public:
     * Constructor
     *
     */
-    TempStatusRptMsg();
+    SWCDetailedStatusRptMsg();
 
     /**
     * Destructor
     *
     */
-    virtual ~TempStatusRptMsg(){};
+    virtual ~SWCDetailedStatusRptMsg(){};
 
     /**
     * Method buildMsg builds the message given the current member 
@@ -32,17 +32,17 @@ public:
     */
     virtual STATUS buildMsg();
 
-    inline void setTempStatus(TempStatusParamsType status);
+    inline void setSWCDetailedStatus(SWCDetailedStatusDataType status);
 
 private:
 
     /** Status Report data */
 
-    TempStatusParamsType _data;
+    SWCDetailedStatusDataType _data;
 
 };
 
-void TempStatusRptMsg::setTempStatus(TempStatusParamsType status)
+void SWCDetailedStatusRptMsg::setSWCDetailedStatus(SWCDetailedStatusDataType status)
 {
     _data = status;
 }
