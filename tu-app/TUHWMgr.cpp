@@ -33,7 +33,7 @@ STATUS TUHWMgr::initialize()
 
     // Get config parameters
     ConfigDataManager &configs = ConfigDataManager::getInstance();
-    rc = rc || configs.get("MODULE_TYPE", MODULE_TYPE);
+//  rc = rc || configs.get("MODULE_TYPE", MODULE_TYPE);
 
     // Open /dev/mem device
     _tuDev = new TUDevice(APB_BUS_OFFSET);
@@ -71,6 +71,11 @@ void TUHWMgr::getRegs(int startReg, int endReg)
 void TUHWMgr::setReg(int offset, int data)
 {
     _tuDev->writeReg(offset, data);
+}
+
+int TUHWMgr::getBrdStatus()
+{
+    return (_tuDev->getBrdStatusReg());
 }
 
 int TUHWMgr::getArmKSine(RFCC_CH ch)

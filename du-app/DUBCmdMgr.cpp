@@ -188,7 +188,10 @@ STATUS DUBCmdMgr::start()
         int queueSize = _duHWMgr.getDCUStatusQueueSize();
         if (queueSize > 0)
         {
-            DCUStatusParamsType status = _duHWMgr.getDCUStatusFromQueue();
+            DCUStatusParamsType dcuStatus = _duHWMgr.getDCUStatusFromQueue();
+            BetaDCUStatusParamsType status;
+            status.msgID = BETA_DCU_STATUS;
+            status.betaDCUStatus = dcuStatus;
             sendDCUStatusToDUA(status);
             usleep(1*1000);   // Sleep 1 msecs
         }
@@ -369,7 +372,10 @@ void DUBCmdMgr::processStatusTimer()
         int queueSize = _duHWMgr.getDCUStatusQueueSize();
         if (queueSize > 0)
         {
-            DCUStatusParamsType status = _duHWMgr.getDCUStatusFromQueue();
+            DCUStatusParamsType dcuStatus = _duHWMgr.getDCUStatusFromQueue();
+            BetaDCUStatusParamsType status;
+            status.msgID = BETA_DCU_STATUS;
+            status.betaDCUStatus = dcuStatus;
             sendDCUStatusToDUA(status);
             usleep(1*1000);   // Sleep 1 msecs
         }
@@ -476,9 +482,9 @@ void DUBCmdMgr::processTestServerMsg()
     }
 }
 
-void DUBCmdMgr::sendDCUStatusToDUA(DCUStatusParamsType status)
+void DUBCmdMgr::sendDCUStatusToDUA(BetaDCUStatusParamsType status)
 {
-    _localHWStatus->write(&status, sizeof(DCUStatusParamsType));
+    _localHWStatus->write(&status, sizeof(BetaDCUStatusParamsType));
 }
 
 

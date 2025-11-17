@@ -16,7 +16,7 @@
 /** Insert padding into a structure. */
 #define PADDING(bytes) unsigned char UNIQUE(padding)[bytes]
 
-/** CSPU message identifiers */
+/** Test Server message identifiers */
 
 typedef enum
 {
@@ -29,7 +29,7 @@ typedef enum
     SWC_ACK_RPT_MSG_ID              = 14,
 } MessageId;
 
-/** RIMS message header */
+/** Test Server message header */
 
 typedef struct
 {
@@ -40,7 +40,7 @@ typedef struct
     int recLen;
 } MsgHeaderType;
 
-/** Maximum text field size in RIMS messages */
+/** Maximum text field size in Test Server messages */
 
 #define MAX_TEXT_FIELD_SIZE 512
 
@@ -162,6 +162,13 @@ typedef struct
     HealthState betaStatus3;
     HealthState betaStatus4;
     HealthState betaStatus5;
+    // TU
+    HealthState tuOverall;
+    HealthState tuStatus1;
+    HealthState tuStatus2;
+    HealthState tuStatus3;
+    HealthState tuStatus4;
+    HealthState tuStatus5;
     // Pwr Supplies
     HealthState psOverall;
     HealthState psStatus1;
@@ -210,5 +217,25 @@ enum
     RadarNetRptError,
     ShutdownError
 };
+
+// Internal messages between embedded SW components: DU Alpha, DU Beta, Test Unit
+typedef enum 
+{
+    BETA_DCU_STATUS = 1,
+    TU_STATUS       = 2
+}InternalMsgID;
+
+typedef struct
+{
+    InternalMsgID msgID;
+    DCUStatusParamsType betaDCUStatus;
+}BetaDCUStatusParamsType;
+
+typedef struct
+{
+    InternalMsgID msgID;
+//  TUParamsType tuStatus;
+}TUStatusParamsType;
+
 
 #endif

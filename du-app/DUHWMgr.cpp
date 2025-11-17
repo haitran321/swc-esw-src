@@ -133,6 +133,11 @@ void DUHWMgr::setReg(int offset, int data)
     _duDev->writeReg(offset, data);
 }
 
+int DUHWMgr::getBrdStatus()
+{
+    return (_duDev->getBrdStatusReg());
+}
+
 int DUHWMgr::getArmKSine(RFCC_CH ch)
 {
     return(_duDev->getArmKSineReg(ch));
@@ -401,7 +406,7 @@ DCUStatusParamsType DUHWMgr::readDCUFWStatus(int reg)
         fwStatus = 0xb86401;
         fwStatus = DeviceUtilities::updateReg(DCU_LOCATION_STATUS_MASK, fwStatus, reg+1);
         // Alternate between Red and Green
-        fwStatus = DeviceUtilities::updateReg(DCU_BIT_OVERALL_STATUS_MASK, fwStatus, reg%2);
+        fwStatus = DeviceUtilities::updateReg(DCU_BIT_OVERALL_STATUS_MASK, fwStatus, (reg+1)%2);
     }
 
     // Get location number from FW

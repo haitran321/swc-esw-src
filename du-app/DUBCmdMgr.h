@@ -60,7 +60,7 @@ class DUBCmdMgr : public EventProcessor
         void processConfigInterrupt();
         TimerDevice* _timerDevStatus;
         void processStatusTimer();
-        void sendDCUStatusToDUA(DCUStatusParamsType status);
+        void sendDCUStatusToDUA(BetaDCUStatusParamsType status);
         ElapsedTimer eInterruptProcessing;
         Timestamp ts;
 

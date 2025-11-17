@@ -27,6 +27,8 @@ class TUHWMgr : public Uncopyable
         void getRegs(int startReg, int endReg);
         void setReg(int offset, int data);
 
+        int getBrdStatus();
+
         int getArmKSine(RFCC_CH ch);
         void setArmKSine(RFCC_CH ch, int val);
 

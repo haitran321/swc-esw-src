@@ -33,6 +33,14 @@ STATUS SWCDetailedStatusRptMsg::buildMsg()
     _data.betaStatus4 = (HealthState)toNetworkInt(_data.betaStatus4);
     _data.betaStatus5 = (HealthState)toNetworkInt(_data.betaStatus5);
 
+    // TU status
+    _data.tuOverall = (HealthState)toNetworkInt(_data.tuOverall);
+    _data.tuStatus1 = (HealthState)toNetworkInt(_data.tuStatus1);
+    _data.tuStatus2 = (HealthState)toNetworkInt(_data.tuStatus2);
+    _data.tuStatus3 = (HealthState)toNetworkInt(_data.tuStatus3);
+    _data.tuStatus4 = (HealthState)toNetworkInt(_data.tuStatus4);
+    _data.tuStatus5 = (HealthState)toNetworkInt(_data.tuStatus5);
+
     // PS status
     _data.psOverall = (HealthState)toNetworkInt(_data.psOverall);
     _data.psStatus1 = (HealthState)toNetworkInt(_data.psStatus1);

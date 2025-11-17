@@ -628,6 +628,13 @@ void DUACmdMgr::processTestServerMsg()
                 swcDetailedStatus.betaStatus4 = GO;
                 swcDetailedStatus.betaStatus5 = GO;
 
+                swcDetailedStatus.tuOverall = GO;
+                swcDetailedStatus.tuStatus1 = GO;
+                swcDetailedStatus.tuStatus2 = GO;
+                swcDetailedStatus.tuStatus3 = GO;
+                swcDetailedStatus.tuStatus4 = GO;
+                swcDetailedStatus.tuStatus5 = NO_GO;
+
                 swcDetailedStatus.psOverall = GO;
                 swcDetailedStatus.psStatus1 = GO;
                 swcDetailedStatus.psStatus2 = GO;
@@ -670,26 +677,30 @@ void DUACmdMgr::processLocalHWStatusMsg()
     printf("Received Beta DCU data %d\n", counter);
     size_t bytesRead = 0;
 
-    DCUStatusParamsType *betaDCUStatus;
-    betaDCUStatus = &_betaDCUStatus[betaDCUStatusCounter];
-    betaDCUStatusCounter++;
+    BetaDCUStatusParamsType *localStatus;
+    localStatus = &_localStatus[localStatusCounter];
+    localStatusCounter++;
 
-    if (betaDCUStatusCounter >= 4)
+    if (localStatusCounter >= 4)
     {
-        betaDCUStatusCounter = 0;
+        localStatusCounter = 0;
     }
 
     // Read UDP data
-    if (_localHWStatus->read((char *)betaDCUStatus, sizeof(DCUStatusParamsType), bytesRead) != OK)
+    if (_localHWStatus->read((char *)localStatus, sizeof(BetaDCUStatusParamsType), bytesRead) != OK)
     {
         printf("Error reading from _localHWStatus\n");
         return;
     }
     else
     {
-        printf("Received % bytes: Group %d DCU %d\n", bytesRead, betaDCUStatus->group, betaDCUStatus->number);
-        // Update local SW status and add to send queue
-        _duHWMgr.processDCUStatus(*betaDCUStatus);
+        // Get message id
+        if (localStatus->msgID == BETA_DCU_STATUS)
+        {
+            printf("Received % bytes: Group %d DCU %d\n", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.number);
+            // Update local SW status and add to send queue
+            _duHWMgr.processDCUStatus(localStatus->betaDCUStatus);
+        }
     }
 }
 
