@@ -184,6 +184,13 @@ STATUS TUCmdMgr::start()
     // Initialize HW Manager
     _tuHWMgr.initialize();
 
+    // Read TU status and send to Alpha DU
+    DUTUStatusMsg tuStatus;
+    tuStatus.msgID = TU_STATUS;
+    tuStatus.dutuStatus = _tuHWMgr.readTUStatus();
+    sendTUStatusToDUA(tuStatus);
+    usleep(1*1000);   // Sleep 1 msecs
+
     // Open UIO device for Scan Limit HW Interrupt
     _uioDevSL = new UIODevice(AXI_INT_121_OFFSET, 0);
 
@@ -307,7 +314,12 @@ void TUCmdMgr::processStatusTimer()
         printf("In processTimer: timerCounter = %d\n", timerCounter);
 //  }
 
-    // Send status to Alpha DU
+    // Read TU status and send to Alpha DU
+    DUTUStatusMsg tuStatus;
+    tuStatus.msgID = TU_STATUS;
+    tuStatus.dutuStatus = _tuHWMgr.readTUStatus();
+    sendTUStatusToDUA(tuStatus);
+    usleep(1*1000);   // Sleep 1 msecs
 
 	_timerDevStatus->read();
 }
@@ -395,6 +407,10 @@ void TUCmdMgr::processTestServerMsg()
     }
 }
 
+void TUCmdMgr::sendTUStatusToDUA(DUTUStatusMsg status)
+{
+    _localHWStatus->write(&status, sizeof(DUTUStatusMsg));
+}
 
 
 

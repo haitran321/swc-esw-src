@@ -77,6 +77,23 @@ class DUHWMgr : public Uncopyable
 
         void addDCUStatusToQueue(DCUStatusParamsType status);
 
+        DUTUStatusType readDUStatus();
+        void processDUAStatus(DUTUStatusType status);
+        void processDUBStatus(DUTUStatusType status);
+        void processTUStatus(DUTUStatusType status);
+        void processIOModuleStatus();
+        void computeDCURolledUpStatus();
+
+        DUTUStatusType getDUAStatus();
+        DUTUStatusType getDUBStatus();
+        DUTUStatusType getTUStatus();
+        TempStatusType getTempStatus();
+        PSStatusType getPSStatus();
+        HealthState getSWCOverallStatus();
+        SWC_CONFIG getSWCConfigStatus();
+        SWC_MODE getSWCModeStatus();
+        int getTestEnabledStatus();
+
     protected:
         /**
          * Sends pertinent state data for this event processor to standard output.
@@ -103,12 +120,13 @@ class DUHWMgr : public Uncopyable
         SWC_CONFIG _sysConfig;
         SWC_MODE _mode;
         int _testEnabled;
-        HealthState _alphaDUStatus;
-        HealthState _betaDUStatus;
+        DUTUStatusType _alphaDUStatus;
+        DUTUStatusType _betaDUStatus;
+        DUTUStatusType _tuStatus;
         DCURolledUpStatus _alphaDCURolledUpStatus;
         DCURolledUpStatus _betaDCURolledUpStatus;
-        HealthState _tempStatus;
-        HealthState _pwrStatus;
+        TempStatusType _tempStatus;
+        PSStatusType _pwrStatus;
         HealthState _atbStatus;
         RFCC_CH _dcuGroup;
         int _dcuNum;
@@ -133,6 +151,7 @@ class DUHWMgr : public Uncopyable
         void setDCUNumberStatusBit(int val);
 
         int USE_STATUS_EMULATOR;
+        int fakeDCUFWStatus[NUM_RFCC_CH][NUM_DCU];
 
 };
 

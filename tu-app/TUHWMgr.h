@@ -8,6 +8,7 @@
 #include "Uncopyable.h"
 #include "TUDevice.h"
 #include "Logger.h"
+#include "SWCMsgTypes.h"
 
 class TUHWMgr : public Uncopyable
 {
@@ -37,6 +38,8 @@ class TUHWMgr : public Uncopyable
         void toggleRLTDSignal();
         void toggleRLCPSignal();
         void toggleRLSCSignal();
+
+        DUTUStatusType readTUStatus();
 
     protected:
         /**

@@ -72,7 +72,7 @@ class DUACmdMgr : public EventProcessor
         int lastAlpha;
         int lastBeta;
 
-        BetaDCUStatusParamsType _localStatus[4];
+        BetaDCUStatusMsg _localStatus[4];
         int localStatusCounter;
 
 };

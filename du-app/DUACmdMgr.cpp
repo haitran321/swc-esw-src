@@ -218,6 +218,9 @@ STATUS DUACmdMgr::start()
     // Initialize HW Manager
     _duHWMgr.initialize(MODULE_TYPE);
 
+    // Read Alpha DU status
+    _duHWMgr.processDUAStatus(_duHWMgr.readDUStatus());
+
     // Open UIO device for Scan Limit HW Interrupt
     _uioDevSL = new UIODevice(AXI_INT_121_OFFSET, 0);
 
@@ -418,20 +421,16 @@ void DUACmdMgr::processStatusTimer()
         statusCounter = 0;
     }
 
+    // Read Alpha DU status
+    _duHWMgr.processDUAStatus(_duHWMgr.readDUStatus());
+
     printf("Read all DCUs status to update local queue.\n");
     _logger.logDebug("Read all DCUs status to update local queue.");
     _duHWMgr.readDCUStatus();
 
-    // For testing to be removed
     int queueSize = _duHWMgr.getDCUStatusQueueSize();
     printf("DCU status queue size = %d\n", queueSize);
     _logger.logDebug("DCU status queue size = %d", queueSize);
-    if (queueSize > 0)
-    {
-        DCUStatusParamsType status = _duHWMgr.getDCUStatusFromQueue();
-        _duHWMgr.setDCUStatusToTwgs(status.group, status.dcuStatus.overallStatus, status.number);
-    }
-    // End For testing
 
     _timerDevStatus->read();
 }
@@ -611,44 +610,41 @@ void DUACmdMgr::processTestServerMsg()
 
             else if (params->requestType == SWCDetailedStatus)
             {
-                printf("Received AlphaDUDetailedStatus request\n");
+                printf("Received SWCDetailedStatus request\n");
 
                 SWCDetailedStatusDataType swcDetailedStatus;
-                swcDetailedStatus.alphaOverall = GO;
-                swcDetailedStatus.alphaStatus1 = NO_GO;
-                swcDetailedStatus.alphaStatus2 = GO;
-                swcDetailedStatus.alphaStatus3 = GO;
-                swcDetailedStatus.alphaStatus4 = GO;
-                swcDetailedStatus.alphaStatus5 = GO;
 
-                swcDetailedStatus.betaOverall = GO;
-                swcDetailedStatus.betaStatus1 = GO;
-                swcDetailedStatus.betaStatus2 = NO_GO;
-                swcDetailedStatus.betaStatus3 = GO;
-                swcDetailedStatus.betaStatus4 = GO;
-                swcDetailedStatus.betaStatus5 = GO;
+                swcDetailedStatus.swcStatus = _duHWMgr.getSWCOverallStatus();
 
-                swcDetailedStatus.tuOverall = GO;
-                swcDetailedStatus.tuStatus1 = GO;
-                swcDetailedStatus.tuStatus2 = GO;
-                swcDetailedStatus.tuStatus3 = GO;
-                swcDetailedStatus.tuStatus4 = GO;
-                swcDetailedStatus.tuStatus5 = NO_GO;
-
-                swcDetailedStatus.psOverall = GO;
-                swcDetailedStatus.psStatus1 = GO;
-                swcDetailedStatus.psStatus2 = GO;
-                swcDetailedStatus.psStatus3 = NO_GO;
-                swcDetailedStatus.psStatus4 = GO;
-                swcDetailedStatus.psStatus5 = GO;
-
-                swcDetailedStatus.tempOverall = GO;
-                swcDetailedStatus.tempStatus1 = GO;
-                swcDetailedStatus.tempStatus2 = GO;
-                swcDetailedStatus.tempStatus3 = GO;
-                swcDetailedStatus.tempStatus4 = NO_GO;
-                swcDetailedStatus.tempStatus5 = GO;
-
+                swcDetailedStatus.alphaDUStatus = _duHWMgr.getDUAStatus();
+                printf("DUA: %d, %d, %d, %d, %d, %d\n", swcDetailedStatus.alphaDUStatus.overallStatus,
+                       swcDetailedStatus.alphaDUStatus.readyStatus,
+                       swcDetailedStatus.alphaDUStatus.highTempAlarm,
+                       swcDetailedStatus.alphaDUStatus.vccintAlarm,
+                       swcDetailedStatus.alphaDUStatus.vccauxAlarm,
+                       swcDetailedStatus.alphaDUStatus.vbramAlarm);
+                swcDetailedStatus.betaDUStatus = _duHWMgr.getDUBStatus();
+                printf("DUB: %d, %d, %d, %d, %d, %d\n", swcDetailedStatus.betaDUStatus.overallStatus,
+                       swcDetailedStatus.betaDUStatus.readyStatus,
+                       swcDetailedStatus.betaDUStatus.highTempAlarm,
+                       swcDetailedStatus.betaDUStatus.vccintAlarm,
+                       swcDetailedStatus.betaDUStatus.vccauxAlarm,
+                       swcDetailedStatus.betaDUStatus.vbramAlarm);
+                swcDetailedStatus.tuStatus = _duHWMgr.getTUStatus();
+                swcDetailedStatus.tempStatus = _duHWMgr.getTempStatus();
+                printf("Temp: %d, %d, %d, %d, %d, %d\n", swcDetailedStatus.tempStatus.overallStatus,
+                       swcDetailedStatus.tempStatus.tempStatus1,
+                       swcDetailedStatus.tempStatus.tempStatus2,
+                       swcDetailedStatus.tempStatus.tempStatus3,
+                       swcDetailedStatus.tempStatus.tempStatus4,
+                       swcDetailedStatus.tempStatus.tempStatus5);
+                swcDetailedStatus.psStatus = _duHWMgr.getPSStatus();
+                printf("PS: %d, %d, %d, %d, %d, %d\n", swcDetailedStatus.psStatus.overallStatus,
+                       swcDetailedStatus.psStatus.psStatus1,
+                       swcDetailedStatus.psStatus.psStatus2,
+                       swcDetailedStatus.psStatus.psStatus3,
+                       swcDetailedStatus.psStatus.psStatus4,
+                       swcDetailedStatus.psStatus.psStatus5);
 
                 SWCDetailedStatusRptMsg swcDetailedStatusRptMsg;
                 swcDetailedStatusRptMsg.setSWCDetailedStatus(swcDetailedStatus);
@@ -672,12 +668,9 @@ void DUACmdMgr::processTestServerMsg()
 
 void DUACmdMgr::processLocalHWStatusMsg()
 {
-    static int counter = 0;
-    counter++;
-    printf("Received Beta DCU data %d\n", counter);
     size_t bytesRead = 0;
 
-    BetaDCUStatusParamsType *localStatus;
+    BetaDCUStatusMsg *localStatus;
     localStatus = &_localStatus[localStatusCounter];
     localStatusCounter++;
 
@@ -687,7 +680,7 @@ void DUACmdMgr::processLocalHWStatusMsg()
     }
 
     // Read UDP data
-    if (_localHWStatus->read((char *)localStatus, sizeof(BetaDCUStatusParamsType), bytesRead) != OK)
+    if (_localHWStatus->read((char *)localStatus, sizeof(BetaDCUStatusMsg), bytesRead) != OK)
     {
         printf("Error reading from _localHWStatus\n");
         return;
@@ -697,9 +690,32 @@ void DUACmdMgr::processLocalHWStatusMsg()
         // Get message id
         if (localStatus->msgID == BETA_DCU_STATUS)
         {
-            printf("Received % bytes: Group %d DCU %d\n", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.number);
+            printf("Received %d bytes: Group %d DCU %d\n", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.number);
+            _logger.logDebug("Received %d bytes: Group %d DCU %d", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.number);
             // Update local SW status and add to send queue
             _duHWMgr.processDCUStatus(localStatus->betaDCUStatus);
+        }
+        if (localStatus->msgID == BETA_DU_STATUS)
+        {
+            DUTUStatusMsg betaStatus;
+            memcpy((DUTUStatusMsg *)&betaStatus, (DUTUStatusMsg *)localStatus, sizeof(DUTUStatusMsg));
+            printf("Received %d bytes for Beta DU status: overall %d, ready %d\n", bytesRead, 
+                             betaStatus.dutuStatus.overallStatus, betaStatus.dutuStatus.readyStatus);
+            _logger.logDebug("Received  %d bytes for Beta DU status: overall %d, ready %d", bytesRead, 
+                             betaStatus.dutuStatus.overallStatus, betaStatus.dutuStatus.readyStatus);
+            // Update local SW status and add to send queue
+            _duHWMgr.processDUBStatus(betaStatus.dutuStatus);
+        }
+        if (localStatus->msgID == TU_STATUS)
+        {
+            DUTUStatusMsg tuStatus;
+            memcpy((DUTUStatusMsg *)&tuStatus, (DUTUStatusMsg *)localStatus, sizeof(DUTUStatusMsg));
+            printf("Received %d bytes for TU status: overall %d, ready %d\n", bytesRead, 
+                             tuStatus.dutuStatus.overallStatus, tuStatus.dutuStatus.readyStatus);
+            _logger.logDebug("Received  %d bytes for TU status: overall %d, ready %d", bytesRead, 
+                             tuStatus.dutuStatus.overallStatus, tuStatus.dutuStatus.readyStatus);
+            // Update local SW status and add to send queue
+            _duHWMgr.processTUStatus(tuStatus.dutuStatus);
         }
     }
 }

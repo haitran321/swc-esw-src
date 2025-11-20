@@ -30,6 +30,7 @@ DUBCmdMgr::DUBCmdMgr() :
     _fromTestServer(NULL),
     _toTestServer(NULL),
     _localHWStatus(NULL),
+    _udpFromDevPC(NULL),
     _duHWMgr(DUHWMgr::getInstance()),
     _uioDevSL(NULL),
     _uioDevConfig(NULL),
@@ -50,6 +51,9 @@ DUBCmdMgr::~DUBCmdMgr()
 
     delete _localHWStatus;
     _localHWStatus = NULL;
+
+    delete _udpFromDevPC;
+    _udpFromDevPC = NULL;
 
     delete _uioDevSL;
     _uioDevSL = NULL;
@@ -180,16 +184,45 @@ STATUS DUBCmdMgr::start()
     _logger.logInfo("Successfully created _localHWStatus device");
     printf("Successfully created _localHWStatus device\n");
 
+    // Incoming from Dev PC device
+    devName.clear();
+    devName << "UDP Server From Dev PC";
+    devName << BETA_IP_ADDRESS << ":" << FROM_DEV_PC_PORT;
+
+    _udpFromDevPC = new UDPNetworkDevice(NetworkServer, BETA_IP_ADDRESS, FROM_DEV_PC_PORT, false);
+    _udpFromDevPC->setName(devName.str());
+
+    if (_udpFromDevPC->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _udpFromDevPC->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_udpFromDevPC, READ_EVENT, 1, static_cast<EventFunc>(&DUBCmdMgr::processDEVPCMsg)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _udpFromDevPC->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _udpFromDevPC device");
+    printf("Successfully created _udpFromDevPC device\n");
+
     // Initialize HW Manager
     _duHWMgr.initialize(MODULE_TYPE);
 
+    // Read Beta DU status and send to Alpha DU
+    DUTUStatusMsg bduStatus;
+    bduStatus.msgID = BETA_DU_STATUS;
+    bduStatus.dutuStatus = _duHWMgr.readDUStatus();
+    sendDUBStatusToDUA(bduStatus);
+    usleep(1*1000);   // Sleep 1 msecs
+
+    // Read and send Beta DCUs status to Alpha DU
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
     {
         int queueSize = _duHWMgr.getDCUStatusQueueSize();
         if (queueSize > 0)
         {
             DCUStatusParamsType dcuStatus = _duHWMgr.getDCUStatusFromQueue();
-            BetaDCUStatusParamsType status;
+            BetaDCUStatusMsg status;
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;
             sendDCUStatusToDUA(status);
@@ -326,6 +359,21 @@ void DUBCmdMgr::processSLInterrupt()
         lastBeta = atbBeta;
     }
 
+    // Check DCU status queue to see if there are status to send
+    for (int dcu = 0; dcu < NUM_DCU; dcu++)
+    {
+        int queueSize = _duHWMgr.getDCUStatusQueueSize();
+        if (queueSize > 0)
+        {
+            DCUStatusParamsType dcuStatus = _duHWMgr.getDCUStatusFromQueue();
+            BetaDCUStatusMsg status;
+            status.msgID = BETA_DCU_STATUS;
+            status.betaDCUStatus = dcuStatus;
+            sendDCUStatusToDUA(status);
+            usleep(1*1000);   // Sleep 1 msecs
+        }
+    }
+
 //  eInterruptProcessing.stop();
 //  printf("SW Scan Limit Check took %f\n", eInterruptProcessing.secs());
 
@@ -360,20 +408,29 @@ void DUBCmdMgr::processStatusTimer()
         printf("In processTimer: timerCounter = %d\n", timerCounter);
 //  }
 
-    _duHWMgr.readSWCStatus(DATA_TYPE_CUSTOM_STATUS);
-    printf("calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+    // Read Beta DU status and send to Alpha DU
+    DUTUStatusMsg bduStatus;
+    bduStatus.msgID = BETA_DU_STATUS;
+    bduStatus.dutuStatus = _duHWMgr.readDUStatus();
+    sendDUBStatusToDUA(bduStatus);
+    usleep(1*1000);   // Sleep 1 msecs
 
     printf("Read all DCUs status to update local queue.\n");
     _logger.logDebug("Read all DCUs status to update local queue.");
     _duHWMgr.readDCUStatus();
 
+    int queueSize = _duHWMgr.getDCUStatusQueueSize();
+    printf("DCU status queue size = %d\n", queueSize);
+    _logger.logDebug("DCU status queue size = %d", queueSize);
+
+    // TO BE REMOVED WHEN RUNNING ON ACTUAL DU HW THAT HAS INTERRUPT
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
     {
         int queueSize = _duHWMgr.getDCUStatusQueueSize();
         if (queueSize > 0)
         {
             DCUStatusParamsType dcuStatus = _duHWMgr.getDCUStatusFromQueue();
-            BetaDCUStatusParamsType status;
+            BetaDCUStatusMsg status;
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;
             sendDCUStatusToDUA(status);
@@ -482,9 +539,46 @@ void DUBCmdMgr::processTestServerMsg()
     }
 }
 
-void DUBCmdMgr::sendDCUStatusToDUA(BetaDCUStatusParamsType status)
+void DUBCmdMgr::sendDCUStatusToDUA(BetaDCUStatusMsg status)
 {
-    _localHWStatus->write(&status, sizeof(BetaDCUStatusParamsType));
+    _localHWStatus->write(&status, sizeof(BetaDCUStatusMsg));
 }
 
+void DUBCmdMgr::sendDUBStatusToDUA(DUTUStatusMsg status)
+{
+    _localHWStatus->write(&status, sizeof(DUTUStatusMsg));
+}
+
+void DUBCmdMgr::processDEVPCMsg()
+{
+    size_t bytesRead = 0;
+
+    int status[14];
+
+    // Read UDP data
+    if (_udpFromDevPC->read((char *)&status[0], sizeof(int)*14, bytesRead) != OK)
+    {
+        printf("error reading from _udpFromDevPC\n");
+        return;
+    }
+    else
+    {
+        printf("processDEVPCMsg Successfully read %d bytes\n", (int)bytesRead);
+    }
+
+    _duHWMgr.processEmulatorStatus(HealthState(status[1]),
+                                   SWC_CONFIG(status[2]),
+                                   SWC_MODE(status[3]),
+                                   HealthState(status[4]),
+                                   HealthState(status[5]),
+                                   DCURolledUpStatus(status[6]),
+                                   DCURolledUpStatus(status[7]),
+                                   HealthState(status[8]),
+                                   HealthState(status[9]),
+                                   HealthState(status[10]),
+                                   RFCC_CH(status[11]),
+                                   HealthState(status[12]),
+                                   status[13]);
+
+}
 

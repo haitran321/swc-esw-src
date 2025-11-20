@@ -22,12 +22,13 @@ typedef struct
 
 typedef enum
 {
-    TU_OVERALL_STATUS_MASK      = 0x8000001F,    /* Bits 0..4 */
-    TU_READY_STATUS_MASK        = 0x80000001,    /* Bit 0 */
+    TU_OVERALL_STATUS_MASK      = 0x8000001F,    /* Bits 0..4, and 31 */
+    TU_READY_STATUS_MASK        = 0x00000001,    /* Bit 0 */
     TU_HIGH_TEMP_ALARM_MASK     = 0x00000002,    /* Bit 1 */
     TU_VCC_INT_ALARM_MASK       = 0x00000004,    /* Bit 2 */
-    TU_VCC_AUX_ALARM_MASK       = 0x80000008,    /* Bit 3 */
-    TU_VBRAM_ALARM_MASK         = 0x80000010,    /* Bit 4 */
+    TU_VCC_AUX_ALARM_MASK       = 0x00000008,    /* Bit 3 */
+    TU_VBRAM_ALARM_MASK         = 0x00000010,    /* Bit 4 */
+    TU_BIT_RESULT_MASK          = 0x80000000,    /* Bit 31 */
 }TU_OVERALL_STATUS_ENUM;
 
 typedef enum

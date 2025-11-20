@@ -27,7 +27,9 @@ STATUS SteeringCmdMsg::validateData()
 
 void SteeringCmdMsg::byteSwapToLocal()
 {
-    _data->testOption = (TestOption)fromNetworkInt(_data->testOption);
+    _data->testSource = (TestSource)fromNetworkInt(_data->testSource);
     _data->alpha = (int)fromNetworkInt(_data->alpha);
     _data->beta = (int)fromNetworkInt(_data->beta);
+    _data->RLCP = (CmdOnOff)fromNetworkInt(_data->RLCP);
+    _data->RLSC = (CmdOnOff)fromNetworkInt(_data->RLSC);
 }

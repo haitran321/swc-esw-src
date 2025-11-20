@@ -60,12 +60,17 @@ class DUBCmdMgr : public EventProcessor
         void processConfigInterrupt();
         TimerDevice* _timerDevStatus;
         void processStatusTimer();
-        void sendDCUStatusToDUA(BetaDCUStatusParamsType status);
+        void sendDCUStatusToDUA(BetaDCUStatusMsg status);
+        void sendDUBStatusToDUA(DUTUStatusMsg status);
         ElapsedTimer eInterruptProcessing;
         Timestamp ts;
 
         int lastAlpha;
         int lastBeta;
+
+        // TO BE REMOVED
+        UDPNetworkDevice* _udpFromDevPC;
+        void processDEVPCMsg();
 };
 
 

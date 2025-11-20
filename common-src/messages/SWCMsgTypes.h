@@ -68,21 +68,29 @@ typedef struct
 
 typedef enum
 {
-    Analog = 1,
-    Digital
-} TestOption;
+    TestSourceTU = 1,
+    TestSourceDU = 2
+} TestSource;
+
+typedef enum
+{
+    Off = 0,
+    On  = 1
+} CmdOnOff;
 
 /** Steering message data  */
 typedef struct
 {
-    TestOption testOption;
+    TestSource testSource;
     int alpha;
     int beta;
+    CmdOnOff RLCP;
+    CmdOnOff RLSC; 
 } SteeringCmdDataType;
 
 typedef enum
 {
-    SWCOverallStatus       = 1,
+    SWCOverallStatus        = 1,
     AlphaDCUDetailedStatus  = 2,
     BetaDCUDetailedStatus   = 3,
     SWCDetailedStatus       = 4,
@@ -148,41 +156,42 @@ typedef struct
 
 typedef struct
 {
-    // Alpha
-    HealthState alphaOverall;
-    HealthState alphaStatus1;
-    HealthState alphaStatus2;
-    HealthState alphaStatus3;
-    HealthState alphaStatus4;
-    HealthState alphaStatus5;
-    // Beta
-    HealthState betaOverall;
-    HealthState betaStatus1;
-    HealthState betaStatus2;
-    HealthState betaStatus3;
-    HealthState betaStatus4;
-    HealthState betaStatus5;
-    // TU
-    HealthState tuOverall;
-    HealthState tuStatus1;
-    HealthState tuStatus2;
-    HealthState tuStatus3;
-    HealthState tuStatus4;
-    HealthState tuStatus5;
-    // Pwr Supplies
-    HealthState psOverall;
-    HealthState psStatus1;
-    HealthState psStatus2;
-    HealthState psStatus3;
-    HealthState psStatus4;
-    HealthState psStatus5;
-    // Temp
-    HealthState tempOverall;
-    HealthState tempStatus1;
-    HealthState tempStatus2;
-    HealthState tempStatus3;
-    HealthState tempStatus4;
-    HealthState tempStatus5;
+    HealthState overallStatus;
+    HealthState readyStatus;
+    HealthState highTempAlarm;
+    HealthState vccintAlarm;
+    HealthState vccauxAlarm;
+    HealthState vbramAlarm;
+} DUTUStatusType;
+
+typedef struct
+{
+    HealthState overallStatus; 
+    HealthState psStatus1; 
+    HealthState psStatus2; 
+    HealthState psStatus3; 
+    HealthState psStatus4; 
+    HealthState psStatus5; 
+} PSStatusType;
+
+typedef struct
+{
+    HealthState overallStatus;  
+    HealthState tempStatus1;  
+    HealthState tempStatus2;  
+    HealthState tempStatus3;  
+    HealthState tempStatus4;  
+    HealthState tempStatus5;  
+} TempStatusType;
+
+typedef struct
+{
+    HealthState swcStatus;
+    DUTUStatusType alphaDUStatus;
+    DUTUStatusType betaDUStatus;
+    DUTUStatusType tuStatus;
+    PSStatusType psStatus;
+    TempStatusType tempStatus;
 } SWCDetailedStatusDataType;
 
 /** SW Exception Report message data */
@@ -222,20 +231,20 @@ enum
 typedef enum 
 {
     BETA_DCU_STATUS = 1,
-    TU_STATUS       = 2
+    BETA_DU_STATUS  = 2,
+    TU_STATUS       = 3
 }InternalMsgID;
 
 typedef struct
 {
     InternalMsgID msgID;
     DCUStatusParamsType betaDCUStatus;
-}BetaDCUStatusParamsType;
+}BetaDCUStatusMsg;
 
 typedef struct
 {
     InternalMsgID msgID;
-//  TUParamsType tuStatus;
-}TUStatusParamsType;
-
+    DUTUStatusType dutuStatus;
+}DUTUStatusMsg;
 
 #endif

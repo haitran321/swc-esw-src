@@ -116,3 +116,26 @@ void TUHWMgr::toggleRLSCSignal()
     _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLSC_SIGNAL_MASK, _brdCtrVal, 0);
     _tuDev->setBrdCtrlReg(_brdCtrVal);
 }
+
+DUTUStatusType TUHWMgr::readTUStatus()
+{
+    int status = _tuDev->getBrdStatusReg();
+
+    // TO BE REMOVED
+//  status = 0x80000001;
+    status = 0x00000018;
+
+    _logger.logDebug("TU %d Status for 0x%x module", MODULE_TYPE, status);
+    printf("TU %d Status for 0x%x module\n", MODULE_TYPE, status);
+
+    DUTUStatusType tuStatus;
+    tuStatus.overallStatus = (HealthState)(DeviceUtilities::readMask(TU_BIT_RESULT_MASK, status));
+    tuStatus.readyStatus = (HealthState)(DeviceUtilities::readMask(TU_READY_STATUS_MASK, status));
+    tuStatus.highTempAlarm = (HealthState)(DeviceUtilities::readMask(TU_HIGH_TEMP_ALARM_MASK, status));
+    tuStatus.vccintAlarm = (HealthState)(DeviceUtilities::readMask(TU_VCC_INT_ALARM_MASK, status));
+    tuStatus.vccauxAlarm = (HealthState)(DeviceUtilities::readMask(TU_VCC_AUX_ALARM_MASK, status));
+    tuStatus.vbramAlarm = (HealthState)(DeviceUtilities::readMask(TU_VBRAM_ALARM_MASK, status));
+
+    return (tuStatus);
+}
+

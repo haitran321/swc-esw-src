@@ -27,11 +27,11 @@ typedef struct
 typedef enum
 {
     DU_HW_OVERALL_STATUS_MASK   = 0x8000001F,    /* Bits 0..4, and 31 */
-    DU_READY_STATUS_MASK        = 0x80000001,    /* Bit 0 */
+    DU_READY_STATUS_MASK        = 0x00000001,    /* Bit 0 */
     DU_HIGH_TEMP_ALARM_MASK     = 0x00000002,    /* Bit 1 */
     DU_VCC_INT_ALARM_MASK       = 0x00000004,    /* Bit 2 */
-    DU_VCC_AUX_ALARM_MASK       = 0x80000008,    /* Bit 3 */
-    DU_VBRAM_ALARM_MASK         = 0x80000010,    /* Bit 4 */
+    DU_VCC_AUX_ALARM_MASK       = 0x00000008,    /* Bit 3 */
+    DU_VBRAM_ALARM_MASK         = 0x00000010,    /* Bit 4 */
     DU_BIT_RESULT_MASK          = 0x80000000,    /* Bit 31 */
 }DU_OVERALL_STATUS_ENUM;
 

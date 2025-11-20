@@ -38,11 +38,11 @@ public:
     virtual STATUS validateData();
 
     /**
-    * Method getTestOption returns the test option.
+    * Method getTestSource returns the test source.
     *
-    * @return testOption value
+    * @return testSource value
     */
-    inline int getTestOption();
+    inline TestSource getTestSource();
 
     /**
     * Method getAlpha returns the KSineAlpha.
@@ -58,6 +58,20 @@ public:
     */
     inline int getBeta();
 
+    /**
+    * Method getRLCPCmd returns the RLCP.
+    *
+    * @return RPCP value
+    */
+    inline CmdOnOff getRLCPCmd();
+
+    /**
+    * Method getRLSCCmd returns the RLSC.
+    *
+    * @return RPSC value
+    */
+    inline CmdOnOff getRLSCCmd();
+
     void byteSwapToLocal();
 
 private:
@@ -68,9 +82,9 @@ private:
 
 };
 
-int SteeringCmdMsg::getTestOption()
+TestSource SteeringCmdMsg::getTestSource()
 {
-    return (_data->testOption);
+    return (_data->testSource);
 }
 
 int SteeringCmdMsg::getAlpha()
@@ -83,5 +97,14 @@ int SteeringCmdMsg::getBeta()
     return (_data->beta);
 }
 
+CmdOnOff SteeringCmdMsg::getRLCPCmd()
+{
+    return (_data->RLCP);
+}
+
+CmdOnOff SteeringCmdMsg::getRLSCCmd()
+{
+    return (_data->RLSC);
+}
 
 #endif

@@ -64,6 +64,7 @@ class TUCmdMgr : public EventProcessor
         void processStatusTimer();
         ElapsedTimer eInterruptProcessing;
         Timestamp ts;
+        void sendTUStatusToDUA(DUTUStatusMsg status);
 };
 
 
