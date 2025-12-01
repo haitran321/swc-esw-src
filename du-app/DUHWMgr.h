@@ -33,12 +33,19 @@ class DUHWMgr : public Uncopyable
 
         int getArmKSine(RFCC_CH ch);
         void setArmKSine(RFCC_CH ch, int val);
-        void toggleSWTrigger();
-        int getFWScanLimitCheckStatus();
-
         int getAtbKSine(RFCC_CH ch);
         void setAtbKSine(RFCC_CH ch, int val);
+        int getFWScanLimitCheckStatus();
 
+        // Board Control Reg
+        void toggleSWTrigger();
+        void setUnitType(RFCC_CH unitType);
+        void setTestSrcInTestMode(TestSource testSrc);
+        void setSystemConfigInTestMode(SWC_CONFIG config);
+        void sendDCUCmdInTestMode(DCU_CMD_ENUM cmd);
+        void sendSteeringWordValidFlagInTestMode(DU_STEERING_WORD_VALID_FLAG_ENUM flag);
+
+        // SWCR Status to TWGS Reg
         int getSwcStatusToTwgs();
         void setSwcStatusToTwgs();
 
@@ -59,7 +66,8 @@ class DUHWMgr : public Uncopyable
                                    DCURolledUpStatus alphaDCURolledUpStatus_,
                                    DCURolledUpStatus betaDCURolledUpStatus_,
                                    HealthState tempStatus_,
-                                   HealthState pwrStatus_,
+                                   HealthState pwr12VStatus_,
+                                   HealthState pwr24VStatus_,
                                    HealthState atbStatus_,
                                    RFCC_CH dcuGroup_,
                                    HealthState dcuStatus_,
@@ -87,8 +95,9 @@ class DUHWMgr : public Uncopyable
         DUTUStatusType getDUAStatus();
         DUTUStatusType getDUBStatus();
         DUTUStatusType getTUStatus();
-        TempStatusType getTempStatus();
-        PSStatusType getPSStatus();
+        HealthState getTempStatus();
+        HealthState get12VPSStatus();
+        HealthState get24VPSStatus();
         HealthState getSWCOverallStatus();
         SWC_CONFIG getSWCConfigStatus();
         SWC_MODE getSWCModeStatus();
@@ -125,8 +134,9 @@ class DUHWMgr : public Uncopyable
         DUTUStatusType _tuStatus;
         DCURolledUpStatus _alphaDCURolledUpStatus;
         DCURolledUpStatus _betaDCURolledUpStatus;
-        TempStatusType _tempStatus;
-        PSStatusType _pwrStatus;
+        HealthState _tempStatus;
+        HealthState _pwr12VStatus;
+        HealthState _pwr24VStatus;
         HealthState _atbStatus;
         RFCC_CH _dcuGroup;
         int _dcuNum;
@@ -144,7 +154,8 @@ class DUHWMgr : public Uncopyable
         void setAlphaDCURolledUpStatusBit(int val);
         void setBetaDCURolledUpStatusBit(int val);
         void setTempStatusBit(int val);
-        void setPwrSuppliesStatusBit(int val);
+        void set12VPwrStatusBit(int val);
+        void set24VPwrStatusBit(int val);
         void setATBStatusBit(int val);
         void setDCUGroupStatusBit(RFCC_CH val);
         void setDCUHealthStatusBit(HealthState val);

@@ -47,19 +47,11 @@ typedef enum
     NUM_RFCC_CH = 2
 } RFCC_CH;
 
-//typedef enum
-//{
-//    CONFIG_ERR  = 0,
-//    SWC         = 1,
-//    JOINT       = 2,
-//    SWCR        = 3
-//} SWC_CONFIG;
-
 typedef enum
 {
     CONFIG_ERR  = 0,
-    SWC         = 2,
-    JOINT       = 1,
+    SWC         = 1,
+    JOINT       = 2,
     SWCR        = 3
 } SWC_CONFIG;
 
@@ -75,19 +67,11 @@ typedef enum
     GO    = 1
 } HealthState;
 
-//typedef enum
-//{
-//    DCU_ROLLED_UP_ERROR    = 0,
-//    DCU_ROLLED_UP_RED      = 1,
-//    DCU_ROLLED_UP_YELLOW   = 2,
-//    DCU_ROLLED_UP_GREEN    = 3
-//} DCURolledUpStatus;
-
 typedef enum
 {
     DCU_ROLLED_UP_ERROR    = 0,
-    DCU_ROLLED_UP_RED      = 2,
-    DCU_ROLLED_UP_YELLOW   = 1,
+    DCU_ROLLED_UP_RED      = 1,
+    DCU_ROLLED_UP_YELLOW   = 2,
     DCU_ROLLED_UP_GREEN    = 3
 } DCURolledUpStatus;
 

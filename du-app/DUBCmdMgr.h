@@ -50,7 +50,6 @@ class DUBCmdMgr : public EventProcessor
 
         /* Common config parameters */
         int FORCE_TEST_MODE;
-        int STEERING_WORD_SRC;
 
         DUHWMgr &_duHWMgr;
 

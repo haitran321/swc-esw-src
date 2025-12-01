@@ -390,16 +390,33 @@ void TUCmdMgr::processTestServerMsg()
 
             SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(cloneSteeringCmdMsg->getDataBufPos());
 
-//          printf("Alpha = %d, Beta = %d\n", params->alpha, params->beta);
+            printf("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d\n",
+                   params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
+            _logger.logDebug("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d",
+                             params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
 
             // Set KSine Regs
-            _tuHWMgr.setArmKSine(ALPHA, params->alpha);
-            _tuHWMgr.setArmKSine(BETA, params->beta);
+            if (params->testSource == TestSourceTU)
+            {
+                _tuHWMgr.setArmKSine(ALPHA, params->alpha);
+                _tuHWMgr.setArmKSine(BETA, params->beta);
 
-//          _tuHWMgr.getRegs(0xC, 0x10);
+                if (params->RLCP == On)
+                {
+                    _tuHWMgr.setRLCPSignal(On);
+                }
+                if (params->RLSC == On)
+                {
+                    _tuHWMgr.setRLSCSignal(On);
+                }
 
-            // Toggle RLTD signal to start steering words processing 
-            _tuHWMgr.toggleRLTDSignal();
+                // Toggle RLTD signal to start steering words processing 
+                _tuHWMgr.toggleRLTDSignal();
+
+                // Reset RLCP and RLSC back to off
+                _tuHWMgr.setRLCPSignal(Off);
+                _tuHWMgr.setRLSCSignal(Off);
+            }
 
             break;
         }

@@ -36,8 +36,8 @@ class TUHWMgr : public Uncopyable
         int getFWScanLimitCheckStatus();
 
         void toggleRLTDSignal();
-        void toggleRLCPSignal();
-        void toggleRLSCSignal();
+        void setRLCPSignal(CmdOnOff flag);
+        void setRLSCSignal(CmdOnOff flag);
 
         DUTUStatusType readTUStatus();
 

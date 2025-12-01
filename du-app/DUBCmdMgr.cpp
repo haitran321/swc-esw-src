@@ -115,7 +115,6 @@ STATUS DUBCmdMgr::start()
 
     // Configuration parameters
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
-    rc = rc || configs.get("STEERING_WORD_SRC", STEERING_WORD_SRC);
 
     // Status parameters
     rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
@@ -348,16 +347,16 @@ void DUBCmdMgr::processSLInterrupt()
     _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
 
     // Set last K Sine processed
-    if (STEERING_WORD_SRC == ARM)
-    {
-        lastAlpha = armAlpha;
-        lastBeta = armBeta;
-    }
-    else
-    {
-        lastAlpha = atbAlpha;
-        lastBeta = atbBeta;
-    }
+//  if (TEST_MODE_STEERING_WORD_SRC == TEST_MODE_DU)
+//  {
+//      lastAlpha = armAlpha;
+//      lastBeta = armBeta;
+//  }
+//  else
+//  {
+//      lastAlpha = atbAlpha;
+//      lastBeta = atbBeta;
+//  }
 
     // Check DCU status queue to see if there are status to send
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
@@ -515,22 +514,40 @@ void DUBCmdMgr::processTestServerMsg()
 
             SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(cloneSteeringCmdMsg->getDataBufPos());
 
-            printf("Alpha = %d, Beta = %d\n", params->alpha, params->beta);
-            _logger.logDebug("Alpha = %d, Beta = %d", params->alpha, params->beta);
+            printf("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d\n", 
+                   params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
+            _logger.logDebug("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d",
+                             params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
 
-            // Set KSine Regs
-            if (STEERING_WORD_SRC == ARM)
+            // Check for Offline Mode from HW or Test Enabled from HW or Force Test Mode from Config File
+            if ((_duHWMgr.getSWCModeStatus() == TEST_ENABLE) || (_duHWMgr.getTestEnabledStatus() == 1) || (FORCE_TEST_MODE == TEST))
             {
-                _duHWMgr.setArmKSine(ALPHA, params->alpha);
-                _duHWMgr.setArmKSine(BETA, params->beta);
-            }
+                // Set test source based on command
+                _duHWMgr.setTestSrcInTestMode(params->testSource);
 
-//          _duHWMgr.getRegs(0xC, 0x10);
+                // Set KSine Regs
+                if (params->testSource == TestSourceDU)
+                {
+                    _duHWMgr.setArmKSine(ALPHA, params->alpha);
+                    _duHWMgr.setArmKSine(BETA, params->beta);
 
-            // Toggle the Scan Limit check 
-            if (FORCE_TEST_MODE == TEST)
-            {
-                _duHWMgr.toggleSWTrigger();
+                    if (params->RLCP == On)
+                    {
+                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
+                        _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_BORESIGHT);
+                    }
+                    if (params->RLSC == On)
+                    {
+                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
+                        _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_CALIBRATION);
+                    }
+
+                    // Toggle SW trigger in place of /RLTD
+                    _duHWMgr.toggleSWTrigger();
+
+                    // Reset Steering Word valid flag back to valid for the next command
+                    _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
+                }
             }
 
             break;
@@ -553,7 +570,7 @@ void DUBCmdMgr::processDEVPCMsg()
 {
     size_t bytesRead = 0;
 
-    int status[14];
+    int status[15];
 
     // Read UDP data
     if (_udpFromDevPC->read((char *)&status[0], sizeof(int)*14, bytesRead) != OK)
@@ -576,9 +593,10 @@ void DUBCmdMgr::processDEVPCMsg()
                                    HealthState(status[8]),
                                    HealthState(status[9]),
                                    HealthState(status[10]),
-                                   RFCC_CH(status[11]),
-                                   HealthState(status[12]),
-                                   status[13]);
+                                   HealthState(status[11]),
+                                   RFCC_CH(status[12]),
+                                   HealthState(status[13]),
+                                   status[14]);
 
 }
 

@@ -42,23 +42,6 @@ STATUS SWCDetailedStatusRptMsg::buildMsg()
     _data.tuStatus.vccauxAlarm = (HealthState)toNetworkInt(_data.tuStatus.vccauxAlarm);
     _data.tuStatus.vbramAlarm = (HealthState)toNetworkInt(_data.tuStatus.vbramAlarm);
 
-    // PS status
-    _data.psStatus.overallStatus = (HealthState)toNetworkInt(_data.psStatus.overallStatus);
-    _data.psStatus.psStatus1 = (HealthState)toNetworkInt(_data.psStatus.psStatus1);
-    _data.psStatus.psStatus2 = (HealthState)toNetworkInt(_data.psStatus.psStatus2);
-    _data.psStatus.psStatus3 = (HealthState)toNetworkInt(_data.psStatus.psStatus3);
-    _data.psStatus.psStatus4 = (HealthState)toNetworkInt(_data.psStatus.psStatus4);
-    _data.psStatus.psStatus5 = (HealthState)toNetworkInt(_data.psStatus.psStatus5);
-
-    // Temp status
-    _data.tempStatus.overallStatus = (HealthState)toNetworkInt(_data.tempStatus.overallStatus);
-    _data.tempStatus.tempStatus1 = (HealthState)toNetworkInt(_data.tempStatus.tempStatus1);
-    _data.tempStatus.tempStatus2 = (HealthState)toNetworkInt(_data.tempStatus.tempStatus2);
-    _data.tempStatus.tempStatus3 = (HealthState)toNetworkInt(_data.tempStatus.tempStatus3);
-    _data.tempStatus.tempStatus4 = (HealthState)toNetworkInt(_data.tempStatus.tempStatus4);
-    _data.tempStatus.tempStatus5 = (HealthState)toNetworkInt(_data.tempStatus.tempStatus5);
-
-
     // Add data to message.
     rc = addData(reinterpret_cast<char *>(&_data), sizeof(_data));
 

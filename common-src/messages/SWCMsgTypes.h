@@ -68,8 +68,8 @@ typedef struct
 
 typedef enum
 {
-    TestSourceTU = 1,
-    TestSourceDU = 2
+    TestSourceTU = 0,
+    TestSourceDU = 1
 } TestSource;
 
 typedef enum
@@ -114,7 +114,8 @@ typedef struct
     DCURolledUpStatus swcAlphaDCURolledUpStatus;
     DCURolledUpStatus swcBetaDCURolledUpStatus;
     HealthState swcTempStatus;
-    HealthState swcPwrSuppliesStatus;
+    HealthState swc12VPwrStatus;
+    HealthState swc24VPwrStatus;
     HealthState swcATBStatus;
     HealthState testUnitHWStatus;
     int lastAlpha;
@@ -166,32 +167,10 @@ typedef struct
 
 typedef struct
 {
-    HealthState overallStatus; 
-    HealthState psStatus1; 
-    HealthState psStatus2; 
-    HealthState psStatus3; 
-    HealthState psStatus4; 
-    HealthState psStatus5; 
-} PSStatusType;
-
-typedef struct
-{
-    HealthState overallStatus;  
-    HealthState tempStatus1;  
-    HealthState tempStatus2;  
-    HealthState tempStatus3;  
-    HealthState tempStatus4;  
-    HealthState tempStatus5;  
-} TempStatusType;
-
-typedef struct
-{
     HealthState swcStatus;
     DUTUStatusType alphaDUStatus;
     DUTUStatusType betaDUStatus;
     DUTUStatusType tuStatus;
-    PSStatusType psStatus;
-    TempStatusType tempStatus;
 } SWCDetailedStatusDataType;
 
 /** SW Exception Report message data */

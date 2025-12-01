@@ -48,7 +48,9 @@ public:
 
     inline void setTempStatus(HealthState health);
 
-    inline void setPwrSuppliesStatus(HealthState health);
+    inline void set12VPwrStatus(HealthState health);
+
+    inline void set24VPwrStatus(HealthState health);
 
     inline void setATBStatus(HealthState health);
 
@@ -110,9 +112,14 @@ void SWCOverallStatusRptMsg::setTempStatus(HealthState health)
     _data.swcTempStatus = health;
 }
 
-void SWCOverallStatusRptMsg::setPwrSuppliesStatus(HealthState health)
+void SWCOverallStatusRptMsg::set12VPwrStatus(HealthState health)
 {
-    _data.swcPwrSuppliesStatus = health;
+    _data.swc12VPwrStatus = health;
+}
+
+void SWCOverallStatusRptMsg::set24VPwrStatus(HealthState health)
+{
+    _data.swc24VPwrStatus = health;
 }
 
 void SWCOverallStatusRptMsg::setATBStatus(HealthState health)

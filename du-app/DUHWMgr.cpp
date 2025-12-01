@@ -40,13 +40,14 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     _tuStatus.overallStatus = GO;
     _alphaDCURolledUpStatus = DCU_ROLLED_UP_GREEN;
     _betaDCURolledUpStatus = DCU_ROLLED_UP_GREEN;
-    _tempStatus.overallStatus = GO;
-    _pwrStatus.overallStatus = GO;
+    _tempStatus = GO;
+    _pwr12VStatus = GO;
+    _pwr24VStatus = GO;
     _atbStatus = GO;
 
     /* Common config parameters */;
     int FORCE_TEST_MODE;
-    int STEERING_WORD_SRC;
+    int TEST_MODE_STEERING_WORD_SRC;
     int DCU_SCLK_READBACK_DELAY;
 
     _logger.logInfo("DUHWMgr Initializing");
@@ -54,7 +55,7 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     // Get config parameters
     ConfigDataManager &configs = ConfigDataManager::getInstance();
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
-    rc = rc || configs.get("STEERING_WORD_SRC", STEERING_WORD_SRC);
+    rc = rc || configs.get("TEST_MODE_STEERING_WORD_SRC", TEST_MODE_STEERING_WORD_SRC);
     rc = rc || configs.get("DCU_SCLK_READBACK_DELAY", DCU_SCLK_READBACK_DELAY);
 
     // For testing.  To be removed
@@ -73,6 +74,10 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
 
     printf("After create _duDev\n");
 
+    // Reset brdCtl to default
+    _brdCtrVal = 0;
+    _duDev->setBrdCtrlReg(_brdCtrVal);
+
     // Set RFCC Type
     _rfccType = ALPHA;
     if (MODULE_TYPE == BETA)
@@ -80,10 +85,16 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
         _rfccType = BETA;
     }
 
-//  brdCtrVal = DeviceUtilities::readMask(DU_BRD_CTRL_MASK, _duDev->getBrdCtrlReg());
-    // Reset brdCtl to default
-    _brdCtrVal = 0;
-    _duDev->setBrdCtrlReg(_brdCtrVal);
+    // Set Unit Type in FW
+    setUnitType(_rfccType);
+
+    // Initialize DCU group status
+    for (int dcu = 0; dcu < NUM_DCU; dcu++)
+    {
+        _dcuStatus[ALPHA][dcu].group = ALPHA;
+        _dcuStatus[BETA][dcu].group = BETA;
+    }
+
 
     printf("getFirmwareVersionReg = 0x%x\n", _duDev->getFWVerReg());
     printf("getBoardStatusReg = 0x%x\n", _duDev->getBrdStatusReg());
@@ -94,11 +105,11 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     {
         _brdCtrVal = DeviceUtilities::updateReg(DU_FORCE_TEST_MODE_MASK, _brdCtrVal, TEST);
     }
-    // Set Steering Word source to ARM
-    if (STEERING_WORD_SRC == ARM)
-    {
-        _brdCtrVal = DeviceUtilities::updateReg(DU_STEERING_WORD_SRC_MASK, _brdCtrVal, ARM);
-    }
+//  // Set Steering Word source to ARM
+//  if (TEST_MODE_STEERING_WORD_SRC == TEST_MODE_DU)
+//  {
+//      _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_STEERING_WORD_SRC_MASK, _brdCtrVal, TEST_MODE_DU);
+//  }
     _duDev->setBrdCtrlReg(_brdCtrVal);
 
     // Set DCU_SCLK_READBACK_DELAY
@@ -187,9 +198,39 @@ int DUHWMgr::getFWScanLimitCheckStatus()
 
 void DUHWMgr::toggleSWTrigger()
 {
-    _brdCtrVal = DeviceUtilities::updateReg(DU_SW_TRIGGER_MASK, _brdCtrVal, 1);
+    _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_SW_TRIGGER_MASK, _brdCtrVal, 1);
     _duDev->setBrdCtrlReg(_brdCtrVal);
-    _brdCtrVal = DeviceUtilities::updateReg(DU_SW_TRIGGER_MASK, _brdCtrVal, 0);
+    _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_SW_TRIGGER_MASK, _brdCtrVal, 0);
+    _duDev->setBrdCtrlReg(_brdCtrVal);
+}
+
+void DUHWMgr::setUnitType(RFCC_CH unitType)
+{
+    _brdCtrVal = DeviceUtilities::updateReg(DU_UNIT_TYPE_MASK, _brdCtrVal, unitType);
+    _duDev->setBrdCtrlReg(_brdCtrVal);
+}
+
+void DUHWMgr::setTestSrcInTestMode(TestSource testSrc)
+{
+    _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_STEERING_WORD_SRC_MASK, _brdCtrVal, testSrc);
+    _duDev->setBrdCtrlReg(_brdCtrVal);
+}
+
+void DUHWMgr::setSystemConfigInTestMode(SWC_CONFIG config)
+{
+    _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_SYSTEM_CONFIG_MASK, _brdCtrVal, config);
+    _duDev->setBrdCtrlReg(_brdCtrVal);
+}
+
+void DUHWMgr::sendSteeringWordValidFlagInTestMode(DU_STEERING_WORD_VALID_FLAG_ENUM flag)
+{   
+    _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_STEERING_WORD_VALID_MASK, _brdCtrVal, flag);
+    _duDev->setBrdCtrlReg(_brdCtrVal);
+}
+
+void DUHWMgr::sendDCUCmdInTestMode(DCU_CMD_ENUM cmd)
+{   
+    _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_DCU_CMD_MASK, _brdCtrVal, cmd);
     _duDev->setBrdCtrlReg(_brdCtrVal);
 }
 
@@ -258,9 +299,14 @@ void DUHWMgr::setTempStatusBit(int val)
     _statusToTwgs = DeviceUtilities::updateReg(DU_TEMP_STATUS_MASK, _statusToTwgs, val);
 }
 
-void DUHWMgr::setPwrSuppliesStatusBit(int val)
+void DUHWMgr::set12VPwrStatusBit(int val)
 {
-    _statusToTwgs = DeviceUtilities::updateReg(DU_PS_STATUS_MASK, _statusToTwgs, val);
+    _statusToTwgs = DeviceUtilities::updateReg(DU_12V_PWR_STATUS_MASK, _statusToTwgs, val);
+}
+
+void DUHWMgr::set24VPwrStatusBit(int val)
+{
+    _statusToTwgs = DeviceUtilities::updateReg(DU_24V_PWR_STATUS_MASK, _statusToTwgs, val);
 }
 
 void DUHWMgr::setATBStatusBit(int val)
@@ -311,8 +357,9 @@ void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
     _swcrOverall = GO;
     if ((_alphaDUStatus.overallStatus == NO_GO) || 
         (_betaDUStatus.overallStatus == NO_GO) || 
-        (_tempStatus.overallStatus == NO_GO) || 
-        (_pwrStatus.overallStatus == NO_GO))
+        (_tempStatus == NO_GO) || 
+        (_pwr12VStatus == NO_GO) ||
+        (_pwr24VStatus == NO_GO))
     {
         // Should DCU status be included in the SWCR overall rolled up?
         _swcrOverall = NO_GO;
@@ -340,8 +387,9 @@ void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
     else    // dataType == DATA_TYPE_IO_MODULE_STATUS
     {
         setDataTypeBit(DATA_TYPE_IO_MODULE_STATUS);
-        setTempStatusBit(_tempStatus.overallStatus);
-        setPwrSuppliesStatusBit(_pwrStatus.overallStatus);
+        setTempStatusBit(_tempStatus);
+        set12VPwrStatusBit(_pwr12VStatus);
+        set24VPwrStatusBit(_pwr24VStatus);
         setATBStatusBit(_atbStatus);
     }
 
@@ -359,8 +407,9 @@ SWCOverallStatusDataType DUHWMgr::getSWCStatus()
     status.swcBetaDUStatus = _betaDUStatus.overallStatus;
     status.swcAlphaDCURolledUpStatus = _alphaDCURolledUpStatus;
     status.swcBetaDCURolledUpStatus = _betaDCURolledUpStatus;
-    status.swcTempStatus = _tempStatus.overallStatus;
-    status.swcPwrSuppliesStatus = _pwrStatus.overallStatus;
+    status.swcTempStatus = _tempStatus;
+    status.swc12VPwrStatus = _pwr12VStatus;
+    status.swc24VPwrStatus = _pwr24VStatus;
     status.swcATBStatus = _atbStatus;
     status.testUnitHWStatus = GO;
 
@@ -591,21 +640,10 @@ void DUHWMgr::processIOModuleStatus()
 {
     if (!USE_STATUS_EMULATOR)
     {
+        _tempStatus = GO;
+        _pwr12VStatus = GO;
+        _pwr24VStatus = GO;
         _atbStatus = GO;
-
-        _pwrStatus.overallStatus = NO_GO;
-        _pwrStatus.psStatus1 = GO;
-        _pwrStatus.psStatus2 = NO_GO;
-        _pwrStatus.psStatus3 = GO;
-        _pwrStatus.psStatus4 = NO_GO;
-        _pwrStatus.psStatus5 = GO;
-
-        _tempStatus.overallStatus = GO;
-        _tempStatus.tempStatus1 = GO;
-        _tempStatus.tempStatus2 = NO_GO;
-        _tempStatus.tempStatus3 = GO;
-        _tempStatus.tempStatus4 = GO;
-        _tempStatus.tempStatus5 = NO_GO;
     }
 }
 
@@ -634,14 +672,19 @@ DUTUStatusType DUHWMgr::getTUStatus()
     return (_tuStatus);
 }
 
-TempStatusType DUHWMgr::getTempStatus()
+HealthState DUHWMgr::getTempStatus()
 {
     return (_tempStatus);
 }
 
-PSStatusType DUHWMgr::getPSStatus()
+HealthState DUHWMgr::get12VPSStatus()
 {
-    return (_pwrStatus);
+    return (_pwr12VStatus);
+}
+
+HealthState DUHWMgr::get24VPSStatus()
+{
+    return (_pwr24VStatus);
 }
 
 HealthState DUHWMgr::getSWCOverallStatus()
@@ -672,7 +715,8 @@ void DUHWMgr::processEmulatorStatus(HealthState swcrOverall_,
                                    DCURolledUpStatus alphaDCURolledUpStatus_,
                                    DCURolledUpStatus betaDCURolledUpStatus_,
                                    HealthState tempStatus_,
-                                   HealthState pwrStatus_,
+                                   HealthState pwr12VStatus_,
+                                   HealthState pwr24VStatus_,
                                    HealthState atbStatus_,
                                    RFCC_CH dcuGroup_,
                                    HealthState dcuStatus_,
@@ -686,23 +730,12 @@ void DUHWMgr::processEmulatorStatus(HealthState swcrOverall_,
     _betaDUStatus.overallStatus = betaDUStatus_;
     _alphaDCURolledUpStatus = alphaDCURolledUpStatus_;
     _betaDCURolledUpStatus = betaDCURolledUpStatus_;
-    _tempStatus.overallStatus = tempStatus_;
-    _pwrStatus.overallStatus = pwrStatus_;
+    _tempStatus = tempStatus_;
+    _pwr12VStatus = pwr12VStatus_;
+    _pwr24VStatus = pwr24VStatus_;
     _atbStatus = atbStatus_;
     _dcuGroup = dcuGroup_;
     _dcuNum = dcuNum_;
     printf("From Emulator: setting rfcc %d dcu %d to %d\n", dcuGroup_, dcuNum_, dcuStatus_);
     fakeDCUFWStatus[_dcuGroup][_dcuNum] = (HealthState)(DeviceUtilities::updateReg(DCU_BIT_OVERALL_STATUS_MASK, 0xb86401, dcuStatus_));
-
-    _pwrStatus.psStatus1 = GO;
-    _pwrStatus.psStatus2 = NO_GO;
-    _pwrStatus.psStatus3 = GO;
-    _pwrStatus.psStatus4 = NO_GO;
-    _pwrStatus.psStatus5 = GO;
-
-    _tempStatus.tempStatus1 = GO;
-    _tempStatus.tempStatus2 = NO_GO;
-    _tempStatus.tempStatus3 = GO;
-    _tempStatus.tempStatus4 = GO;
-    _tempStatus.tempStatus5 = NO_GO;
 }

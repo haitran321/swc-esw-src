@@ -37,8 +37,6 @@ public:
     inline void setAlphaDUDetailedStatus(DUTUStatusType status);
     inline void setBetaDUDetailedStatus(DUTUStatusType status);
     inline void setTUDetailedStatus(DUTUStatusType status);
-    inline void setPSDetailedStatus(PSStatusType status);
-    inline void setTempDetailedStatus(TempStatusType status);
 
 private:
 
@@ -71,16 +69,6 @@ void SWCDetailedStatusRptMsg::setBetaDUDetailedStatus(DUTUStatusType status)
 void SWCDetailedStatusRptMsg::setTUDetailedStatus(DUTUStatusType status)
 {
     _data.tuStatus = status;
-}
-
-void SWCDetailedStatusRptMsg::setPSDetailedStatus(PSStatusType status)
-{
-    _data.psStatus = status;
-}
-
-void SWCDetailedStatusRptMsg::setTempDetailedStatus(TempStatusType status)
-{
-    _data.tempStatus = status;
 }
 
 #endif
