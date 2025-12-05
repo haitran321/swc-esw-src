@@ -347,16 +347,9 @@ void DUBCmdMgr::processSLInterrupt()
     _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
 
     // Set last K Sine processed
-//  if (TEST_MODE_STEERING_WORD_SRC == TEST_MODE_DU)
-//  {
-//      lastAlpha = armAlpha;
-//      lastBeta = armBeta;
-//  }
-//  else
-//  {
-//      lastAlpha = atbAlpha;
-//      lastBeta = atbBeta;
-//  }
+    lastAlpha = armAlpha;
+    lastBeta = armBeta;
+
 
     // Check DCU status queue to see if there are status to send
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
@@ -520,7 +513,7 @@ void DUBCmdMgr::processTestServerMsg()
                              params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
 
             // Check for Offline Mode from HW or Test Enabled from HW or Force Test Mode from Config File
-            if ((_duHWMgr.getSWCModeStatus() == TEST_ENABLE) || (_duHWMgr.getTestEnabledStatus() == 1) || (FORCE_TEST_MODE == TEST))
+            if ((_duHWMgr.getSWCModeStatus() == OFFLINE) || (_duHWMgr.getTestEnabledStatus() == 1) || (FORCE_TEST_MODE == TEST))
             {
                 // Set test source based on command
                 _duHWMgr.setTestSrcInTestMode(params->testSource);
@@ -570,10 +563,11 @@ void DUBCmdMgr::processDEVPCMsg()
 {
     size_t bytesRead = 0;
 
-    int status[15];
+    int num_data = 15;
+    int status[num_data];
 
     // Read UDP data
-    if (_udpFromDevPC->read((char *)&status[0], sizeof(int)*14, bytesRead) != OK)
+    if (_udpFromDevPC->read((char *)&status[0], sizeof(int)*num_data, bytesRead) != OK)
     {
         printf("error reading from _udpFromDevPC\n");
         return;
@@ -599,4 +593,3 @@ void DUBCmdMgr::processDEVPCMsg()
                                    status[14]);
 
 }
-

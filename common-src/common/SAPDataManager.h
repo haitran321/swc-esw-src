@@ -24,7 +24,7 @@ public:
      *
      * @return Status of operation
      */
-    STATUS load(const char* fileName = "/mnt/sd-mmcblk0p1/conf/sap.txt");
+    STATUS load(const char* fileName = "/mnt/sd-mmcblk0p1/run/conf/sap.txt");
     
     /**
      * Retrieves the SAP named <code>name</code>, placing its contents

@@ -337,17 +337,9 @@ void DUACmdMgr::processSLInterrupt()
     printf("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d\n", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
     _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
 
-//  // Set last K Sine processed
-//  if (TEST_MODE_STEERING_WORD_SRC == TEST_MODE_DU)
-//  {
-//      lastAlpha = armAlpha;
-//      lastBeta = armBeta;
-//  }
-//  else
-//  {
-//      lastAlpha = atbAlpha;
-//      lastBeta = atbBeta;
-//  }
+    // Set last K Sine processed
+    lastAlpha = armAlpha;
+    lastBeta = armBeta;
 
     // Set DCU status to send to TWGS
     // DCU status is sent to TWGS per action
@@ -515,7 +507,7 @@ void DUACmdMgr::processTestServerMsg()
                              params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
 
             // Check for Offline Mode from HW or Test Enabled from HW or Force Test Mode from Config File
-            if ((_duHWMgr.getSWCModeStatus() == TEST_ENABLE) || (_duHWMgr.getTestEnabledStatus() == 1) || (FORCE_TEST_MODE == TEST))
+            if ((_duHWMgr.getSWCModeStatus() == OFFLINE) || (_duHWMgr.getTestEnabledStatus() == 1) || (FORCE_TEST_MODE == TEST))
             {
                 // Set test source based on command
                 _duHWMgr.setTestSrcInTestMode(params->testSource);
@@ -529,13 +521,13 @@ void DUACmdMgr::processTestServerMsg()
                     if (params->RLCP == On)
                     {
                         printf("Setting RLCP to On\n");
-                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
+                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
                         _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_BORESIGHT);
                     }
                     if (params->RLSC == On)
                     {
                         printf("Setting RLSC to On\n");
-                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
+                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
                         _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_CALIBRATION);
                     }
 

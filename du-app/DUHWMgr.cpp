@@ -105,11 +105,15 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     {
         _brdCtrVal = DeviceUtilities::updateReg(DU_FORCE_TEST_MODE_MASK, _brdCtrVal, TEST);
     }
-//  // Set Steering Word source to ARM
-//  if (TEST_MODE_STEERING_WORD_SRC == TEST_MODE_DU)
-//  {
-//      _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_STEERING_WORD_SRC_MASK, _brdCtrVal, TEST_MODE_DU);
-//  }
+    // Set Steering Word source to ARM
+    if (TEST_MODE_STEERING_WORD_SRC == TestSourceDU)
+    {
+        _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_STEERING_WORD_SRC_MASK, _brdCtrVal, TestSourceDU);
+    }
+    // TO BE REMOVED
+    // Set default system config for Test Mode
+    _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_SYSTEM_CONFIG_MASK, _brdCtrVal, SWCR);
+
     _duDev->setBrdCtrlReg(_brdCtrVal);
 
     // Set DCU_SCLK_READBACK_DELAY

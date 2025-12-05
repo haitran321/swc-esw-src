@@ -58,7 +58,7 @@ typedef enum
 typedef enum
 {
     ONLINE = 0,
-    TEST_ENABLE = 1,
+    OFFLINE = 1,
 } SWC_MODE;
 
 typedef enum
