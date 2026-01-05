@@ -100,6 +100,26 @@ void DUDevice::setSwcStatusToTwgsReg(int val)
     regs->swcStatusToTwgs = val;
 }
 
+int DUDevice::getCableDelayCompReg()
+{
+    return (regs->cableDelayComp);
+}
+
+void DUDevice::setCableDelayCompReg(int val)
+{
+    regs->cableDelayComp = val;
+}
+
+int DUDevice::getARMInitStatusReg()
+{
+    return (regs->armInitStatus);
+}
+
+void DUDevice::setARMInitStatusReg(int val)
+{
+    regs->armInitStatus = val;
+}
+
 int DUDevice::getDiagInfoReg()
 {
     return (regs->diagInfo);

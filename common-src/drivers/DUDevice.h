@@ -179,6 +179,13 @@ typedef enum
     DU_DCU_NUMBER_STATUS_MASK           = 0x7F800000,    /* Bit 11..18 */  /* Bit 23..30 */
 }SWC_STATUS_TO_TWGS_ENUM;
 
+typedef enum
+{
+    DU_ARM_INIT_STATUS_MASK         = 0x80000003,    /* Bits 0..1 */
+    DU_OS_INIT_STATUS_MASK          = 0x00000001,    /* Bit 0 */
+    DU_APP_INIT_STATUS_MASK         = 0x00000002,    /* Bit 1 */
+}DU_ARM_INIT_STATUS_ENUM;
+
 class DUDevice : public Device
 {
 public:
@@ -209,6 +216,12 @@ public:
 
     int getSwcStatusToTwgsReg();
     void setSwcStatusToTwgsReg(int val);
+
+    int getCableDelayCompReg();
+    void setCableDelayCompReg(int val);
+
+    int getARMInitStatusReg();
+    void setARMInitStatusReg(int val);
 
     void setDiagInfoReg(int val);
     int getDiagInfoReg();

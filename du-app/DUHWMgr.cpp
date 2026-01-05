@@ -7,7 +7,8 @@
 DUHWMgr::DUHWMgr() :
 _logger(Logger::getInstance()),
 _duDev(NULL),
-_brdCtrVal(-1)
+_brdCtrVal(0),
+_armInitReady(0)
 {
 }
 
@@ -48,6 +49,7 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     /* Common config parameters */;
     int FORCE_TEST_MODE;
     int TEST_MODE_STEERING_WORD_SRC;
+    int DCU_CABLE_DELAY_COMP;
     int DCU_SCLK_READBACK_DELAY;
 
     _logger.logInfo("DUHWMgr Initializing");
@@ -56,6 +58,7 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     ConfigDataManager &configs = ConfigDataManager::getInstance();
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
     rc = rc || configs.get("TEST_MODE_STEERING_WORD_SRC", TEST_MODE_STEERING_WORD_SRC);
+    rc = rc || configs.get("DCU_CABLE_DELAY_COMP", DCU_CABLE_DELAY_COMP);
     rc = rc || configs.get("DCU_SCLK_READBACK_DELAY", DCU_SCLK_READBACK_DELAY);
 
     // For testing.  To be removed
@@ -73,6 +76,10 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     }
 
     printf("After create _duDev\n");
+
+    // Set Arm Init Reg to indicate the OS is ready
+    _armInitReady = DeviceUtilities::updateReg(DU_OS_INIT_STATUS_MASK, _armInitReady, READY);
+    _duDev->setARMInitStatusReg(_armInitReady);
 
     // Reset brdCtl to default
     _brdCtrVal = 0;
@@ -116,8 +123,14 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
 
     _duDev->setBrdCtrlReg(_brdCtrVal);
 
+    printf("Setting DCU_CABLE_DELAY_COMP = %d, DCU_SCLK_READBACK_DELAY to %d\n", 
+           DCU_CABLE_DELAY_COMP, DCU_SCLK_READBACK_DELAY);
+
+    // Set DCU_CABLE_DELAY_COMP
+    _duDev->setCableDelayCompReg(DCU_CABLE_DELAY_COMP);
+    //setReg(0x28, 1);
+
     // Set DCU_SCLK_READBACK_DELAY
-    printf("Setting DCU_SCLK_READBACK_DELAY to %d\n", DCU_SCLK_READBACK_DELAY);
     for (int i = 0; i < NUM_DCU-1; i++)
     {
         _duDev->setDCUSCLKReg(i, DCU_SCLK_READBACK_DELAY);
@@ -151,7 +164,11 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
         readSWCStatus(DATA_TYPE_CONFIG_STATUS);
     }
 
-    getRegs(0x0, 0x28);
+    // Set ARM Init Reg to indicate the app is ready
+    _armInitReady = DeviceUtilities::updateReg(DU_APP_INIT_STATUS_MASK, _armInitReady, READY);
+    _duDev->setARMInitStatusReg(_armInitReady);
+
+    getRegs(0x0, 0x2C);
     printf("getBoardControlReg = 0x%x\n", _duDev->getBrdCtrlReg());
 
     getRegs(0x380, 0x380);
@@ -463,7 +480,7 @@ DCUStatusParamsType DUHWMgr::readDCUFWStatus(int reg)
     {
         // Use fake dcu status except for dcu at index 40, real dcu at index 40 has dcu number 100
         // So set index 99 dcu number 41
-        if ((reg != 40) && (reg != 99) && (reg != 42) && (reg != 100) && (MODULE_TYPE == DU_ALPHA))
+        if ((reg != 40) && (reg != 99) && (reg != 44) && (reg != 100) && (MODULE_TYPE == DU_ALPHA))
         {
             fwStatus = fakeDCUFWStatus[_rfccType][reg+1];
             fwStatus = DeviceUtilities::updateReg(DCU_LOCATION_STATUS_MASK, fwStatus, reg+1);
@@ -476,7 +493,7 @@ DCUStatusParamsType DUHWMgr::readDCUFWStatus(int reg)
         if ((reg == 100) && (MODULE_TYPE == DU_ALPHA))
         {
             fwStatus = fakeDCUFWStatus[_rfccType][reg+1];
-            fwStatus = DeviceUtilities::updateReg(DCU_LOCATION_STATUS_MASK, fwStatus, 43);
+            fwStatus = DeviceUtilities::updateReg(DCU_LOCATION_STATUS_MASK, fwStatus, 45);
         }
         if (MODULE_TYPE == DU_BETA)
         {
@@ -659,6 +676,11 @@ void DUHWMgr::computeDCURolledUpStatus()
         _alphaDCURolledUpStatus = DCU_ROLLED_UP_GREEN;
         _betaDCURolledUpStatus = DCU_ROLLED_UP_GREEN;
     }
+}
+
+int DUHWMgr::getOverallSPIStatus()
+{
+    return(DeviceUtilities::readMask(DU_SPI_HEALTH_MASK, getSysConfigStatus()));
 }
 
 DUTUStatusType DUHWMgr::getDUAStatus()

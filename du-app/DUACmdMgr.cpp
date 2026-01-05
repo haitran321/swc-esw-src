@@ -341,6 +341,21 @@ void DUACmdMgr::processSLInterrupt()
     lastAlpha = armAlpha;
     lastBeta = armBeta;
 
+    // Get last SPI transfer status
+    if (_duHWMgr.getOverallSPIStatus() == FAILED)
+    {
+        printf("Last SPI transfer status has no failures.\n");
+        _logger.logDebug("Last SPI transfer status has no failures.");
+    }
+    else
+    {
+        printf("Last SPI transfer status has failures.\n");
+        _logger.logDebug("Last SPI transfer status has failures.");
+
+        // Determine what DCU reported CRC failures
+
+    }
+
     // Set DCU status to send to TWGS
     // DCU status is sent to TWGS per action
     // Check DCU status queue to see if there are status to send

@@ -75,4 +75,10 @@ typedef enum
     DCU_ROLLED_UP_GREEN    = 3
 } DCURolledUpStatus;
 
+typedef enum
+{
+    NOT_READY  = 0,
+    READY      = 1,
+} READY_STATUS;
+
 #endif

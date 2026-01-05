@@ -92,6 +92,8 @@ class DUHWMgr : public Uncopyable
         void processIOModuleStatus();
         void computeDCURolledUpStatus();
 
+        int getOverallSPIStatus();
+
         DUTUStatusType getDUAStatus();
         DUTUStatusType getDUBStatus();
         DUTUStatusType getTUStatus();
@@ -125,6 +127,7 @@ class DUHWMgr : public Uncopyable
         int _diagRegVal;
         int _sysConfigReg;
         int _statusToTwgs;
+        int _armInitReady;
         HealthState _swcrOverall;
         SWC_CONFIG _sysConfig;
         SWC_MODE _mode;
