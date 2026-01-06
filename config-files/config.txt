@@ -39,11 +39,6 @@ STATUS_TIMER_INTERVAL_SECONDS = 10
 # 1 = Force test, no RLTD but needs SW trigger
 FORCE_TEST_MODE = 0
 
-# STEERING_WORD_SRC
-# 0 = TU
-# 1 = DU
-TEST_MODE_STEERING_WORD_SRC = 0
-
 # DCU Cable Delay Comp (course adjustment)
 DCU_CABLE_DELAY_COMP = 1
 

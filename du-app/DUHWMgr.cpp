@@ -48,7 +48,6 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
 
     /* Common config parameters */;
     int FORCE_TEST_MODE;
-    int TEST_MODE_STEERING_WORD_SRC;
     int DCU_CABLE_DELAY_COMP;
     int DCU_SCLK_READBACK_DELAY;
 
@@ -57,7 +56,6 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     // Get config parameters
     ConfigDataManager &configs = ConfigDataManager::getInstance();
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
-    rc = rc || configs.get("TEST_MODE_STEERING_WORD_SRC", TEST_MODE_STEERING_WORD_SRC);
     rc = rc || configs.get("DCU_CABLE_DELAY_COMP", DCU_CABLE_DELAY_COMP);
     rc = rc || configs.get("DCU_SCLK_READBACK_DELAY", DCU_SCLK_READBACK_DELAY);
 
@@ -111,15 +109,11 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     if (FORCE_TEST_MODE == TEST)
     {
         _brdCtrVal = DeviceUtilities::updateReg(DU_FORCE_TEST_MODE_MASK, _brdCtrVal, TEST);
+
+        // Set default config, mode, test enable
+        // TO DO:  Remove when the ATB is providing these param
+        _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_SYSTEM_CONFIG_MASK, _brdCtrVal, SWCR);
     }
-    // Set Steering Word source to ARM
-    if (TEST_MODE_STEERING_WORD_SRC == TestSourceDU)
-    {
-        _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_STEERING_WORD_SRC_MASK, _brdCtrVal, TestSourceDU);
-    }
-    // TO BE REMOVED
-    // Set default system config for Test Mode
-    _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_SYSTEM_CONFIG_MASK, _brdCtrVal, SWCR);
 
     _duDev->setBrdCtrlReg(_brdCtrVal);
 
@@ -361,12 +355,14 @@ void DUHWMgr::setDCUStatusToTwgs(RFCC_CH group, HealthState health, int dcuNum)
 
 void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
 {
+    getSysConfigStatus();
+    _sysConfig = (SWC_CONFIG)(DeviceUtilities::readMask(DU_SYSTEM_CONFIG_MASK, _sysConfigReg));
+
     if (!USE_STATUS_EMULATOR)
     {
         getSysConfigStatus();
 
         // Translate system config reg
-        _sysConfig = (SWC_CONFIG)(DeviceUtilities::readMask(DU_SYSTEM_CONFIG_MASK, _sysConfigReg));
         _mode = (SWC_MODE)(DeviceUtilities::readMask(DU_MODE_MASK, _sysConfigReg));
         _testEnabled = DeviceUtilities::readMask(DU_OFFLINE_TEST_ENABLED_MASK, _sysConfigReg);
     }
@@ -749,7 +745,11 @@ void DUHWMgr::processEmulatorStatus(HealthState swcrOverall_,
                                    int dcuNum_)
 {
     _swcrOverall = swcrOverall_;
-    _sysConfig = sysConfig_;
+
+//  _sysConfig = sysConfig_;
+    _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_SYSTEM_CONFIG_MASK, _brdCtrVal, sysConfig_);
+    _duDev->setBrdCtrlReg(_brdCtrVal);
+
     _mode = mode_;
     printf("From Emulator: overall = %d, config = %d, mode = %d\n", _swcrOverall, _sysConfig, _mode);
     _alphaDUStatus.overallStatus = alphaDUStatus_;
