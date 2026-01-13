@@ -338,8 +338,10 @@ void DUACmdMgr::processSLInterrupt()
     _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
 
     // Set last K Sine processed
-    lastAlpha = armAlpha;
-    lastBeta = armBeta;
+    lastARMAlpha = armAlpha;
+    lastARMBeta = armBeta;
+    lastATBAlpha = atbAlpha;
+    lastATBBeta = atbBeta;
 
     // Get last SPI transfer status
     if (_duHWMgr.getOverallSPIStatus() == FAILED)
@@ -391,6 +393,17 @@ void DUACmdMgr::processConfigInterrupt()
     _uioDevConfig->clearInterrupt();
 
     _duHWMgr.readSWCStatus(DATA_TYPE_CONFIG_STATUS);
+
+    // Get mode
+    if (_duHWMgr.getSWCModeStatus() == ONLINE)
+    {
+        // Reset test source back 0 (TU = 0)
+        // Should already be 0 but just to be safe 
+        _duHWMgr.setTestSrcInTestMode(TestSourceTU);
+    }
+
+    // Does CmdMgr need to set anything based on config?  
+    // Do it here
 }
 
 void DUACmdMgr::processStatusTimer()
@@ -521,15 +534,16 @@ void DUACmdMgr::processTestServerMsg()
             _logger.logDebug("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d",
                              params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
 
-            // Check for Offline Mode from HW or Test Enabled from HW or Force Test Mode from Config File
+            // Check for Offline Mode from HW or Test Enabled from HW
+            // Force Test Mode from Config File set SWCR mode to offline
             if ((_duHWMgr.getSWCModeStatus() == OFFLINE) || (_duHWMgr.getTestEnabledStatus() == 1) || (FORCE_TEST_MODE == TEST))
             {
-                // Set test source based on command
-                _duHWMgr.setTestSrcInTestMode(params->testSource);
-
                 // Set KSine Regs
                 if (params->testSource == TestSourceDU)
                 {
+                    // Set test source based on command
+                    _duHWMgr.setTestSrcInTestMode(params->testSource);
+
                     _duHWMgr.setArmKSine(ALPHA, params->alpha);
                     _duHWMgr.setArmKSine(BETA, params->beta);
 
@@ -551,6 +565,9 @@ void DUACmdMgr::processTestServerMsg()
 
                     // Reset Steering Word valid flag back to valid for the next command
                     _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
+
+                    // Reset test source back 0 (TU = 0)
+                    _duHWMgr.setTestSrcInTestMode(TestSourceTU);
                 }
             }
 
@@ -603,8 +620,10 @@ void DUACmdMgr::processTestServerMsg()
                 {
                     swcOverallStatusRptMsg.setBetaDCUStatus(dcu, swcStatus.betaDCU[dcu]);
                 }
-                swcOverallStatusRptMsg.setLastAlpha(lastAlpha);
-                swcOverallStatusRptMsg.setLastBeta(lastBeta);
+                swcOverallStatusRptMsg.setLastARMAlpha(lastARMAlpha);
+                swcOverallStatusRptMsg.setLastARMBeta(lastARMBeta);
+                swcOverallStatusRptMsg.setLastATBAlpha(lastATBAlpha);
+                swcOverallStatusRptMsg.setLastATBBeta(lastATBBeta);
                 swcOverallStatusRptMsg.buildMsg();
                 int msgSize = swcOverallStatusRptMsg.getBufSize();
                 swcOverallStatusRptMsg.headerByteSwapToNetwork();

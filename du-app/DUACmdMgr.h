@@ -68,8 +68,10 @@ class DUACmdMgr : public EventProcessor
         UDPNetworkDevice* _udpToDevPC;
         void processDEVPCMsg();
 
-        int lastAlpha;
-        int lastBeta;
+        int lastARMAlpha;
+        int lastARMBeta;
+        int lastATBAlpha;
+        int lastATBBeta;
 
         BetaDCUStatusMsg _localStatus[4];
         int localStatusCounter;

@@ -20,7 +20,6 @@ WARM_RESTART_PORT = 9010
 LOCAL_HW_STATUS_PORT = 4020
 
 # For logger configs
-LOGGER_IP_ADDRESS = 172.16.80.50
 LOGGER_PORT = 3030
 # Trace = 1, Debug = 2, Info = 3, Error = 4
 LOG_LEVEL = 2

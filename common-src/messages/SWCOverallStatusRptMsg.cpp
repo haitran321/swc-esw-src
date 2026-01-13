@@ -29,8 +29,10 @@ STATUS SWCOverallStatusRptMsg::buildMsg()
     _data.swc24VPwrStatus = (HealthState)toNetworkInt(_data.swc24VPwrStatus);
     _data.swcATBStatus = (HealthState)toNetworkInt(_data.swcATBStatus);
     _data.testUnitHWStatus = (HealthState)toNetworkInt(_data.testUnitHWStatus);
-    _data.lastAlpha = (int)toNetworkInt(_data.lastAlpha);
-    _data.lastBeta = (int)toNetworkInt(_data.lastBeta);
+    _data.lastARMAlpha = (int)toNetworkInt(_data.lastARMAlpha);
+    _data.lastARMBeta = (int)toNetworkInt(_data.lastARMBeta);
+    _data.lastATBAlpha = (int)toNetworkInt(_data.lastATBAlpha);
+    _data.lastATBBeta = (int)toNetworkInt(_data.lastATBBeta);
     for (int i = 0; i < NUM_DCU; i++)
     {
         _data.alphaDCU[i] = (HealthState)toNetworkInt(_data.alphaDCU[i]);

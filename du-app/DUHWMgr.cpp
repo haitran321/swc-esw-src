@@ -136,7 +136,8 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     {
         for (int i = 0; i < NUM_DCU; i++)
         {
-            fakeDCUFWStatus[_rfccType][i] = 0xb86401;
+//          fakeDCUFWStatus[_rfccType][i] = 0xb86401;
+            fakeDCUFWStatus[_rfccType][i] = 0x3c6415; 
             // Alternate between Red and Green
             fakeDCUFWStatus[_rfccType][i] = DeviceUtilities::updateReg(DCU_BIT_OVERALL_STATUS_MASK, fakeDCUFWStatus[_rfccType][i], i%2);
         }
@@ -360,8 +361,6 @@ void DUHWMgr::readSWCStatus(SWC_STATUS_DATA_TYPE dataType)
 
     if (!USE_STATUS_EMULATOR)
     {
-        getSysConfigStatus();
-
         // Translate system config reg
         _mode = (SWC_MODE)(DeviceUtilities::readMask(DU_MODE_MASK, _sysConfigReg));
         _testEnabled = DeviceUtilities::readMask(DU_OFFLINE_TEST_ENABLED_MASK, _sysConfigReg);

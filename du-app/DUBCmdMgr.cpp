@@ -347,8 +347,10 @@ void DUBCmdMgr::processSLInterrupt()
     _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
 
     // Set last K Sine processed
-    lastAlpha = armAlpha;
-    lastBeta = armBeta;
+    lastARMAlpha = armAlpha;
+    lastARMBeta = armBeta;
+    lastATBAlpha = atbAlpha;
+    lastATBBeta = atbBeta;
 
     // Get last SPI transfer status
     if (_duHWMgr.getOverallSPIStatus() == FAILED)
@@ -403,6 +405,17 @@ void DUBCmdMgr::processConfigInterrupt()
     printf("Reading config changed interrupt, number of interrupt = %d\n", pending);
     _logger.logDebug("Reading config changed interrupt, number of interrupt = %d", pending);
     _uioDevConfig->clearInterrupt();
+
+    // Get mode
+    if (_duHWMgr.getSWCModeStatus() == ONLINE)
+    {
+        // Reset test source back 0 (TU = 0)
+        // Should already be 0 but just to be safe 
+        _duHWMgr.setTestSrcInTestMode(TestSourceTU);
+    }
+
+    // Does CmdMgr need to set anything based on config?  
+    // Do it here
 }
 
 void DUBCmdMgr::processStatusTimer()
@@ -529,25 +542,28 @@ void DUBCmdMgr::processTestServerMsg()
                              params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
 
             // Check for Offline Mode from HW or Test Enabled from HW or Force Test Mode from Config File
+            // Force Test Mode from Config File set SWCR mode to offline
             if ((_duHWMgr.getSWCModeStatus() == OFFLINE) || (_duHWMgr.getTestEnabledStatus() == 1) || (FORCE_TEST_MODE == TEST))
             {
-                // Set test source based on command
-                _duHWMgr.setTestSrcInTestMode(params->testSource);
-
                 // Set KSine Regs
                 if (params->testSource == TestSourceDU)
                 {
+                    // Set test source based on command
+                    _duHWMgr.setTestSrcInTestMode(params->testSource);
+
                     _duHWMgr.setArmKSine(ALPHA, params->alpha);
                     _duHWMgr.setArmKSine(BETA, params->beta);
 
                     if (params->RLCP == On)
                     {
-                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
+                        printf("Setting RLCP to On\n");
+                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
                         _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_BORESIGHT);
                     }
                     if (params->RLSC == On)
                     {
-                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
+                        printf("Setting RLSC to On\n");
+                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
                         _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_CALIBRATION);
                     }
 
@@ -556,6 +572,9 @@ void DUBCmdMgr::processTestServerMsg()
 
                     // Reset Steering Word valid flag back to valid for the next command
                     _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
+
+                    // Reset test source back 0 (TU = 0)
+                    _duHWMgr.setTestSrcInTestMode(TestSourceTU);
                 }
             }
 
