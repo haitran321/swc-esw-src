@@ -64,10 +64,8 @@ class DUBCmdMgr : public EventProcessor
         ElapsedTimer eInterruptProcessing;
         Timestamp ts;
 
-        int lastARMAlpha;
-        int lastARMBeta;
-        int lastATBAlpha;
-        int lastATBBeta;
+        int lastProcessedAlpha;
+        int lastProcessedBeta;
 
         // TO BE REMOVED
         UDPNetworkDevice* _udpFromDevPC;

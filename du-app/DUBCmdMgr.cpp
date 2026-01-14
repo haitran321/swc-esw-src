@@ -347,10 +347,8 @@ void DUBCmdMgr::processSLInterrupt()
     _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d", fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
 
     // Set last K Sine processed
-    lastARMAlpha = armAlpha;
-    lastARMBeta = armBeta;
-    lastATBAlpha = atbAlpha;
-    lastATBBeta = atbBeta;
+    lastProcessedAlpha = atbAlpha;
+    lastProcessedBeta = atbBeta;
 
     // Get last SPI transfer status
     if (_duHWMgr.getOverallSPIStatus() == FAILED)
@@ -557,13 +555,13 @@ void DUBCmdMgr::processTestServerMsg()
                     if (params->RLCP == On)
                     {
                         printf("Setting RLCP to On\n");
-                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
+                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
                         _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_BORESIGHT);
                     }
                     if (params->RLSC == On)
                     {
                         printf("Setting RLSC to On\n");
-                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
+                        _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
                         _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_CALIBRATION);
                     }
 

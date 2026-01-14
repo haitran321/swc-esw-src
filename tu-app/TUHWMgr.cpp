@@ -95,21 +95,21 @@ int TUHWMgr::getFWScanLimitCheckStatus()
 
 void TUHWMgr::toggleRLTDSignal()
 {
-    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLTD_SIGNAL_MASK, _brdCtrVal, 1);
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SW_TRIGGER_MASK, _brdCtrVal, 1);
     _tuDev->setBrdCtrlReg(_brdCtrVal);
-    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLTD_SIGNAL_MASK, _brdCtrVal, 0);
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SW_TRIGGER_MASK, _brdCtrVal, 0);
     _tuDev->setBrdCtrlReg(_brdCtrVal);
 }
 
 void TUHWMgr::setRLCPSignal(CmdOnOff flag)
 {
-    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLCP_SIGNAL_MASK, _brdCtrVal, flag);
+    _brdCtrVal = DeviceUtilities::updateReg(TU_RLCP_CMD_MASK, _brdCtrVal, flag);
     _tuDev->setBrdCtrlReg(_brdCtrVal);
 }
 
 void TUHWMgr::setRLSCSignal(CmdOnOff flag)
 {
-    _brdCtrVal = DeviceUtilities::updateReg(TU_SET_RLSC_SIGNAL_MASK, _brdCtrVal, flag);
+    _brdCtrVal = DeviceUtilities::updateReg(TU_RLSC_CMD_MASK, _brdCtrVal, flag);
     _tuDev->setBrdCtrlReg(_brdCtrVal);
 }
 

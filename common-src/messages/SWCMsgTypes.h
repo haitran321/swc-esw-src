@@ -118,10 +118,8 @@ typedef struct
     HealthState swc24VPwrStatus;
     HealthState swcATBStatus;
     HealthState testUnitHWStatus;
-    int lastARMAlpha;
-    int lastARMBeta;
-    int lastATBAlpha;
-    int lastATBBeta;
+    int lastProcessedAlpha;
+    int lastProcessedBeta;
     HealthState alphaDCU[NUM_DCU];
     HealthState betaDCU[NUM_DCU];
 } SWCOverallStatusDataType;

@@ -60,13 +60,9 @@ public:
 
     inline void setBetaDCUStatus(int dcu, HealthState health);
 
-    inline void setLastARMAlpha(int alpha);
+    inline void setLastProcessedAlpha(int alpha);
 
-    inline void setLastARMBeta(int beta);
-
-    inline void setLastATBAlpha(int alpha);
-
-    inline void setLastATBBeta(int beta);
+    inline void setLastProcessedBeta(int beta);
 
 private:
 
@@ -146,28 +142,16 @@ void SWCOverallStatusRptMsg::setBetaDCUStatus(int dcu, HealthState health)
     _data.betaDCU[dcu] = health;
 }
 
-void SWCOverallStatusRptMsg::setLastARMAlpha(int alpha)
+void SWCOverallStatusRptMsg::setLastProcessedAlpha(int alpha)
 {
-    _data.lastARMAlpha = alpha;
-    printf("lastARMAlpha = %d\n", _data.lastARMAlpha);
+    _data.lastProcessedAlpha = alpha;
+    printf("lastProcessedAlpha = %d\n", _data.lastProcessedAlpha);
 }
 
-void SWCOverallStatusRptMsg::setLastARMBeta(int beta)
+void SWCOverallStatusRptMsg::setLastProcessedBeta(int beta)
 {
-    _data.lastARMBeta = beta;
-    printf("lastARMBeta = %d\n", _data.lastARMBeta);
-}
-
-void SWCOverallStatusRptMsg::setLastATBAlpha(int alpha)
-{
-    _data.lastATBAlpha = alpha;
-    printf("lastATBAlpha = %d\n", _data.lastATBAlpha);
-}
-
-void SWCOverallStatusRptMsg::setLastATBBeta(int beta)
-{
-    _data.lastATBBeta = beta;
-    printf("lastATBBeta = %d\n", _data.lastATBBeta);
+    _data.lastProcessedBeta = beta;
+    printf("lastProcessedBeta = %d\n", _data.lastProcessedBeta);
 }
 
 #endif

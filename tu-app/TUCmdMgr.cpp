@@ -33,7 +33,7 @@ TUCmdMgr::TUCmdMgr() :
     _localHWStatus(NULL),
     _tuHWMgr(TUHWMgr::getInstance()),
     _uioDevSL(NULL),
-    _uioDevConfig(NULL),
+    _uioDevWLSP(NULL),
     _timerDevStatus(NULL)
 {
 }
@@ -55,8 +55,8 @@ TUCmdMgr::~TUCmdMgr()
     delete _uioDevSL;
     _uioDevSL = NULL;
 
-    delete _uioDevConfig;
-    _uioDevConfig = NULL;
+    delete _uioDevWLSP;
+    _uioDevWLSP = NULL;
 
     delete _timerDevStatus;
     _timerDevStatus = NULL;
@@ -112,7 +112,6 @@ STATUS TUCmdMgr::start()
 
     // Configuration parameters
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
-    rc = rc || configs.get("STEERING_WORD_SRC", STEERING_WORD_SRC);
 
     // Status parameters
     rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
@@ -211,23 +210,23 @@ STATUS TUCmdMgr::start()
     _uioDevSL->clearInterrupt();
 
     // Open UIO device for HW Config Changed Interrupt
-    _uioDevConfig = new UIODevice(AXI_INT_122_OFFSET, 1);
+    _uioDevWLSP = new UIODevice(AXI_INT_122_OFFSET, 1);
 
-    if (_uioDevConfig->open() != OK)
+    if (_uioDevWLSP->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _uioDevConfig->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _uioDevWLSP->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_uioDevConfig, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processConfigInterrupt)) != OK)
+    if (addEvent(*_uioDevWLSP, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processWLSPInterrupt)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _uioDevConfig->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _uioDevWLSP->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _uioDevConfig device");
+    _logger.logInfo("Successfully created _uioDevWLSP device");
 
     // Map UIO address
-    _uioDevConfig->mmap();
-    _uioDevConfig->clearInterrupt();
+    _uioDevWLSP->mmap();
+    _uioDevWLSP->clearInterrupt();
 
     // Status Timer
     timespec init = { STATUS_TIMER_INTERVAL_SECONDS, 0 };
@@ -288,19 +287,19 @@ void TUCmdMgr::processSLInterrupt()
 
 }
 
-void TUCmdMgr::processConfigInterrupt()
+void TUCmdMgr::processWLSPInterrupt()
 {
 #ifdef PRINT_DEBUG
-    printf("In processConfigInterrupt()\n");
+    printf("In processWLSPInterrupt()\n");
 #endif
 
     size_t bytesRead = 0;
     int pending = 0;
 
-    _uioDevConfig->read((char *)&pending, sizeof(int), bytesRead);
-    printf("Reading config changed interrupt, number of interrupt = %d\n", pending);
-    _logger.logDebug("Reading config changed interrupt, number of interrupt = %d", pending);
-    _uioDevConfig->clearInterrupt();
+    _uioDevWLSP->read((char *)&pending, sizeof(int), bytesRead);
+    printf("Reading WLSP interrupt, number of interrupt = %d\n", pending);
+    _logger.logDebug("Reading WLSP changed interrupt, number of interrupt = %d", pending);
+    _uioDevWLSP->clearInterrupt();
 }
 
 void TUCmdMgr::processStatusTimer()

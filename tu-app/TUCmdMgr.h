@@ -50,7 +50,6 @@ class TUCmdMgr : public EventProcessor
 
         /* Common config parameters */
         int FORCE_TEST_MODE;
-        int STEERING_WORD_SRC;
 
         void processIncomingMsg();
 
@@ -58,8 +57,8 @@ class TUCmdMgr : public EventProcessor
 
         UIODevice* _uioDevSL;
         void processSLInterrupt();
-        UIODevice* _uioDevConfig;
-        void processConfigInterrupt();
+        UIODevice* _uioDevWLSP;
+        void processWLSPInterrupt();
         TimerDevice* _timerDevStatus;
         void processStatusTimer();
         ElapsedTimer eInterruptProcessing;
