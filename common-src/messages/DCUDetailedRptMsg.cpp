@@ -18,17 +18,20 @@ STATUS DCUDetailedStatusRptMsg::buildMsg()
 
     // Byte swap from Local to Network
     _data.group = (RFCC_CH)toNetworkInt(_data.group);
-    _data.number = (int)toNetworkInt(_data.number);
+    _data.loc = (int)toNetworkInt(_data.loc);
+    _data.duplicate = (HealthState)toNetworkInt(_data.duplicate);
     _data.fwStatusReg = (int)toNetworkInt(_data.fwStatusReg);
-    _data.dcuStatus.bypassStatus = (int)toNetworkInt(_data.dcuStatus.bypassStatus);
-    _data.dcuStatus.modeStatus = (int)toNetworkInt(_data.dcuStatus.modeStatus);
-    _data.dcuStatus.overallStatus = (HealthState)toNetworkInt(_data.dcuStatus.overallStatus);
-    _data.dcuStatus.clockStatus = (HealthState)toNetworkInt(_data.dcuStatus.clockStatus);
-    _data.dcuStatus.locValid = (HealthState)toNetworkInt(_data.dcuStatus.locValid);
-    _data.dcuStatus.spiCommStatus = (HealthState)toNetworkInt(_data.dcuStatus.spiCommStatus);
-    _data.dcuStatus.steeringWordCompare = (HealthState)toNetworkInt(_data.dcuStatus.steeringWordCompare);
-    _data.dcuStatus.fwLoc = (HealthState)toNetworkInt(_data.dcuStatus.fwLoc);
-    _data.dcuStatus.crcStatus = (HealthState)toNetworkInt(_data.dcuStatus.crcStatus);
+    _data.dcuFWStatus.bypassStatus = (int)toNetworkInt(_data.dcuFWStatus.bypassStatus);
+    _data.dcuFWStatus.modeStatus = (int)toNetworkInt(_data.dcuFWStatus.modeStatus);
+    _data.dcuFWStatus.overallStatus = (HealthState)toNetworkInt(_data.dcuFWStatus.overallStatus);
+    _data.dcuFWStatus.clockStatus = (HealthState)toNetworkInt(_data.dcuFWStatus.clockStatus);
+    _data.dcuFWStatus.locValid = (HealthState)toNetworkInt(_data.dcuFWStatus.locValid);
+    _data.dcuFWStatus.spiCommStatus = (HealthState)toNetworkInt(_data.dcuFWStatus.spiCommStatus);
+    _data.dcuFWStatus.steeringWordCompare = (HealthState)toNetworkInt(_data.dcuFWStatus.steeringWordCompare);
+    _data.dcuFWStatus.dcuFWMajorRev = (int)toNetworkInt(_data.dcuFWStatus.dcuFWMajorRev);
+    _data.dcuFWStatus.dcuFWMinorRev = (int)toNetworkInt(_data.dcuFWStatus.dcuFWMinorRev);
+    _data.dcuFWStatus.dcuType = (RFCC_CH)toNetworkInt(_data.dcuFWStatus.dcuType);
+    _data.dcuFWStatus.crcStatus = (HealthState)toNetworkInt(_data.dcuFWStatus.crcStatus);
 
     // Add data to message.
     rc = addData(reinterpret_cast<char *>(&_data), sizeof(_data));

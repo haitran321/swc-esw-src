@@ -32,17 +32,17 @@ public:
     */
     virtual STATUS buildMsg();
 
-    inline void setDCUStatus(DCUStatusParamsType status);
+    inline void setDCUStatus(DCUStatus status);
 
 private:
 
     /** Status Report data */
 
-    DCUStatusParamsType _data;
+    DCUStatus _data;
 
 };
 
-void DCUDetailedStatusRptMsg::setDCUStatus(DCUStatusParamsType status)
+void DCUDetailedStatusRptMsg::setDCUStatus(DCUStatus status)
 {
     _data = status;
 }

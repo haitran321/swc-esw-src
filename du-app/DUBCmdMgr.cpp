@@ -220,7 +220,7 @@ STATUS DUBCmdMgr::start()
         int queueSize = _duHWMgr.getDCUStatusQueueSize();
         if (queueSize > 0)
         {
-            DCUStatusParamsType dcuStatus = _duHWMgr.getDCUStatusFromQueue();
+            DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromQueue();
             BetaDCUStatusMsg status;
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;
@@ -373,7 +373,7 @@ void DUBCmdMgr::processSLInterrupt()
         int queueSize = _duHWMgr.getDCUStatusQueueSize();
         if (queueSize > 0)
         {
-            DCUStatusParamsType dcuStatus = _duHWMgr.getDCUStatusFromQueue();
+            DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromQueue();
             BetaDCUStatusMsg status;
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;
@@ -448,7 +448,7 @@ void DUBCmdMgr::processStatusTimer()
         int queueSize = _duHWMgr.getDCUStatusQueueSize();
         if (queueSize > 0)
         {
-            DCUStatusParamsType dcuStatus = _duHWMgr.getDCUStatusFromQueue();
+            DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromQueue();
             BetaDCUStatusMsg status;
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;

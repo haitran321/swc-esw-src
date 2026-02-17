@@ -39,9 +39,8 @@ class DUHWMgr : public Uncopyable
 
         // Board Control Reg
         void toggleSWTrigger();
-        void setUnitType(RFCC_CH unitType);
+        void setSysConfig(SWC_CONFIG config);
         void setTestSrcInTestMode(TestSource testSrc);
-        void setSystemConfigInTestMode(SWC_CONFIG config);
         void sendDCUCmdInTestMode(DCU_CMD_ENUM cmd);
         void sendSteeringWordValidFlagInTestMode(DU_STEERING_WORD_VALID_FLAG_ENUM flag);
 
@@ -53,7 +52,7 @@ class DUHWMgr : public Uncopyable
 
         void readSWCStatus(SWC_STATUS_DATA_TYPE dataType);
         void readDCUStatus();
-        DCUStatusParamsType readDCUFWStatus(int reg);
+        DCUStatus readDCUFWStatus(int reg);
 
         void setDCUStatusToTwgs(RFCC_CH group, HealthState health, int dcuNum);
 
@@ -75,15 +74,15 @@ class DUHWMgr : public Uncopyable
 
         SWCOverallStatusDataType getSWCStatus();
 
-        void processDCUStatus(DCUStatusParamsType status);
+        void processDCUStatus(DCUStatus status);
 
-        DCUStatusParamsType getDCUStatusFromSW(RFCC_CH type, int dcuNum);
+        DCUStatus getDCUStatusFromSW(RFCC_CH type, int dcuNum);
 
-        DCUStatusParamsType getDCUStatusFromQueue();
+        DCUStatus getDCUStatusFromQueue();
 
         int getDCUStatusQueueSize();
 
-        void addDCUStatusToQueue(DCUStatusParamsType status);
+        void addDCUStatusToQueue(DCUStatus status);
 
         DUTUStatusType readDUStatus();
         void processDUAStatus(DUTUStatusType status);
@@ -144,9 +143,10 @@ class DUHWMgr : public Uncopyable
         RFCC_CH _dcuGroup;
         int _dcuNum;
 
-        std::queue<DCUStatusParamsType> _dcuSendQueue;
+        std::queue<DCUStatus> _dcuSendQueue;
         // This store the dcu data at index based on the dcu number from the FW
-        DCUStatusParamsType _dcuStatus[NUM_RFCC_CH][NUM_DCU];
+        DCUStatus _dcuStatus[NUM_RFCC_CH][NUM_DCU];
+        bool _dcuLocOccupied[NUM_DCU];
 
         void setOverallStatusBit(int val);
         void setDataTypeBit(SWC_STATUS_DATA_TYPE val);

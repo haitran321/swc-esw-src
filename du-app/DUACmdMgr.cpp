@@ -364,8 +364,8 @@ void DUACmdMgr::processSLInterrupt()
     _logger.logDebug("DCU status queue size = %d", queueSize);
     if (queueSize > 0)
     {
-        DCUStatusParamsType status = _duHWMgr.getDCUStatusFromQueue();
-        _duHWMgr.setDCUStatusToTwgs(status.group, status.dcuStatus.overallStatus, status.number);
+        DCUStatus status = _duHWMgr.getDCUStatusFromQueue();
+        _duHWMgr.setDCUStatusToTwgs(status.group, status.dcuFWStatus.overallStatus, status.loc);
     }
 
 //  eInterruptProcessing.stop();
@@ -718,8 +718,8 @@ void DUACmdMgr::processLocalHWStatusMsg()
         // Get message id
         if (localStatus->msgID == BETA_DCU_STATUS)
         {
-            printf("Received %d bytes: Group %d DCU %d\n", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.number);
-            _logger.logDebug("Received %d bytes: Group %d DCU %d", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.number);
+            printf("Received %d bytes: Group %d DCU %d\n", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.loc);
+            _logger.logDebug("Received %d bytes: Group %d DCU %d", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.loc);
             // Update local SW status and add to send queue
             _duHWMgr.processDCUStatus(localStatus->betaDCUStatus);
         }

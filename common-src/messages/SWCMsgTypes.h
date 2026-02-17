@@ -68,8 +68,8 @@ typedef struct
 
 typedef enum
 {
-    TestSourceTU = 0,
-    TestSourceDU = 1
+    TestSourceTU = 0,       // analog
+    TestSourceDU = 1        // digital
 } TestSource;
 
 typedef enum
@@ -134,16 +134,19 @@ typedef struct
     HealthState spiCommStatus;
     HealthState steeringWordCompare;
     int fwLoc;
+    int dcuFWMajorRev;
+    int dcuFWMinorRev;
+    RFCC_CH dcuType;
     int crcStatus;
-} DCUStatus;
+} DCUFWStatus;
 
 typedef struct
 {
     RFCC_CH group;
-    int number;
+    int loc;
     int fwStatusReg;
-    DCUStatus dcuStatus;
-} DCUStatusParamsType;
+    DCUFWStatus dcuFWStatus;
+} DCUStatus;
 
 typedef enum
 {
@@ -217,7 +220,7 @@ typedef enum
 typedef struct
 {
     InternalMsgID msgID;
-    DCUStatusParamsType betaDCUStatus;
+    DCUStatus betaDCUStatus;
 }BetaDCUStatusMsg;
 
 typedef struct

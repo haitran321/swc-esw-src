@@ -15,7 +15,8 @@ typedef struct
     int swcStatusToTwgs;
     int cableDelayComp;
     int armInitStatus;
-    int spare1[15];
+    int dcuEnable;
+    int spare1[14];
     int fpgaDieTemp;
     int vccIntVoltage;
     int vccAuxVoltage;
@@ -39,7 +40,7 @@ typedef enum
 
 typedef enum
 {
-    DU_BRD_CTRL_MASK                        = 0x8000077F,    /* Bits 0..6, 8..10 and 31 */
+    DU_BRD_CTRL_MASK                        = 0x8003177F,    /* Bits 0..6, 8..10, 12, 16..17 and 31 */
     DU_UNIT_TYPE_MASK                       = 0x00000001,    /* Bit 0 */
     DU_TEST_MODE_STEERING_WORD_SRC_MASK     = 0x00000002,    /* Bit 1 */
     DU_TEST_MODE_SW_TRIGGER_MASK            = 0x00000004,    /* Bit 2 */
@@ -47,6 +48,8 @@ typedef enum
     DU_TEST_MODE_STEERING_WORD_VALID_MASK   = 0x00000010,    /* Bit 4 */
     DU_TEST_MODE_SYSTEM_CONFIG_MASK         = 0x00000060,    /* Bits 5..6 */
     DU_TEST_MODE_DCU_CMD_MASK               = 0x00000700,    /* Bits 8..10 */
+    DU_SHUTDOWN_CMD_MASK                    = 0x00001000,    /* Bit 12 */
+    DU_SCAN_LIMIT_CENTER_FREQ_MASK          = 0x00030000,    /* Bits 16..17 */
     DU_SOFT_RESET_MASK                      = 0x80000000,    /* Bit 31 */
 }DU_BOARD_CONTROL_ENUM;
 
@@ -64,12 +67,21 @@ typedef enum
 
 typedef enum
 {
-    DCU_CMD_NONE        = 0,
-    DCU_CMD_BORESIGHT   = 1,
-    DCU_CMD_CALIBRATION = 2,
-    DCU_CMD_CRC_RESET   = 2,
-    DCU_CMD_DCU_RESET   = 3
+    DCU_CMD_NONE                    = 0,
+    DCU_CMD_BORESIGHT               = 1,
+    DCU_CMD_CALIBRATION             = 2,
+    DCU_CMD_CRC_RESET               = 3,
+    DCU_CMD_DCU_RESET               = 3,
+    DCU_TEST_PATTERN_READ_BACK      = 5
 }DCU_CMD_ENUM;
+
+typedef enum
+{
+    DCU_SL_CF_442_MHZ   = 0,
+    DCU_SL_CF_444_MHZ   = 1,
+    DCU_SL_CF_445_MHZ   = 2,
+    DCU_SL_CF_446_MHZ   = 3,
+}DCU_SL_CENTER_FREQ_ENUM;
 
 typedef enum
 {
@@ -96,6 +108,19 @@ typedef enum
 
 typedef enum
 {
+    DU_SYSTEM_STATUS_MASK            = 0x8000003F,    /* Bits 0..5, 8..10 */
+    DU_SYSTEM_CONFIG_MASK            = 0x00000003,    /* Bit 0..1 */
+    DU_MODE_MASK                     = 0x00000004,    /* Bit 2 */
+    DU_OFFLINE_TEST_ENABLED_MASK     = 0x00000008,    /* Bit 3 */
+    DU_BORESIGHT_LAST_CMD_MASK       = 0x00000010,    /* Bit 4 */
+    DU_CAL_LAST_CMD_MASK             = 0x00000020,    /* Bit 5 */
+    DU_SPI_HEALTH_LAST_CMD_MASK      = 0x00000100,    /* Bit 8 */
+    DU_COMPARE_RESULT_LAST_CMD_MASK  = 0x00000200,    /* Bit 9 */
+    DU_DCU_READ_BACK_MASK            = 0x00000400,    /* Bit 10 */
+}DU_SYSTEM_STATUS_ENUM;
+
+typedef enum
+{
     DCU_STATUS_MASK                 = 0x00FFFFFF,    /* Bits 0..23 */
     DCU_CRC_STATUS_MASK             = 0x00000001,    /* Bit 0 */
     DCU_TYPE_STATUS_MASK            = 0x00000002,    /* Bit 1 */
@@ -114,44 +139,9 @@ typedef enum
 
 typedef enum
 {
-    DU_SYSTEM_STATUS_MASK            = 0x8000003F,    /* Bits 0..5 */
-    DU_SYSTEM_CONFIG_MASK            = 0x00000003,    /* Bit 0..1 */
-    DU_MODE_MASK                     = 0x00000004,    /* Bit 2 */
-    DU_OFFLINE_TEST_ENABLED_MASK     = 0x00000008,    /* Bit 3 */
-    DU_BORESIGHT_CMD_MASK            = 0x00000010,    /* Bit 4 */
-    DU_CAL_CMD_MASK                  = 0x00000020,    /* Bit 5 */
-    DU_SPI_HEALTH_MASK               = 0x00000100,    /* Bit 8 */
-}DU_SYSTEM_STATUS_ENUM;
-
-typedef enum
-{
     WITH_CRC_ERROR      = 0,
     WITHOUT_CRC_ERROR   = 1
 }LAST_ACTION_CRC_STATUS;
-
-//typedef enum
-//{
-//    DU_STATUS_TO_TWGS_MASK              = 0x7FFFFFFF,    /* Bits 0..30 */
-//    DU_OVERALL_STATUS_MASK              = 0x00000001,    /* Bit 0 */
-//    DU_DATA_TYPE_MASK                   = 0x00000006,    /* Bit 1..2 */
-//    // Data Type = Config Status
-//    DU_CONFIG_STATUS_MASK               = 0x00000018,    /* Bit 3..4 */
-//    DU_MODE_STATUS_MASK                 = 0x00000020,    /* Bit 5 */
-//    // Data Type = Custom Status
-//    DU_ALPHA_OVERALL_STATUS_MASK        = 0x00000200,    /* Bit 9 */
-//    DU_BETA_OVERALL_STATUS_MASK         = 0x00000400,    /* Bit 10 */
-//    DU_ALPHA_DCU_ROLLED_UP_STATUS_MASK  = 0x00001800,    /* Bit 11..12 */
-//    DU_BETA_DCU_ROLLED_UP_STATUS_MASK   = 0x00006000,    /* Bit 13..14 */
-//    // Data Type = COTS Status
-//    DU_TEMP_STATUS_MASK                 = 0x00008000,    /* Bit 15 */
-//    DU_12V_PWR_STATUS_MASK              = 0x00010000,    /* Bit 16 */
-//    DU_24V_PWR_STATUS_MASK              = 0x00020000,    /* Bit 17 */
-//    DU_ATB_STATUS_MASK                  = 0x00040000,    /* Bit 18 */
-//    // DCU Status
-//    DU_DCU_GROUP_STATUS_MASK            = 0x00200000,    /* Bit 21 */
-//    DU_DCU_HEALTH_STATUS_MASK           = 0x00400000,    /* Bit 22 */
-//    DU_DCU_NUMBER_STATUS_MASK           = 0x7F800000,    /* Bit 11..18 */  /* Bit 23..30 */
-//}SWC_STATUS_TO_TWGS_ENUM;
 
 typedef enum
 {

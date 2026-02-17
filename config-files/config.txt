@@ -44,4 +44,10 @@ DCU_CABLE_DELAY_COMP = 1
 # DCU SCLK Readback Delay
 DCU_SCLK_READBACK_DELAY = 0
 
+# Scan Limit center freq selection
+# 0 = 442MHz
+# 1 = 444MHz
+# 2 = 445MHz
+# 3 = 446MHz
+SCAN_LIMIT_CENTER_FREQ_SEL = 0
 
