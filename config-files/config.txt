@@ -38,10 +38,13 @@ STATUS_TIMER_INTERVAL_SECONDS = 10
 # 1 = Force test, no RLTD but needs SW trigger
 FORCE_TEST_MODE = 0
 
-# DCU Cable Delay Comp (course adjustment)
-DCU_CABLE_DELAY_COMP = 1
+# DCU SPI Cable Delays (course adjustment)
+DCU_SPI_DELAY1 = 18
+DCU_SPI_DELAY2 = 18
+DCU_SPI_DELAY3 = 18
+DCU_SPI_DELAY4 = 18
 
-# DCU SCLK Readback Delay
+# DCU SCLK Readback Delay (fine adjustment)
 DCU_SCLK_READBACK_DELAY = 0
 
 # Scan Limit center freq selection

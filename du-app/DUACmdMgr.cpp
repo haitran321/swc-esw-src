@@ -12,6 +12,7 @@
 #include "SWCOverallStatusRptMsg.h"
 #include "DCUDetailedStatusRptMsg.h"
 #include "SWCDetailedStatusRptMsg.h"
+#include "SWCProcessedSteeringWordRptMsg.h"
 #include "SWCAckRptMsg.h"
 #include "ConfigDataManager.h"
 #include "DeviceFactory.h"
@@ -368,6 +369,20 @@ void DUACmdMgr::processSLInterrupt()
         _duHWMgr.setDCUStatusToTwgs(status.group, status.dcuFWStatus.overallStatus, status.loc);
     }
 
+    // Send last processed steering word to Test Server
+    if (sendProcessedSW)
+    {
+        SWCProcessedSteeringWordRptMsg swRptMsg;
+        swRptMsg.setProcessedAlpha(lastProcessedAlpha);
+        swRptMsg.setProcessedBeta(lastProcessedBeta);
+        swRptMsg.buildMsg();
+        int msgSize = swRptMsg.getBufSize();
+        printf("swRptMsg msgSize = %d, id = %d\n", msgSize, swRptMsg.getMsgId());
+        swRptMsg.headerByteSwapToNetwork();
+        
+        _toTestServer->write(swRptMsg.getBuf(), msgSize);
+    }
+
 //  eInterruptProcessing.stop();
 //  printf("SW Scan Limit Check took %f\n", eInterruptProcessing.secs());
 
@@ -680,6 +695,16 @@ void DUACmdMgr::processTestServerMsg()
                 int msgSize = swcDetailedStatusRptMsg.getBufSize();
                 swcDetailedStatusRptMsg.headerByteSwapToNetwork();
                 _toTestServer->write(swcDetailedStatusRptMsg.getBuf(), sizeof(SWCDetailedStatusRptMsg));
+            }
+
+            else if (params->requestType == StartSendingProcessedSteeringWord)
+            {
+                sendProcessedSW = true;
+            }
+
+            else if (params->requestType == StopSendingProcessedSteeringWord)
+            {
+                sendProcessedSW = false;
             }
 
             else

@@ -8,7 +8,9 @@
 #include "DUBCmdMgr.h"
 #include "ShutdownCmdMsg.h"
 #include "SteeringCmdMsg.h"
+#include "StatusRequestCmdMsg.h"
 #include "SWCAckRptMsg.h"
+#include "SWCProcessedSteeringWordRptMsg.h"
 #include "ConfigDataManager.h"
 #include "DeviceFactory.h"
 #include "EndianUtils.h"
@@ -365,8 +367,6 @@ void DUBCmdMgr::processSLInterrupt()
 
     }
 
-
-
     // Check DCU status queue to see if there are status to send
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
     {
@@ -380,6 +380,20 @@ void DUBCmdMgr::processSLInterrupt()
             sendDCUStatusToDUA(status);
             usleep(1*1000);   // Sleep 1 msecs
         }
+    }
+
+    // Send last processed steering word to Test Server
+    if (sendProcessedSW)
+    {
+        SWCProcessedSteeringWordRptMsg swRptMsg;
+        swRptMsg.setProcessedAlpha(lastProcessedAlpha);
+        swRptMsg.setProcessedBeta(lastProcessedBeta);
+        swRptMsg.buildMsg();
+        int msgSize = swRptMsg.getBufSize();
+        printf("swRptMsg msgSize = %d, id = %d\n", msgSize, swRptMsg.getMsgId());
+        swRptMsg.headerByteSwapToNetwork();
+        
+        _toTestServer->write(swRptMsg.getBuf(), msgSize);
     }
 
 //  eInterruptProcessing.stop();
@@ -574,6 +588,44 @@ void DUBCmdMgr::processTestServerMsg()
                     // Reset test source back 0 (TU = 0)
                     _duHWMgr.setTestSrcInTestMode(TestSourceTU);
                 }
+            }
+
+            break;
+        }
+    case STATUS_REQUEST_CMD_MSG_ID:
+        {
+            StatusRequestCmdMsg *cloneStatusRequestCmdMsg = new StatusRequestCmdMsg(msg->getBuf(), msg->getBufSize());
+            cloneStatusRequestCmdMsg->byteSwapToLocal();
+            int numActions = cloneStatusRequestCmdMsg->getDataSize() / sizeof(StatusRequestCmdDataType);
+
+            static int StatusRequestCmdCounter = 0;
+            StatusRequestCmdCounter++;
+//          if ((StatusRequestCmdCounter % 100) == 0)
+//          {
+                printf("===> STATUS_REQUEST_CMD_MSG_ID: StatusRequestCmdCounter = %d\n", StatusRequestCmdCounter);
+//          }
+
+            _logger.logInfo("===> STATUS_REQUEST_CMD_MSG_ID: StatusRequestCmdCounter = %d", StatusRequestCmdCounter);
+
+            StatusRequestCmdDataType *params = reinterpret_cast<StatusRequestCmdDataType *>(cloneStatusRequestCmdMsg->getDataBufPos());
+
+            printf("requestType = %d, dcuNum = %d\n", params->requestType, params->dcuNum);
+            _logger.logDebug("requestType = %d, dcuNum = %d", params->requestType, params->dcuNum);
+
+            if (params->requestType == StartSendingProcessedSteeringWord)
+            {
+                sendProcessedSW = true;
+            }
+
+            else if (params->requestType == StopSendingProcessedSteeringWord)
+            {
+                sendProcessedSW = false;
+            }
+
+            else
+            {
+                printf("ERROR: Invalid status request of %d\n", params->requestType);
+                _logger.logError("ERROR: Invalid status request of %d", params->requestType);
             }
 
             break;

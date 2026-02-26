@@ -27,6 +27,7 @@ typedef enum
     SWC_DETAILED_STATUS_RPT_MSG_ID  = 12,
     DCU_DETAILED_STATUS_RPT_MSG_ID  = 13,
     SWC_ACK_RPT_MSG_ID              = 14,
+    SWC_PROCESSED_SW_RPT_MSG_ID     = 15,
 } MessageId;
 
 /** Test Server message header */
@@ -90,10 +91,12 @@ typedef struct
 
 typedef enum
 {
-    SWCOverallStatus        = 1,
-    AlphaDCUDetailedStatus  = 2,
-    BetaDCUDetailedStatus   = 3,
-    SWCDetailedStatus       = 4,
+    SWCOverallStatus                    = 1,
+    AlphaDCUDetailedStatus              = 2,
+    BetaDCUDetailedStatus               = 3,
+    SWCDetailedStatus                   = 4,
+    StartSendingProcessedSteeringWord   = 5,
+    StopSendingProcessedSteeringWord    = 6
 } StatusRequestType;
 
 /** Status Request message data  */
@@ -124,6 +127,14 @@ typedef struct
     HealthState betaDCU[NUM_DCU];
 } SWCOverallStatusDataType;
 
+/** Status Report message data  */
+typedef struct
+{
+    MODULE_TYPE moduleType;
+    int processedAlpha;
+    int processedBeta;
+} SWCProcessedSteerWordDataType;
+
 typedef struct
 {
     int bypassStatus;
@@ -144,6 +155,7 @@ typedef struct
 {
     RFCC_CH group;
     int loc;
+    int duplicate;
     int fwStatusReg;
     DCUFWStatus dcuFWStatus;
 } DCUStatus;

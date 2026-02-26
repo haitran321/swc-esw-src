@@ -64,6 +64,7 @@ class DUBCmdMgr : public EventProcessor
         ElapsedTimer eInterruptProcessing;
         Timestamp ts;
 
+        bool sendProcessedSW;
         int lastProcessedAlpha;
         int lastProcessedBeta;
 

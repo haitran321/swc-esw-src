@@ -100,16 +100,6 @@ void DUDevice::setSwcStatusToTwgsReg(int val)
     regs->swcStatusToTwgs = val;
 }
 
-int DUDevice::getCableDelayCompReg()
-{
-    return (regs->cableDelayComp);
-}
-
-void DUDevice::setCableDelayCompReg(int val)
-{
-    regs->cableDelayComp = val;
-}
-
 int DUDevice::getARMInitStatusReg()
 {
     return (regs->armInitStatus);
@@ -118,6 +108,46 @@ int DUDevice::getARMInitStatusReg()
 void DUDevice::setARMInitStatusReg(int val)
 {
     regs->armInitStatus = val;
+}
+
+int DUDevice::getDCUSPIDelay1Reg()
+{
+    return (regs->dcuSPIDelay1);
+}
+
+void DUDevice::setDCUSPIDelay1Reg(int val)
+{
+    regs->dcuSPIDelay1 = val;
+}
+
+int DUDevice::getDCUSPIDelay2Reg()
+{
+    return (regs->dcuSPIDelay2);
+}
+
+void DUDevice::setDCUSPIDelay2Reg(int val)
+{
+    regs->dcuSPIDelay2 = val;
+}
+
+int DUDevice::getDCUSPIDelay3Reg()
+{
+    return (regs->dcuSPIDelay3);
+}
+
+void DUDevice::setDCUSPIDelay3Reg(int val)
+{
+    regs->dcuSPIDelay3 = val;
+}
+
+int DUDevice::getDCUSPIDelay4Reg()
+{
+    return (regs->dcuSPIDelay4);
+}
+
+void DUDevice::setDCUSPIDelay4Reg(int val)
+{
+    regs->dcuSPIDelay4 = val;
 }
 
 int DUDevice::getDiagInfoReg()

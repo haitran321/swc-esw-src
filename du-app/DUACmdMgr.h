@@ -68,6 +68,7 @@ class DUACmdMgr : public EventProcessor
         UDPNetworkDevice* _udpToDevPC;
         void processDEVPCMsg();
 
+        bool sendProcessedSW;
         int lastProcessedAlpha;
         int lastProcessedBeta;
 

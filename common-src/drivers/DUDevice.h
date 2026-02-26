@@ -16,7 +16,11 @@ typedef struct
     int cableDelayComp;
     int armInitStatus;
     int dcuEnable;
-    int spare1[14];
+    int dcuSPIDelay1;
+    int dcuSPIDelay2;
+    int dcuSPIDelay3;
+    int dcuSPIDelay4;
+    int spare1[10];
     int fpgaDieTemp;
     int vccIntVoltage;
     int vccAuxVoltage;
@@ -108,7 +112,7 @@ typedef enum
 
 typedef enum
 {
-    DU_SYSTEM_STATUS_MASK            = 0x8000003F,    /* Bits 0..5, 8..10 */
+    DU_SYSTEM_STATUS_MASK            = 0x80000F3F,    /* Bits 0..5, 8..11 */
     DU_SYSTEM_CONFIG_MASK            = 0x00000003,    /* Bit 0..1 */
     DU_MODE_MASK                     = 0x00000004,    /* Bit 2 */
     DU_OFFLINE_TEST_ENABLED_MASK     = 0x00000008,    /* Bit 3 */
@@ -117,6 +121,7 @@ typedef enum
     DU_SPI_HEALTH_LAST_CMD_MASK      = 0x00000100,    /* Bit 8 */
     DU_COMPARE_RESULT_LAST_CMD_MASK  = 0x00000200,    /* Bit 9 */
     DU_DCU_READ_BACK_MASK            = 0x00000400,    /* Bit 10 */
+    DU_DCU_BIT_MASK                  = 0x00000800,    /* Bit 11 */
 }DU_SYSTEM_STATUS_ENUM;
 
 typedef enum
@@ -207,11 +212,20 @@ public:
     int getSwcStatusToTwgsReg();
     void setSwcStatusToTwgsReg(int val);
 
-    int getCableDelayCompReg();
-    void setCableDelayCompReg(int val);
-
     int getARMInitStatusReg();
     void setARMInitStatusReg(int val);
+
+    int getDCUSPIDelay1Reg();
+    void setDCUSPIDelay1Reg(int val);
+
+    int getDCUSPIDelay2Reg();
+    void setDCUSPIDelay2Reg(int val);
+
+    int getDCUSPIDelay3Reg();
+    void setDCUSPIDelay3Reg(int val);
+
+    int getDCUSPIDelay4Reg();
+    void setDCUSPIDelay4Reg(int val);
 
     void setDiagInfoReg(int val);
     int getDiagInfoReg();
