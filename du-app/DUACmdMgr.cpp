@@ -5,6 +5,10 @@
 #include <sstream>
 #include <unistd.h>
 #include <sys/reboot.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <modbus.h>
 #include "DUACmdMgr.h"
 #include "ShutdownCmdMsg.h"
 #include "SteeringCmdMsg.h"
@@ -20,9 +24,8 @@
 #include "EndianUtils.h"
 #include "DeviceUtilities.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#define ACROMAG_IP "172.16.80.41"
+#define PORT 502
 
 //#define PRINT_DEBUG
 
@@ -275,6 +278,9 @@ STATUS DUACmdMgr::start()
         return ERROR;
     }
     _logger.logInfo("Successfully created _timerDevStatus device");
+
+    modbus_t *ctx = modbus_new_tcp(ACROMAG_IP, PORT);
+    printf("***after modbus_new_tcp***\n");
 
     EventProcessor::start();
 
