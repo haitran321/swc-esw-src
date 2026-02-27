@@ -285,7 +285,7 @@ STATUS DUACmdMgr::start()
     EventProcessor::start();
 
     return OK;  
-}
+}                   
 
 void DUACmdMgr::processSLInterrupt()
 {
