@@ -29,11 +29,22 @@ STATUS TUHWMgr::initialize()
 {
     STATUS rc = OK;
 
+    /* Config parameters */
+    int RLTD_PULSE_DURATION;
+    int RLCP_PULSE_DURATION;
+    int RLSC_PULSE_DURATION;
+    int STEERING_WORD_PULSE_DURATION;
+    int RLTD_PRE_TRIGGER_TIME;
+
     _logger.logInfo("TUHWMgr Initializing");
 
     // Get config parameters
     ConfigDataManager &configs = ConfigDataManager::getInstance();
-//  rc = rc || configs.get("MODULE_TYPE", MODULE_TYPE);
+    rc = rc || configs.get("RLTD_PULSE_DURATION", RLTD_PULSE_DURATION);
+    rc = rc || configs.get("RLCP_PULSE_DURATION", RLCP_PULSE_DURATION);
+    rc = rc || configs.get("RLSC_PULSE_DURATION", RLSC_PULSE_DURATION);
+    rc = rc || configs.get("STEERING_WORD_PULSE_DURATION", STEERING_WORD_PULSE_DURATION);
+    rc = rc || configs.get("RLTD_PRE_TRIGGER_TIME", RLTD_PRE_TRIGGER_TIME);
 
     // Open /dev/mem device
     _tuDev = new TUDevice(APB_BUS_OFFSET);
@@ -57,8 +68,12 @@ STATUS TUHWMgr::initialize()
     // Set Test mode
     _tuDev->setBrdCtrlReg(_brdCtrVal);
 
-//  getRegs(0x8, 0x8);
-//  _logger.logInfo("Board control reg = 0x%x", getBoardControl());
+    // Set pulse durations
+    _tuDev->setRLTDPulseDurReg(RLTD_PULSE_DURATION);
+    _tuDev->setRLCPPulseDurReg(RLCP_PULSE_DURATION);
+    _tuDev->setRLSCPulseDurReg(RLSC_PULSE_DURATION);
+    _tuDev->setSteeringWordPulseDurReg(STEERING_WORD_PULSE_DURATION);
+    _tuDev->setRLTDPreTimeReg(RLTD_PRE_TRIGGER_TIME);
 
     return OK;
 }

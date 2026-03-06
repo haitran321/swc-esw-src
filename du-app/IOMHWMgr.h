@@ -6,6 +6,27 @@
 #include "DUDevice.h"
 #include "Logger.h"
 #include "SWCMsgTypes.h"
+#include <modbus.h>
+
+typedef struct
+{
+    int ch1; // bad bit
+    int ch2; // bad bit
+    int atbIOMStatus;  //ch 3
+    int ch4;
+    int tempIOMStatus;  // ch 5
+    int ch6;
+    int ps12IOMStatus;  // ch 7
+    int ch8;
+    int ps24IOMStatus;  //  ch 9
+    int ch10;
+    int ch11;
+    int ch12;
+    int ch13;
+    int ch14;
+    int ch15;
+    int ch16;
+} IOMStatusDataType;
 
 class IOMHWMgr : public Uncopyable
 {
@@ -19,6 +40,8 @@ class IOMHWMgr : public Uncopyable
         static IOMHWMgr &getInstance();
 
         STATUS initialize();
+
+        IOMStatusDataType readStatus();
 
         void close();
 
@@ -35,6 +58,7 @@ class IOMHWMgr : public Uncopyable
 
         Logger &_logger;
 
+        modbus_t *_modbusCtx;
 };
 
 

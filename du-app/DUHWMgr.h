@@ -5,9 +5,13 @@
 #ifndef DUHWMgr_H
 #define DUHWMgr_H
 
-#include <queue>
+#include <deque>
+#include <vector>
+#include <algorithm>
+#include <iostream>
 #include "Uncopyable.h"
 #include "DUDevice.h"
+#include "IOMHWMgr.h"
 #include "Logger.h"
 #include "SWCMsgTypes.h"
 
@@ -78,17 +82,20 @@ class DUHWMgr : public Uncopyable
 
         DCUStatus getDCUStatusFromSW(RFCC_CH type, int dcuNum);
 
-        DCUStatus getDCUStatusFromQueue();
+        DCUStatus getDCUStatusFromDeque();
 
-        int getDCUStatusQueueSize();
+        int getDCUStatusDequeSize();
 
-        void addDCUStatusToQueue(DCUStatus status);
+        void addDCUStatusToDeque(DCUStatus status);
+        void checkForExistingDCUStatusInDeque(std::deque<DCUStatusWithID>& dq_, const int& dcuID_); 
+
+        void lookForMissingDCUAfterInit();
 
         DUTUStatusType readDUStatus();
         void processDUAStatus(DUTUStatusType status);
         void processDUBStatus(DUTUStatusType status);
         void processTUStatus(DUTUStatusType status);
-        void processIOModuleStatus();
+        void getIOModuleStatus();
         void computeDCURolledUpStatus();
 
         int getOverallSPIStatus();
@@ -121,6 +128,8 @@ class DUHWMgr : public Uncopyable
 
         DUDevice* _duDev;
 
+        IOMHWMgr &_iomHWMgr;
+
         RFCC_CH _rfccType;
         int _brdCtrVal;
         int _diagRegVal;
@@ -143,10 +152,13 @@ class DUHWMgr : public Uncopyable
         RFCC_CH _dcuGroup;
         int _dcuNum;
 
-        std::queue<DCUStatus> _dcuSendQueue;
+        std::deque<DCUStatusWithID> _dcuSendDeque;
         // This store the dcu data at index based on the dcu number from the FW
         DCUStatus _dcuStatus[NUM_RFCC_CH][NUM_DCU];
         bool _dcuLocOccupied[NUM_DCU];
+
+        std::vector<int> _masterDCUList;
+        std::vector<int> _currentDCUList;
 
         void setOverallStatusBit(int val);
         void setDataTypeBit(SWC_STATUS_DATA_TYPE val);

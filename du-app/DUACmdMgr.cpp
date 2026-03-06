@@ -17,15 +17,12 @@
 #include "DCUDetailedStatusRptMsg.h"
 #include "SWCDetailedStatusRptMsg.h"
 #include "SWCProcessedSteeringWordRptMsg.h"
-#include "SWCAckRptMsg.h"
+#include "SWCAckRptMsg.h"  
 #include "ConfigDataManager.h"
 #include "DeviceFactory.h"
 #include "ScanLimitCheck.h"
 #include "EndianUtils.h"
 #include "DeviceUtilities.h"
-
-#define ACROMAG_IP "172.16.80.41"
-#define PORT 502
 
 //#define PRINT_DEBUG
 
@@ -279,13 +276,10 @@ STATUS DUACmdMgr::start()
     }
     _logger.logInfo("Successfully created _timerDevStatus device");
 
-    modbus_t *ctx = modbus_new_tcp(ACROMAG_IP, PORT);
-    printf("***after modbus_new_tcp***\n");
-
     EventProcessor::start();
 
-    return OK;  
-}                   
+    return OK;
+}
 
 void DUACmdMgr::processSLInterrupt()
 {
@@ -366,12 +360,12 @@ void DUACmdMgr::processSLInterrupt()
     // Set DCU status to send to TWGS
     // DCU status is sent to TWGS per action
     // Check DCU status queue to see if there are status to send
-    int queueSize = _duHWMgr.getDCUStatusQueueSize();
-    printf("DCU status queue size = %d\n", queueSize);
-    _logger.logDebug("DCU status queue size = %d", queueSize);
-    if (queueSize > 0)
+    int dequeSize = _duHWMgr.getDCUStatusDequeSize();
+    printf("DCU status deque size = %d\n", dequeSize);
+    _logger.logDebug("DCU status deque size = %d", dequeSize);
+    if (dequeSize > 0)
     {
-        DCUStatus status = _duHWMgr.getDCUStatusFromQueue();
+        DCUStatus status = _duHWMgr.getDCUStatusFromDeque();
         _duHWMgr.setDCUStatusToTwgs(status.group, status.dcuFWStatus.overallStatus, status.loc);
     }
 
@@ -436,6 +430,11 @@ void DUACmdMgr::processStatusTimer()
         printf("In processTimer: timerCounter = %d\n", timerCounter);
 //  }
 
+    // Reset the DCU status data in the status to TWGS register
+//  _duHWMgr.setDCUStatusToTwgs(ALPHA, NO_GO, 0);
+
+    _duHWMgr.getRegs(0x24, 0x24);
+
     // Alternalte status between custom components and COTS
     static int statusCounter = 0;
     if (statusCounter == 0)
@@ -466,9 +465,9 @@ void DUACmdMgr::processStatusTimer()
     _logger.logDebug("Read all DCUs status to update local queue.");
     _duHWMgr.readDCUStatus();
 
-    int queueSize = _duHWMgr.getDCUStatusQueueSize();
-    printf("DCU status queue size = %d\n", queueSize);
-    _logger.logDebug("DCU status queue size = %d", queueSize);
+    int dequeSize = _duHWMgr.getDCUStatusDequeSize();
+    printf("DCU status deque size = %d\n", dequeSize);
+    _logger.logDebug("DCU status deque size = %d", dequeSize);
 
     _timerDevStatus->read();
 }

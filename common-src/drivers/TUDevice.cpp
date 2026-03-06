@@ -70,6 +70,101 @@ int TUDevice::getSLStatusReg()
     return (regs->slResult);
 }
 
+int TUDevice::getSysConfigStatusReg()
+{
+    return (regs->sysConfigStatus);
+}
+
+void TUDevice::setARMInitStatusReg(int val)
+{
+    regs->armInitStatus = val;
+}
+
+int TUDevice::getARMInitStatusReg()
+{
+    return (regs->armInitStatus);
+}
+
+int TUDevice::getSWCStatusReg()
+{
+    return (regs->swcStatus);
+}
+
+int TUDevice::getSWCRStatusReg()
+{
+    return (regs->swcrStatus);
+}
+
+void TUDevice::setRLTDPulseDurReg(int val)
+{
+    regs->rltdPulseDur = val;
+}
+
+int TUDevice::getRLTDPulseDurReg()
+{
+    return (regs->rltdPulseDur);
+}
+
+void TUDevice::setRLCPPulseDurReg(int val)
+{
+    regs->rlcpPulseDur = val;
+}
+
+int TUDevice::getRLCPPulseDurReg()
+{
+    return (regs->rlcpPulseDur);
+}
+
+void TUDevice::setRLSCPulseDurReg(int val)
+{
+    regs->rlscPulseDur = val;
+}
+
+int TUDevice::getRLSCPulseDurReg()
+{
+    return (regs->rlscPulseDur);
+}
+
+void TUDevice::setSteeringWordPulseDurReg(int val)
+{
+    regs->steeringWordPulseDur = val;
+}
+
+int TUDevice::getSteeringWordPulseDurReg()
+{
+    return (regs->steeringWordPulseDur);
+}
+
+void TUDevice::setPBPEmulationPeriodReg(int val)
+{
+    regs->pbpEmulationPeriod = val;
+}
+
+int TUDevice::getPBPEmulationPeriodReg()
+{
+    return (regs->pbpEmulationPeriod);
+}
+
+void TUDevice::setPBPEmulationRunsReg(int val)
+{
+    regs->pbpEmulationRuns = val;
+}
+
+int TUDevice::getPBPEmulationRunsReg()
+{
+    return (regs->pbpEmulationRuns);
+}
+
+void TUDevice::setRLTDPreTimeReg(int val)
+{
+    regs->rltdPreTime = val;
+}
+
+int TUDevice::getRLTDPreTimeReg()
+{
+    return (regs->rltdPreTime);
+}
+
 void TUDevice::setDiagInfoReg(int val)
 {
     regs->diagInfo = val;

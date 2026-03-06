@@ -14,9 +14,16 @@ typedef struct
     int sysConfigStatus;
     int spare2[2];
     int armInitStatus;
-    int swcrStatus;
     int swcStatus;
-    int spare3[15];
+    int swcrStatus;
+    int rltdPulseDur;
+    int rlcpPulseDur;
+    int rlscPulseDur;
+    int steeringWordPulseDur;
+    int pbpEmulationPeriod;
+    int pbpEmulationRuns;
+    int rltdPreTime;
+    int spare3[6];
     int fpgaDieTemp;
     int vccIntVoltage;
     int vccAuxVoltage;
@@ -88,6 +95,36 @@ public:
     int getArmKSineReg(RFCC_CH ch);
 
     int getSLStatusReg();
+
+    int getSysConfigStatusReg();
+
+    void setARMInitStatusReg(int val);
+    int getARMInitStatusReg();
+
+    int getSWCStatusReg();
+
+    int getSWCRStatusReg();
+
+    void setRLTDPulseDurReg(int val);
+    int getRLTDPulseDurReg();
+
+    void setRLCPPulseDurReg(int val);
+    int getRLCPPulseDurReg();
+
+    void setRLSCPulseDurReg(int val);
+    int getRLSCPulseDurReg();
+
+    void setSteeringWordPulseDurReg(int val);
+    int getSteeringWordPulseDurReg();
+
+    void setPBPEmulationPeriodReg(int val);
+    int getPBPEmulationPeriodReg();
+
+    void setPBPEmulationRunsReg(int val);
+    int getPBPEmulationRunsReg();
+
+    void setRLTDPreTimeReg(int val);
+    int getRLTDPreTimeReg();
 
     void setDiagInfoReg(int val);
     int getDiagInfoReg();

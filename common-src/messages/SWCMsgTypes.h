@@ -160,6 +160,18 @@ typedef struct
     DCUFWStatus dcuFWStatus;
 } DCUStatus;
 
+struct DCUStatusWithID
+{
+    int dcuID;
+    DCUStatus dcuStatus;
+
+    // Overload the equality operator for convenience with some algorithms
+    bool operator==(const DCUStatusWithID& dcu) const {
+        return dcuID == dcu.dcuID;
+    }
+
+};
+
 typedef enum
 {
     ShutdownCmdAck      = 1,

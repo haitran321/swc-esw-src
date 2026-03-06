@@ -219,10 +219,10 @@ STATUS DUBCmdMgr::start()
     // Read and send Beta DCUs status to Alpha DU
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
     {
-        int queueSize = _duHWMgr.getDCUStatusQueueSize();
-        if (queueSize > 0)
+        int dequeSize = _duHWMgr.getDCUStatusDequeSize();
+        if (dequeSize > 0)
         {
-            DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromQueue();
+            DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromDeque();
             BetaDCUStatusMsg status;
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;
@@ -370,10 +370,10 @@ void DUBCmdMgr::processSLInterrupt()
     // Check DCU status queue to see if there are status to send
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
     {
-        int queueSize = _duHWMgr.getDCUStatusQueueSize();
-        if (queueSize > 0)
+        int dequeSize = _duHWMgr.getDCUStatusDequeSize();
+        if (dequeSize > 0)
         {
-            DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromQueue();
+            DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromDeque();
             BetaDCUStatusMsg status;
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;
@@ -452,17 +452,17 @@ void DUBCmdMgr::processStatusTimer()
     _logger.logDebug("Read all DCUs status to update local queue.");
     _duHWMgr.readDCUStatus();
 
-    int queueSize = _duHWMgr.getDCUStatusQueueSize();
-    printf("DCU status queue size = %d\n", queueSize);
-    _logger.logDebug("DCU status queue size = %d", queueSize);
+    int dequeSize = _duHWMgr.getDCUStatusDequeSize();
+    printf("DCU status deque size = %d\n", dequeSize);
+    _logger.logDebug("DCU status deque size = %d", dequeSize);
 
     // TO BE REMOVED WHEN RUNNING ON ACTUAL DU HW THAT HAS INTERRUPT
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
     {
-        int queueSize = _duHWMgr.getDCUStatusQueueSize();
-        if (queueSize > 0)
+        int dequeSize = _duHWMgr.getDCUStatusDequeSize();
+        if (dequeSize > 0)
         {
-            DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromQueue();
+            DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromDeque();
             BetaDCUStatusMsg status;
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;
