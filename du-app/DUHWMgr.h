@@ -75,10 +75,13 @@ class DUHWMgr : public Uncopyable
                                    RFCC_CH dcuGroup_,
                                    HealthState dcuStatus_,
                                    int dcuNum_);
+        void processDCUEmulatorStatus(RFCC_CH dcuGroup, int dcuNum, int dcuFWStatus);
 
         SWCOverallStatusDataType getSWCStatus();
 
         void processDCUStatus(DCUStatus status);
+
+        void processBetaDCUStatus(DCUStatus status);
 
         DCUStatus getDCUStatusFromSW(RFCC_CH type, int dcuNum);
 

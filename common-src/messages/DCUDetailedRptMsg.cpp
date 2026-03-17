@@ -19,19 +19,17 @@ STATUS DCUDetailedStatusRptMsg::buildMsg()
     // Byte swap from Local to Network
     _data.group = (RFCC_CH)toNetworkInt(_data.group);
     _data.loc = (int)toNetworkInt(_data.loc);
-    _data.duplicate = (HealthState)toNetworkInt(_data.duplicate);
     _data.fwStatusReg = (int)toNetworkInt(_data.fwStatusReg);
-    _data.dcuFWStatus.bypassStatus = (int)toNetworkInt(_data.dcuFWStatus.bypassStatus);
-    _data.dcuFWStatus.modeStatus = (int)toNetworkInt(_data.dcuFWStatus.modeStatus);
-    _data.dcuFWStatus.overallStatus = (HealthState)toNetworkInt(_data.dcuFWStatus.overallStatus);
-    _data.dcuFWStatus.clockStatus = (HealthState)toNetworkInt(_data.dcuFWStatus.clockStatus);
-    _data.dcuFWStatus.locValid = (HealthState)toNetworkInt(_data.dcuFWStatus.locValid);
-    _data.dcuFWStatus.spiCommStatus = (HealthState)toNetworkInt(_data.dcuFWStatus.spiCommStatus);
-    _data.dcuFWStatus.steeringWordCompare = (HealthState)toNetworkInt(_data.dcuFWStatus.steeringWordCompare);
-    _data.dcuFWStatus.dcuFWMajorRev = (int)toNetworkInt(_data.dcuFWStatus.dcuFWMajorRev);
-    _data.dcuFWStatus.dcuFWMinorRev = (int)toNetworkInt(_data.dcuFWStatus.dcuFWMinorRev);
-    _data.dcuFWStatus.dcuType = (RFCC_CH)toNetworkInt(_data.dcuFWStatus.dcuType);
-    _data.dcuFWStatus.crcStatus = (HealthState)toNetworkInt(_data.dcuFWStatus.crcStatus);
+    _data.locStatus = (HealthState)toNetworkInt(_data.locStatus);
+    _data.dcuFWMajorRev = (int)toNetworkInt(_data.dcuFWMajorRev);
+    _data.dcuFWMinorRev = (int)toNetworkInt(_data.dcuFWMinorRev);
+    _data.bypassStatus = (int)toNetworkInt(_data.bypassStatus);
+    _data.modeStatus = (int)toNetworkInt(_data.modeStatus);
+    _data.overallStatus = (HealthState)toNetworkInt(_data.overallStatus);
+    _data.clockStatus = (HealthState)toNetworkInt(_data.clockStatus);
+    _data.spiCommStatus = (HealthState)toNetworkInt(_data.spiCommStatus);
+    _data.crcStatus = (HealthState)toNetworkInt(_data.crcStatus);
+    _data.steeringWordCompare = (HealthState)toNetworkInt(_data.steeringWordCompare);
 
     // Add data to message.
     rc = addData(reinterpret_cast<char *>(&_data), sizeof(_data));

@@ -135,29 +135,46 @@ typedef struct
     int processedBeta;
 } SWCProcessedSteerWordDataType;
 
-typedef struct
-{
-    int bypassStatus;
-    int modeStatus;
-    HealthState overallStatus;
-    HealthState clockStatus;
-    HealthState locValid;
-    HealthState spiCommStatus;
-    HealthState steeringWordCompare;
-    int fwLoc;
-    int dcuFWMajorRev;
-    int dcuFWMinorRev;
-    RFCC_CH dcuType;
-    int crcStatus;
-} DCUFWStatus;
+//typedef struct
+//{
+//    int bypassStatus;
+//    int modeStatus;
+//    HealthState overallStatus;
+//    HealthState clockStatus;
+//    HealthState locValid;
+//    HealthState spiCommStatus;
+//    HealthState steeringWordCompare;
+//    int fwLoc;
+//    int dcuFWMajorRev;
+//    int dcuFWMinorRev;
+//    RFCC_CH dcuType;
+//    int crcStatus;
+//} DCUFWStatus;
+//
+//typedef struct
+//{
+//    RFCC_CH group;
+//    int loc;
+//    int duplicate;
+//    int fwStatusReg;
+//    DCUFWStatus dcuFWStatus;
+//} DCUStatus;
 
 typedef struct
 {
     RFCC_CH group;
     int loc;
-    int duplicate;
     int fwStatusReg;
-    DCUFWStatus dcuFWStatus;
+    HealthState locStatus;
+    int dcuFWMajorRev;
+    int dcuFWMinorRev;
+    int bypassStatus;
+    int modeStatus;
+    HealthState overallStatus;
+    HealthState clockStatus;
+    HealthState spiCommStatus;
+    HealthState crcStatus;
+    HealthState steeringWordCompare;
 } DCUStatus;
 
 struct DCUStatusWithID

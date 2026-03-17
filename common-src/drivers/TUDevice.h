@@ -73,6 +73,13 @@ typedef enum
     TU_SL_EL_STATUS_MASK        = 0x00000010,    /* Bit 4 */
 }TU_SL_CHECK_RESULTS_ENUM;
 
+typedef enum
+{
+    TU_ARM_INIT_STATUS_MASK         = 0x80000003,    /* Bits 0..1 */
+    TU_OS_INIT_STATUS_MASK          = 0x00000001,    /* Bit 0 */
+    TU_APP_INIT_STATUS_MASK         = 0x00000002,    /* Bit 1 */
+}TU_ARM_INIT_STATUS_ENUM;
+
 class TUDevice : public Device
 {
 public:

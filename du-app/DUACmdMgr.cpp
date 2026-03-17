@@ -366,7 +366,7 @@ void DUACmdMgr::processSLInterrupt()
     if (dequeSize > 0)
     {
         DCUStatus status = _duHWMgr.getDCUStatusFromDeque();
-        _duHWMgr.setDCUStatusToTwgs(status.group, status.dcuFWStatus.overallStatus, status.loc);
+        _duHWMgr.setDCUStatusToTwgs(status.group, status.overallStatus, status.loc);
     }
 
     // Send last processed steering word to Test Server
@@ -751,7 +751,7 @@ void DUACmdMgr::processLocalHWStatusMsg()
             printf("Received %d bytes: Group %d DCU %d\n", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.loc);
             _logger.logDebug("Received %d bytes: Group %d DCU %d", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.loc);
             // Update local SW status and add to send queue
-            _duHWMgr.processDCUStatus(localStatus->betaDCUStatus);
+            _duHWMgr.processBetaDCUStatus(localStatus->betaDCUStatus);
         }
         if (localStatus->msgID == BETA_DU_STATUS)
         {

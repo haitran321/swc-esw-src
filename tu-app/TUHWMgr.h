@@ -56,12 +56,12 @@ class TUHWMgr : public Uncopyable
 
         TUDevice* _tuDev;
 
+        int MODULE_TYPE;
+
         int _brdCtrVal;
 
         int _diagRegVal;
-
-        /* Common config parameters */
-        int MODULE_TYPE;
+        int _armInitReady;
 };
 
 

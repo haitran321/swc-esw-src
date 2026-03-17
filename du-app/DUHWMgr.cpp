@@ -82,8 +82,6 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
         return ERROR;
     }
 
-    printf("After create _duDev\n");
-
     // Set Arm Init Reg to indicate the OS is ready
     _armInitReady = DeviceUtilities::updateReg(DU_OS_INIT_STATUS_MASK, _armInitReady, READY);
     _duDev->setARMInitStatusReg(_armInitReady);
@@ -148,6 +146,11 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     printf("Setting SPI_DELAY1 = %d, SPI_DELAY2 = %d, SPI_DELAY3 = %d, SPI_DELAY3 = %d, SCLK_DELAY to %d\n", 
            DCU_SPI_DELAY1, DCU_SPI_DELAY2, DCU_SPI_DELAY3, DCU_SPI_DELAY4, DCU_SCLK_READBACK_DELAY);
 
+    _logger.logDebug("FW Verison = 0x%x, board status = 0x%x, board control = 0x%x",
+                     _duDev->getFWVerReg(), _duDev->getBrdStatusReg(), _duDev->getBrdCtrlReg());
+    _logger.logDebug("Setting SPI_DELAY1 = %d, SPI_DELAY2 = %d, SPI_DELAY3 = %d, SPI_DELAY3 = %d, SCLK_DELAY to %d", 
+           DCU_SPI_DELAY1, DCU_SPI_DELAY2, DCU_SPI_DELAY3, DCU_SPI_DELAY4, DCU_SCLK_READBACK_DELAY);
+
     // Set DCU_SPI_DELAY_COMP
     _duDev->setDCUSPIDelay1Reg(DCU_SPI_DELAY1);
     _duDev->setDCUSPIDelay2Reg(DCU_SPI_DELAY2);
@@ -161,16 +164,19 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
         _duDev->setDCUSCLKReg(i, DCU_SCLK_READBACK_DELAY);
     }
 
-    // Fake FW status
+    // Fake FW status for Beta DCUs only
     // TO BE REMOVED
-    if (USE_STATUS_EMULATOR)
+    if (MODULE_TYPE == BETA)
     {
         for (int reg = 0; reg < NUM_DCU; reg++)
         {
-            fakeDCUFWStatus[_rfccType][reg] = 0x3c6415; 
-            // Alternate between Red and Green
-            fakeDCUFWStatus[_rfccType][reg] = DeviceUtilities::updateReg(DCU_BIT_OVERALL_STATUS_MASK, fakeDCUFWStatus[_rfccType][reg], reg%2);
+            fakeDCUFWStatus[_rfccType][reg] = 0xffffffff; 
         }
+        fakeDCUFWStatus[_rfccType][40] = 0x3e021b;  // Reg = 40, DCU = 2
+        fakeDCUFWStatus[_rfccType][48] = 0x3e661b;  // Reg = 48, DCU = 102
+        fakeDCUFWStatus[_rfccType][58] = 0x3e451b;  // Reg = 58, DCU = 69
+        fakeDCUFWStatus[_rfccType][66] = 0x3e501b;  // Reg = 66, DCU = 80
+        fakeDCUFWStatus[_rfccType][76] = 0x3e511b;  // Reg = 76, DCU = 81
     }
 
     // Perform these steps to initialize the DCUs and get theirs status at Init without processing an steering action
@@ -183,13 +189,11 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     // Reset Force Test
     // Set Analog
 
-    printf("Pre DCUs Init getBoardControlReg = 0x%x\n", _duDev->getBrdCtrlReg());
     _brdCtrVal = DeviceUtilities::updateReg(DU_FORCE_TEST_MODE_MASK, _brdCtrVal, TEST);
     _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_STEERING_WORD_SRC_MASK, _brdCtrVal, TestSourceDU);
     _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_DCU_CMD_MASK, _brdCtrVal, DCU_CMD_BORESIGHT);
     _brdCtrVal = DeviceUtilities::updateReg(DU_TEST_MODE_STEERING_WORD_VALID_MASK, _brdCtrVal, STEERING_WORD_INVALID);
     _duDev->setBrdCtrlReg(_brdCtrVal);
-    printf("Set DCUs Init getBoardControlReg = 0x%x\n", _duDev->getBrdCtrlReg());
     toggleSWTrigger();
 
     // Init DCUs status
@@ -198,7 +202,11 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     {
         printf("DCU %d Status = 0x%x, loc = %d, status = %d\n", i, _dcuStatus[_rfccType][i].fwStatusReg, 
                _dcuStatus[_rfccType][i].loc,
-               _dcuStatus[_rfccType][i].dcuFWStatus.overallStatus);
+               _dcuStatus[_rfccType][i].overallStatus);
+        _logger.logDebug("DCU %d Status = 0x%x, loc = %d, status = %d\n", i, 
+                         _dcuStatus[_rfccType][i].fwStatusReg,
+                         _dcuStatus[_rfccType][i].loc,
+                         _dcuStatus[_rfccType][i].overallStatus);
     }
 
     if (FORCE_TEST_MODE == TEST)
@@ -217,7 +225,6 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     _duDev->setBrdCtrlReg(_brdCtrVal);
 
     // Ends initialize DCUs
-    printf("Post DCUs Init getBoardControlReg = 0x%x\n", _duDev->getBrdCtrlReg());
 
     if (MODULE_TYPE == DU_ALPHA)
     {
@@ -239,7 +246,8 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
 
     // Initialize IO Module HW Manager
     _iomHWMgr.initialize();
-    printf("Successfully initialize IOMHWMgr\n");
+
+    _logger.logDebug("Successfully initialize DUMHWMgr");
 
     return OK;
 }
@@ -320,8 +328,6 @@ int DUHWMgr::getSysConfigStatus()
 {
     _sysConfigReg = _duDev->getSysConfigStatusReg();
 
-    printf("_sysConfigReg = 0x%x\n", _sysConfigReg);
-
     _sysConfig = (SWC_CONFIG)(DeviceUtilities::readMask(DU_SYSTEM_CONFIG_MASK, _sysConfigReg));
 
     // Set sys config in board control reg to match sys config in system status reg
@@ -348,6 +354,7 @@ void DUHWMgr::setSwcStatusToTwgs()
     static int setCounter = 0;
     setCounter++;
     printf("%d: 0x%x\n", setCounter, _statusToTwgs);
+    _logger.logDebug("SetSwcStatusToTwgs %d: 0x%x", setCounter, _statusToTwgs);
     _duDev->setSwcStatusToTwgsReg(_statusToTwgs);
 }
 
@@ -504,12 +511,12 @@ SWCOverallStatusDataType DUHWMgr::getSWCStatus()
 
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
     {
-        status.alphaDCU[dcu] = _dcuStatus[ALPHA][dcu].dcuFWStatus.overallStatus;
+        status.alphaDCU[dcu] = _dcuStatus[ALPHA][dcu].overallStatus;
     }
 
     for (int dcu = 0; dcu < NUM_DCU; dcu++)
     {
-        status.betaDCU[dcu] = _dcuStatus[BETA][dcu].dcuFWStatus.overallStatus;
+        status.betaDCU[dcu] = _dcuStatus[BETA][dcu].overallStatus;
     }
    
     return status;
@@ -546,7 +553,7 @@ void DUHWMgr::readDCUStatus()
             // Check to see if there was a good location for this DCU from the last read
 //          if (_dcuStatus[_rfccType][reg].loc > 0)
 //          {
-//              _dcuStatus[_rfccType][reg].dcuFWStatus.overallStatus = NO_GO;
+//              _dcuStatus[_rfccType][reg].overallStatus = NO_GO;
 //
 //              // Add to DCU send queue
 //              addDCUStatusToDeque(_dcuStatus[_rfccType][reg]);
@@ -573,35 +580,42 @@ DCUStatus DUHWMgr::readDCUFWStatus(int reg)
 
     int fwStatus = _duDev->getDCUStatusReg(reg);
 
+    // For Beta DCUs, use fake status for now
+    // Fake status can be updated using the Python Status Emulator
+    if (MODULE_TYPE == BETA)
+    {
+        fwStatus = fakeDCUFWStatus[_rfccType][reg]; 
+    }
+
     status.group = _rfccType;
     status.fwStatusReg = fwStatus;
 
     // Get location number from FW
-    status.dcuFWStatus.locValid = (HealthState)(DeviceUtilities::readMask(DCU_BIT_LOC_VALID_STATUS_MASK, fwStatus));
+    status.locStatus = (HealthState)(DeviceUtilities::readMask(DCU_BIT_LOC_VALID_STATUS_MASK, fwStatus));
     status.loc = DeviceUtilities::readMask(DCU_LOCATION_STATUS_MASK, fwStatus);
 
     if ((status.loc > 0) && (status.loc < 153))
     {
-        status.dcuFWStatus.bypassStatus =
+        status.bypassStatus =
             DeviceUtilities::readMask(DCU_BYPASS_STATUS_MASK, fwStatus);
-        status.dcuFWStatus.modeStatus =
+        status.modeStatus =
             DeviceUtilities::readMask(DCU_MODE_STATUS_MASK, fwStatus);
-        status.dcuFWStatus.overallStatus =
+        status.overallStatus =
             (HealthState)(DeviceUtilities::readMask(DCU_BIT_OVERALL_STATUS_MASK, fwStatus));
-        status.dcuFWStatus.clockStatus =
+        status.clockStatus =
             (HealthState)(DeviceUtilities::readMask(DCU_BIT_CLK_STATUS_MASK, fwStatus));
-        status.dcuFWStatus.spiCommStatus =
+        status.spiCommStatus =
             (HealthState)(DeviceUtilities::readMask(DCU_BIT_SPI_STATUS_MASK, fwStatus));
-        status.dcuFWStatus.steeringWordCompare =
+        status.steeringWordCompare =
             (HealthState)(DeviceUtilities::readMask(DCU_BIT_COMPARE_STATUS_MASK, fwStatus));
-        status.dcuFWStatus.dcuFWMajorRev =
+        status.dcuFWMajorRev =
             DeviceUtilities::readMask(DCU_FW_MAJOR_REV_MASK, fwStatus);
-        status.dcuFWStatus.dcuFWMinorRev =
+        status.dcuFWMinorRev =
             DeviceUtilities::readMask(DCU_FW_MINOR_REV_MASK, fwStatus);
-        status.dcuFWStatus.dcuType =
-            (RFCC_CH)(DeviceUtilities::readMask(DCU_TYPE_STATUS_MASK, fwStatus));
-        status.dcuFWStatus.crcStatus =
-            DeviceUtilities::readMask(DCU_CRC_STATUS_MASK, fwStatus);   
+//      status.dcuType =
+//          (RFCC_CH)(DeviceUtilities::readMask(DCU_TYPE_STATUS_MASK, fwStatus));
+        status.crcStatus =
+            (HealthState)DeviceUtilities::readMask(DCU_CRC_STATUS_MASK, fwStatus);   
     }
     else
     {
@@ -616,7 +630,8 @@ void DUHWMgr::processDCUStatus(DCUStatus status)
     int rfccType = status.group;
     int loc = status.loc;
 
-    printf("In processDCUStatus loc = %d, status = 0x%x\n", loc, status.fwStatusReg);
+    printf("In processDCUStatus loc = %d, fwStatusReg = 0x%x\n", loc, status.fwStatusReg);
+    _logger.logDebug("In processDCUStatus loc = %d, fwStatusReg = 0x%x", loc, status.fwStatusReg);
 
     // Add DCU to DCU Send Queue
     if ((loc > 0) && (loc < 153))
@@ -626,9 +641,9 @@ void DUHWMgr::processDCUStatus(DCUStatus status)
         {
             _dcuLocOccupied[loc] = true;
 
-            // Update SW status
+            // Update status
             _dcuStatus[rfccType][loc] = status;
-            _dcuStatus[rfccType][loc].duplicate = false;
+            _dcuStatus[rfccType][loc].locStatus = GO;
 
             // Add DCU to both lists
             _masterDCUList.insert(_masterDCUList.begin(), loc);
@@ -644,14 +659,15 @@ void DUHWMgr::processDCUStatus(DCUStatus status)
             // Check if this location has been occupied
             if (_dcuLocOccupied[loc] == true)
             {
-                // Update SW status
-                _dcuStatus[rfccType][loc].dcuFWStatus.overallStatus = NO_GO;
+                // Update overall status
+                _dcuStatus[rfccType][loc].overallStatus = NO_GO;
 
                 // Add to DCU send queue
-                _dcuStatus[rfccType][loc].duplicate = true;
+                _dcuStatus[rfccType][loc].locStatus = NO_GO;
                 addDCUStatusToDeque(_dcuStatus[rfccType][loc]);
                 
                 printf("DUPLICATE rfccType = %d, loc = %d\n", rfccType, loc);
+                _logger.logDebug("DUPLICATE rfccType = %d, loc = %d\n", rfccType, loc);
             }
             else
             {
@@ -660,7 +676,7 @@ void DUHWMgr::processDCUStatus(DCUStatus status)
                 // Determine if there are changes in the data to add to send queue
                 // Checking if overallStatus has been changed 
                 // TO DO:  Anything else from the DCU status that we need to check???
-                if (_dcuStatus[rfccType][loc].dcuFWStatus.overallStatus != status.dcuFWStatus.overallStatus)
+                if (_dcuStatus[rfccType][loc].overallStatus != status.overallStatus)
                 {
                     // Overal Status has been changed
 
@@ -669,8 +685,6 @@ void DUHWMgr::processDCUStatus(DCUStatus status)
 
                     // Add to DCU send queue
                     addDCUStatusToDeque(_dcuStatus[rfccType][loc]);
-
-                    printf("Added to send queue rfccType = %d, loc = %d\n", rfccType, loc);
                 }
                 else
                 {
@@ -678,12 +692,13 @@ void DUHWMgr::processDCUStatus(DCUStatus status)
                 }
             }
         }
-//      printf("After: loc = %d, fw = 0x%x, _dcuStatus.loc = %d, occupied = %d, overall = %d\n",
-//         loc, status.fwStatusReg,
-//         _dcuStatus[rfccType][loc].loc,
-//         _dcuLocOccupied[loc],
-//         _dcuStatus[rfccType][loc].dcuFWStatus.overallStatus);
     }
+}
+
+void DUHWMgr::processBetaDCUStatus(DCUStatus status)
+{
+    // Add to DCU send queue
+    addDCUStatusToDeque(status);
 }
 
 DCUStatus DUHWMgr::getDCUStatusFromSW(RFCC_CH type, int dcuNum)
@@ -713,20 +728,17 @@ void DUHWMgr::addDCUStatusToDeque(DCUStatus status)
     // Check if there already is an existing DCU ID in the deque
     // and remove before 
     DCUStatusWithID dcuStatusWithID;
-    dcuStatusWithID.dcuID = status.loc + (status.loc * _rfccType);
+    dcuStatusWithID.dcuID = status.loc + (1000 * status.group);
     dcuStatusWithID.dcuStatus = status;
 
     // Check and remove 
     checkForExistingDCUStatusInDeque(_dcuSendDeque, dcuStatusWithID.dcuID);
     _dcuSendDeque.push_back(dcuStatusWithID);
 
-    for (int i = 0; i < _dcuSendDeque.size(); i++)
-    {
-        printf("%d: loc = %d, status = %d, dup = %d\n", i, 
-               _dcuSendDeque[i].dcuStatus.loc, 
-               _dcuSendDeque[i].dcuStatus.dcuFWStatus.overallStatus,
-               _dcuSendDeque[i].dcuStatus.duplicate);
-    }
+    printf("Adding DCU to send queue group = %d, loc = %d, status = %d, locStatus = %d\n", 
+           status.group, status.loc, status.overallStatus, status.locStatus);
+    _logger.logDebug("Adding DCU to send queue group = %d, loc = %d, status = %d, locStatus = %d", 
+                     status.group, status.loc, status.overallStatus, status.locStatus);
 }
 
 void DUHWMgr::checkForExistingDCUStatusInDeque(std::deque<DCUStatusWithID>& dq_, const int& dcuID_) 
@@ -760,8 +772,8 @@ void DUHWMgr::lookForMissingDCUAfterInit()
     for (int loc : difference) 
     {
         printf("Diff between init and now for loc \n", loc);
-        _dcuStatus[_rfccType][loc].dcuFWStatus.overallStatus = NO_GO;
-        _dcuStatus[_rfccType][loc].duplicate = 0;
+        _dcuStatus[_rfccType][loc].overallStatus = NO_GO;
+        _dcuStatus[_rfccType][loc].locStatus = NO_GO;
 
         // Add to DCU send queue
         addDCUStatusToDeque(_dcuStatus[_rfccType][loc]);
@@ -930,4 +942,10 @@ void DUHWMgr::processEmulatorStatus(HealthState swcrOverall_,
     _dcuNum = dcuNum_;
     printf("From Emulator: setting rfcc %d dcu %d to %d\n", dcuGroup_, dcuNum_, dcuStatus_);
     fakeDCUFWStatus[_dcuGroup][_dcuNum] = (HealthState)(DeviceUtilities::updateReg(DCU_BIT_OVERALL_STATUS_MASK, 0xb86401, dcuStatus_));
+}
+
+void DUHWMgr::processDCUEmulatorStatus(RFCC_CH dcuGroup, int dcuNum, int dcuFWStatus)
+{
+    printf("From DCU Emulator: setting rfcc %d dcu %d fw status 0x%x \n", dcuGroup, dcuNum, dcuFWStatus);
+    fakeDCUFWStatus[dcuGroup][dcuNum] = dcuFWStatus;
 }

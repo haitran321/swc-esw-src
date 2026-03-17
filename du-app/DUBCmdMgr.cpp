@@ -441,6 +441,29 @@ void DUBCmdMgr::processStatusTimer()
         printf("In processTimer: timerCounter = %d\n", timerCounter);
 //  }
 
+    // For testing Fake Beta DCUs status
+    // To be removed
+    if (timerCounter == 3)
+    {
+        // Disconnect DCU 102
+        _duHWMgr.processDCUEmulatorStatus(BETA, 48, 0xffffffff);
+    }
+    if (timerCounter == 6)
+    {
+        // Reconnect DCU 102
+        _duHWMgr.processDCUEmulatorStatus(BETA, 48, 0x3e661b);
+    }
+    if (timerCounter == 9)
+    {
+        // Set DCU 69 to have the same location as 80
+        _duHWMgr.processDCUEmulatorStatus(BETA, 58, 0x3e501b);
+    }
+    if (timerCounter == 12)
+    {
+        // Set DCU 69 back to correct address
+        _duHWMgr.processDCUEmulatorStatus(BETA, 58, 0x3e451b);
+    }
+
     // Read Beta DU status and send to Alpha DU
     DUTUStatusMsg bduStatus;
     bduStatus.msgID = BETA_DU_STATUS;

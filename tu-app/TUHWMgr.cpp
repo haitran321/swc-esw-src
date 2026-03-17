@@ -6,7 +6,8 @@
 TUHWMgr::TUHWMgr() :
 _logger(Logger::getInstance()),
 _tuDev(NULL),
-_brdCtrVal(-1)
+_brdCtrVal(0),
+_armInitReady(0)
 {
 }
 
@@ -57,7 +58,9 @@ STATUS TUHWMgr::initialize()
         return ERROR;
     }
 
-    printf("After create _tuDev\n");
+    // Set Arm Init Reg to indicate the OS is ready
+    _armInitReady = DeviceUtilities::updateReg(TU_OS_INIT_STATUS_MASK, _armInitReady, READY);
+    _tuDev->setARMInitStatusReg(_armInitReady);
 
     printf("getFirmwareVersionReg = 0x%x\n", _tuDev->getFWVerReg());
     printf("getBoardStatusReg = 0x%x\n", _tuDev->getBrdStatusReg());
@@ -74,6 +77,10 @@ STATUS TUHWMgr::initialize()
     _tuDev->setRLSCPulseDurReg(RLSC_PULSE_DURATION);
     _tuDev->setSteeringWordPulseDurReg(STEERING_WORD_PULSE_DURATION);
     _tuDev->setRLTDPreTimeReg(RLTD_PRE_TRIGGER_TIME);
+
+    // Set ARM Init Reg to indicate the app is ready
+    _armInitReady = DeviceUtilities::updateReg(TU_APP_INIT_STATUS_MASK, _armInitReady, READY);
+    _tuDev->setARMInitStatusReg(_armInitReady);
 
     return OK;
 }
