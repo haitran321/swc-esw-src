@@ -1,6 +1,5 @@
 #include <stdio.h>
-//#include <usrLib.h>
-//#include <ioLib.h>
+#include <iostream>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -31,7 +30,7 @@ int Device::open()
 
    if ((_fd = ::open(_name.c_str(), O_RDWR, 0)) == ERROR)
    {
-      printf("Device::open: open failed for %s\n", _name.c_str());
+      std::cout << "Device::open: open failed for " << _name.c_str() << std::endl;
       return(ERROR);
    }
 
@@ -156,7 +155,6 @@ int Device::getStatus(int &deviceStatus)
    }
    else
    {
-      //errnoSet(EBADF);
       return(ERROR);
    }
 }

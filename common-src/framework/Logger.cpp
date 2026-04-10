@@ -1,5 +1,6 @@
 #include <string.h>
 #include <sstream>
+#include <iostream>
 #include <stdarg.h>
 #include <ctime>
 
@@ -46,12 +47,12 @@ STATUS Logger::initialize()
 
     if (_udpDev->open() != OK)
     {
-        printf("Error openning dev %s", _udpDev->getName().c_str());
+        std::cout << "Error openning dev " << _udpDev->getName().c_str() << std::endl;
         rc = rc || ERROR;
     }
     else
     {
-        printf("Successfully open Logger UDP device\n");
+        std::cout << "Successfully open Logger UDP device" << std::endl;
     }
 
     return rc;

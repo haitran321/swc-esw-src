@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Script to launch swc app
+
+if [ $# -eq 0 ]; then
+    echo "Usage: ./swc-app-launcher [dua|dub|tu]"
+    echo "Example: ./swc-app-launcher dua"
+    exit 1
+fi
+
+# Veirfy argument is valid
+if [[ ${1,,} != "dua" && ${1,,} != "dub" && ${1,,} != "tu" ]]; then
+    echo "Argument needs to be [dua|dub|tu]"
+    exit 2
+fi
+
+# First kill all instance of running swc app
+killall swc-esw-app.elf
+
+# Start the application
+/mnt/sd-mmcblk0p1/run/bin/swc-esw-app.elf ${1,,}

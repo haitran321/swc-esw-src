@@ -2,17 +2,9 @@
 * $Id: EventProcessor.cpp
 */
 #include <iostream>
-//#include <ioLib.h>
-//#include <errnoLib.h>
 #include <errno.h>
-//#include <msgQEvLib.h>
-//#include <pipeDrv.h>
 #include <sstream>
 #include "EventProcessor.h"
-// #include "EventProcessorMgr.h"
-// #include "UTCTimeUtils.h"
-// #include "ElapsedTimer.h"
-// #include "WVEvents.h"
 
 #include <string.h>
 
@@ -36,7 +28,6 @@ _ticksTimeout(60e6),
 _timeoutSet(false),
 _selEarlyExitCount(0),
 _name("TEST")
-//_logEvPrcr(NULL)
 {
 	FD_ZERO(&_readSet);
 	FD_ZERO(&_writeSet);
@@ -130,13 +121,8 @@ void EventProcessor::waitOnSelect()
 
 	// Time the select call in attempt to trap select non-error-errors.
 
-//	_execTimer.start();
-
 	// Wait for next event to occur.
 
-	// printf("Wait for next event to occur.\n");
-
-//	if ((numdesc = select(_fdSize+1, &readSet, &writeSet, &statusSet, &_selectTimeout)) == ERROR)
 	if ((numdesc = select(_fdSize+1, &readSet, &writeSet, &statusSet, 0)) == ERROR)
 	{
 		//processError(errnoGet());
@@ -146,7 +132,6 @@ void EventProcessor::waitOnSelect()
 	// Increment total events occurred and check for select to have early-exited.
 
 	_totalEventsProcessed++;
-//	elapsedTime = _execTimer.getElapsedTimeSecs();
 
 	if ((numdesc == 0) && //no events detected, and
 		(elapsedTime < _selTimeoutValue)) //select returned before timing out.
@@ -230,10 +215,6 @@ void EventProcessor::waitOnSelect()
 		}
 	}
 
-	// Calculate execution time for this event.
-
-//	elapsedTime = _execTimer.getElapsedTimeSecs() - elapsedTime;
-
 	// Update stats.
 
 	if (_minExecTime == 0.0)
@@ -251,49 +232,6 @@ void EventProcessor::waitOnSelect()
 	}
 	_totalExecTime += elapsedTime;
 }
-
-//void EventProcessor::threadBody()
-//{
-//	// Enter processing loop, looping until requested to terminate.
-//
-//	 while (!_terminated)
-//	 {
-//	 	try
-//	 	{
-//	 		// Wait on select.
-//
-//	 		waitOnSelect();
-//	 	}
-//	 	catch (string &s)
-//	 	{
-//	 		printf("Unhandled exception has occurred in %s (%s)\n", _name.c_str(),
-//	 			s.c_str());
-//	 	}
-//	 	catch (...)
-//	 	{
-//	 		printf("Unhandled exception has occurred in %s\n", _name.c_str());
-//	 	}
-//	 }
-//
-//}
-
-//void EventProcessor::cleanup()
-//{
-//	// clearEventList();
-//
-//	// // Close and delete shutdown pipe.
-//
-//	// _shutdownDev.close();
-//	// string pipeName = "/pipe/shutdown_" + _name;
-//	// if (pipeDevDelete(pipeName.c_str(), 0) == ERROR)
-//	// {
-//	// 	printf("Error deleting shutdown pipe %s\n", pipeName.c_str());
-//	// }
-//
-//	// // Perfrom clean up processing in base class.
-//
-//	// Thread::cleanup();
-//}
 
 void EventProcessor::printEventList()
 {
@@ -334,10 +272,9 @@ void EventProcessor::printEventList()
 			typeString = "STATUS";
 		}
 
-		printf("%-3d %-34s %-6s %3d %6d\n",
-			event->getFd(), event->getName().c_str(),
-			typeString.c_str(), event->getPriority(),
-			event->getCount());
+        std::cout << event->getFd() << " " << event->getName().c_str() << " " <<
+            typeString.c_str() << " " << event->getPriority() << " " <<
+            event->getCount() << std::endl;
 	}
 }
 
@@ -512,31 +449,14 @@ void EventProcessor::terminate()
 	_terminated = true;
 }
 
-//void EventProcessor::printInfo()
-//{
-//	printf("printInfo is not defined for event processor %s\n", getName().c_str());
-//}
-
 void EventProcessor::processWaitTimeout()
 {
-	printf("processWaitTimeout is not defined for event processor %s\n", getName().c_str());
+	std::cout << "processWaitTimeout is not defined for event processor " << getName().c_str() << std::endl;
 }
 
-//STATUS EventProcessor::setSelectTimeout(int msec)
-//{
-//	//return setSelectTimeout(TimeValue(msec, TimeValue::Milliseconds));
-//	return setSelectTimeout(100);
-//}
 
 STATUS EventProcessor::setSelectTimeout(int timeout)
-//STATUS EventProcessor::setSelectTimeout(const TimeValue& timeout)
 {
-//	_selectTimeout.tv_sec = timeout.convertTo<long>(TimeValue::Seconds);
-//	_selectTimeout.tv_usec = (timeout -
-//		TimeValue(_selectTimeout.tv_sec, TimeValue::Seconds)).convertTo<long>(
-//		TimeValue::Microseconds);
-//
-//	_selTimeoutValue = timeout.convertTo<double>(TimeValue::Seconds);
 
 	_selectTimeout.tv_sec = 1;
 	_selectTimeout.tv_usec = 100;
@@ -575,73 +495,21 @@ int EventProcessor::getCounter(int counterId)
 	return _counters[counterId];
 }
 
-//void EventProcessor::processError(int errnoValue)
-//{
-//	char strErrorMsg[256];
-//
-//	// Log/Output error message and event listing.
-//
-////	snprintf(strErrorMsg, 256, "Select failed in %s with errno=%s (%d). "
-////		"Terminating this thread.",
-////		getName().c_str(), strerror(errnoGet()), errnoGet());
-//	//_logEvPrcr->logError(strErrorMsg);
-//	printf("\n%s\n", strErrorMsg);
-//	printEventList();
-//
-//	// Attempt to determine which device is causing the problem.
-//
-////	if (errnoGet() == EBADF)
-////	{
-////		for (EventMap::iterator iter = _eventList.begin();
-////			iter != _eventList.end(); iter++)
-////		{
-////			DeviceEvent *event = (*iter).second;
-////
-////			// Perform a bogus ioctl call to see if fd is in system
-////			// descriptor table. If it is no longer in descriptor table,
-////			// it will fail with errno = EBADF.
-////
-////			int value;
-////			if (ioctl(event->getFd(), FIONREAD, (int)&value) == ERROR)
-////			{
-////				if (errnoGet() == EBADF)
-////				{
-////					printf("\n\nFailure occured for device = %s fd = %d\n",
-////						event->getName().c_str(), event->getFd());
-////				}
-////			}
-////		}
-////	}
-//
-//	// Terminate thread because we are in an unrecoverable situation. This
-//	// task will ultimately be detected as being inactive.
-//
-//	terminate();
-//}
-
 Device* EventProcessor::createDevice(const std::string& name, DeviceFactory::Mode mode,
 	EventFunc callback, EventType eventType, int priority)
-// Device* EventProcessor::createDevice(const std::string& name, int mode,
-// 	EventFunc callback, EventType eventType, int priority)
 {
-	printf("****in EventProcessor::createDevice****\n");
 	// create the device
-	// Device* device = DeviceFactory::getInstance().createDevice(name.c_str(), mode);
 	Device* device = new Device(name.c_str());
 	if (device == NULL)
 	{
-//		fprintf(stderr, "%s: Failed to create device '%s': %s\n",
-//			getName().c_str(), name.c_str(), strerror(errnoGet()));
-		printf("ERROR:  Failed to create device '%s': %s\n", getName().c_str(), name.c_str());
+        std::cout << "ERROR:  Failed to create device " << getName().c_str() << ":"  << name.c_str() << std::endl;
 		return NULL;
 	}
 
 	// open it
 	if (device->open() != OK)
 	{
-//		fprintf(stderr, "%s: Failed to open device '%s': %s\n",
-//			getName().c_str(), device->getName().c_str(), strerror(errnoGet()));
-		printf("ERROR:  Failed to open device '%s': %s\n", getName().c_str(), name.c_str());
+        std::cout << "ERROR:  Failed to open device " << getName().c_str() << ":"  << name.c_str() << std::endl;
 		delete device;
 		return NULL;
 	}
@@ -651,9 +519,7 @@ Device* EventProcessor::createDevice(const std::string& name, DeviceFactory::Mod
 	{
 		if (addEvent(*device, eventType, priority, callback) != OK)
 		{
-//			fprintf(stderr, "%s: Failed to add event for '%s' to '%s'\n",
-//				getName().c_str(), device->getName().c_str(), getName().c_str());
-			printf("ERROR:  Failed to add event for '%s': %s\n", getName().c_str(), name.c_str());
+            std::cout << "ERROR:  Failed to add event for " << getName().c_str() << ":"  << name.c_str() << std::endl;
 			device->close();
 			delete device;
 			return NULL;
@@ -663,64 +529,6 @@ Device* EventProcessor::createDevice(const std::string& name, DeviceFactory::Mod
 	return device;
 }
 
-// TimerDevice* EventProcessor::createTimer(const string& name, EventFunc callback, TimeValue timeout, int priority, bool start)
-// {
-// 	TimerDevice* timer = DeviceFactory::getInstance().createTimerDevice(name);
-// 	if (timer == NULL)
-// 	{
-// 		fprintf(stderr, "%s: Failed to create timer\n", getName().c_str());
-// 		return NULL;
-// 	}
-
-// 	if (timer->open() != OK)
-// 	{
-// 		fprintf(stderr, "%s: Failed to open timer %s: %s\n", getName().c_str(),
-// 			timer->getName().c_str(), strerror(errnoGet()));
-// 		delete timer;
-// 		return NULL;
-// 	}
-
-// 	if (addEvent(*timer, STATUS_EVENT, priority, callback) != OK)
-// 	{
-// 		fprintf(stderr, "%s: Failed to add timer event handler\n", getName().c_str());
-// 		delete timer;
-// 		return NULL;
-// 	}
-
-// 	timer->setTimeout(timeout);
-
-// 	if (start)
-// 	{
-// 		if (timer->start() != OK)
-// 		{
-// 			fprintf(stderr, "%s: Failed to start timer with period of %dms\n",
-// 				getName().c_str(),
-// 				static_cast<int>(timeout.convertTo(TimeValue::Milliseconds)));
-// 			deleteEvent(*timer, STATUS_EVENT);
-// 			delete timer;
-// 			return NULL;
-// 		}
-// 	}
-
-// 	return timer;
-// }
-
-// TimerDevice* EventProcessor::createTimer(EventFunc callback, TimeValue timeout, int priority, bool start)
-// {
-// 	return createTimer("", callback, timeout, priority, start);
-// }
-
-// void EventProcessor::clearEventList()
-// {
-// 	for (EventMap::iterator iter = _eventList.begin();
-// 		iter != _eventList.end(); iter++)
-// 	{
-// 		delete (*iter).second;
-// 		(*iter).second = NULL;
-// 	}
-// 	_eventList.clear();
-// }
-
 void EventProcessor::processShutdownNotification()
 {
 	// Set terminated flag, so thread will terminate when it returns to its
@@ -728,14 +536,3 @@ void EventProcessor::processShutdownNotification()
 
 	terminate();
 }
-
-//void EventProcessor::initiateTermination()
-//{
-//	// Generate a read event on the shutdown pipe for this event processor.
-//
-//	int dummy = 0;
-//	if (_shutdownDev.write(&dummy, sizeof(dummy)) == ERROR)
-//	{
-//		printf("Error writing to shutdown pipe for %s\n", getName().c_str());
-//	}
-//}

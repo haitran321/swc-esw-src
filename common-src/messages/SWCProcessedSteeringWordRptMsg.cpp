@@ -18,8 +18,7 @@ STATUS SWCProcessedSteeringWordRptMsg::buildMsg()
 
     // Byte swap from Local to Network
     _data.moduleType = (MODULE_TYPE)toNetworkInt(_data.moduleType);
-    _data.processedAlpha = (int)toNetworkInt(_data.processedAlpha);
-    _data.processedBeta = (int)toNetworkInt(_data.processedBeta);
+    _data.processedKSine = (int)toNetworkInt(_data.processedKSine);
 
     // Add data to message.
     rc = addData(reinterpret_cast<char *>(&_data), sizeof(_data));

@@ -131,8 +131,7 @@ typedef struct
 typedef struct
 {
     MODULE_TYPE moduleType;
-    int processedAlpha;
-    int processedBeta;
+    int processedKSine;
 } SWCProcessedSteerWordDataType;
 
 //typedef struct
@@ -186,7 +185,6 @@ struct DCUStatusWithID
     bool operator==(const DCUStatusWithID& dcu) const {
         return dcuID == dcu.dcuID;
     }
-
 };
 
 typedef enum

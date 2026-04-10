@@ -32,9 +32,9 @@ public:
     */
     virtual STATUS buildMsg();
 
-    inline void setProcessedAlpha(int alpha);
+    inline void setModuleType(MODULE_TYPE mt);
 
-    inline void setProcessedBeta(int beta);
+    inline void setProcessedKSine(int kSine);
 
 private:
 
@@ -44,16 +44,14 @@ private:
 
 };
 
-void SWCProcessedSteeringWordRptMsg::setProcessedAlpha(int alpha)
+void SWCProcessedSteeringWordRptMsg::setModuleType(MODULE_TYPE mt)
 {
-    _data.processedAlpha = alpha;
-    printf("lastProcessedAlpha = %d\n", _data.processedAlpha);
+    _data.moduleType = mt;
 }
 
-void SWCProcessedSteeringWordRptMsg::setProcessedBeta(int beta)
+void SWCProcessedSteeringWordRptMsg::setProcessedKSine(int kSine)
 {
-    _data.processedBeta = beta;
-    printf("lastProcessedBeta = %d\n", _data.processedBeta);
+    _data.processedKSine = kSine;
 }
 
 #endif

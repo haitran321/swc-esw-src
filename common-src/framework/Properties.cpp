@@ -3,9 +3,11 @@
  */
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <iostream>
 #include "Properties.h"
 #include "StringUtils.h"
 
@@ -139,8 +141,7 @@ STATUS Properties::include(const string& include, const char* from)
         }
         else
         {
-            printf("Could not open configuration file [%s] referenced in [%s]\n",
-                include.c_str(), from);
+            std::cout << "Could not open configuration file " << include.c_str() << " referenced in " << from << std::endl;
             status = ERROR;
         }
     }

@@ -386,8 +386,8 @@ void DUBCmdMgr::processSLInterrupt()
     if (sendProcessedSW)
     {
         SWCProcessedSteeringWordRptMsg swRptMsg;
-        swRptMsg.setProcessedAlpha(lastProcessedAlpha);
-        swRptMsg.setProcessedBeta(lastProcessedBeta);
+        swRptMsg.setModuleType(DU_BETA);
+        swRptMsg.setProcessedKSine(lastProcessedBeta);
         swRptMsg.buildMsg();
         int msgSize = swRptMsg.getBufSize();
         printf("swRptMsg msgSize = %d, id = %d\n", msgSize, swRptMsg.getMsgId());

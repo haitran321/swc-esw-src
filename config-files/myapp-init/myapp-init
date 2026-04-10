@@ -1,11 +1,13 @@
 #!/bin/sh
 
 # hostname:ipaddress
-# dua:172.16.80.49
-# dub:172.16.80.48
-# tu:172.16.80.47
+# dua:172.16.50.11
+# dub:172.16.50.12
+# tu:172.16.50.13
 
-hostname dua
+name="dua"
+
+hostname $name
 
 mkdir /mnt/sd-mmcblk0p1
 mount /dev/mmcblk0p1 /mnt/sd-mmcblk0p1
@@ -13,8 +15,18 @@ mount /dev/mmcblk0p1 /mnt/sd-mmcblk0p1
 mkdir /mnt/sd-mmcblk0p2
 mount /dev/mmcblk0p2 /mnt/sd-mmcblk0p2
 
-ifconfig eth0 172.16.80.49 netmask 255.255.255.0
-ping -c 1 172.16.80.30
-ping -c 1 172.16.80.111
-# /mnt/sd-mmcblk0p1/bin/swic-emsw-app.elf DR &
+if [[ "$name" == "dua" ]]; then
+    ifconfig eth0 172.16.50.11 netmask 255.255.255.0
+    /mnt/sd-mmcblk0p1/run/swc-app-launcher dua &
+fi
+
+if [[ "$name" == "dub" ]]; then
+    ifconfig eth0 172.16.50.12 netmask 255.255.255.0
+    /mnt/sd-mmcblk0p1/run/swc-app-launcher dub &
+fi
+
+if [[ "$name" == "tu" ]]; then
+    ifconfig eth0 172.16.50.13 netmask 255.255.255.0
+    /mnt/sd-mmcblk0p1/run/swc-app-launcher tu &
+fi
 

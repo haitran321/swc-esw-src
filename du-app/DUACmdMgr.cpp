@@ -373,8 +373,8 @@ void DUACmdMgr::processSLInterrupt()
     if (sendProcessedSW)
     {
         SWCProcessedSteeringWordRptMsg swRptMsg;
-        swRptMsg.setProcessedAlpha(lastProcessedAlpha);
-        swRptMsg.setProcessedBeta(lastProcessedBeta);
+        swRptMsg.setModuleType(DU_ALPHA);
+        swRptMsg.setProcessedKSine(lastProcessedAlpha);
         swRptMsg.buildMsg();
         int msgSize = swRptMsg.getBufSize();
         printf("swRptMsg msgSize = %d, id = %d\n", msgSize, swRptMsg.getMsgId());
@@ -746,7 +746,7 @@ void DUACmdMgr::processLocalHWStatusMsg()
     else
     {
         // Get message id
-        if (localStatus->msgID == BETA_DCU_STATUS)
+        if (localStatus->msgID == BETA_DCU_STATUS)  
         {
             printf("Received %d bytes: Group %d DCU %d\n", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.loc);
             _logger.logDebug("Received %d bytes: Group %d DCU %d", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.loc);
