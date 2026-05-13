@@ -15,18 +15,22 @@ mount /dev/mmcblk0p1 /mnt/sd-mmcblk0p1
 mkdir /mnt/sd-mmcblk0p2
 mount /dev/mmcblk0p2 /mnt/sd-mmcblk0p2
 
+rm /etc/profile.d/aliases.sh
+echo "alias stopswc='killall swc-esw-app.elf'" >> /etc/profile.d/aliases.sh
+echo "alias startswc='/mnt/sd-mmcblk0p1/run/swc-app-launcher $name &'" >> /etc/profile.d/aliases.sh
+echo "alias checkswc='ps | grep swc'" >> /etc/profile.d/aliases.sh
+
 if [[ "$name" == "dua" ]]; then
     ifconfig eth0 172.16.50.11 netmask 255.255.255.0
-    /mnt/sd-mmcblk0p1/run/swc-app-launcher dua &
 fi
 
 if [[ "$name" == "dub" ]]; then
     ifconfig eth0 172.16.50.12 netmask 255.255.255.0
-    /mnt/sd-mmcblk0p1/run/swc-app-launcher dub &
 fi
 
 if [[ "$name" == "tu" ]]; then
     ifconfig eth0 172.16.50.13 netmask 255.255.255.0
-    /mnt/sd-mmcblk0p1/run/swc-app-launcher tu &
 fi
+
+/mnt/sd-mmcblk0p1/run/swc-app-launcher dub &
 

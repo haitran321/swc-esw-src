@@ -11,8 +11,6 @@
 #include "UIODevice.h"
 #include "TimerDevice.h"
 #include "Logger.h"
-#include "ElapsedTimer.h"
-#include "Timestamp.h"
 
 class DUBCmdMgr : public EventProcessor
 {
@@ -45,6 +43,7 @@ class DUBCmdMgr : public EventProcessor
         UDPNetworkDevice* _fromTestServer;
         UDPNetworkDevice* _toTestServer;
         void processTestServerMsg();
+        void sendAckToTestServer(SWCAckType ackType);
 
         UDPNetworkDevice* _localHWStatus;
 
@@ -61,16 +60,16 @@ class DUBCmdMgr : public EventProcessor
         void processStatusTimer();
         void sendDCUStatusToDUA(BetaDCUStatusMsg status);
         void sendDUBStatusToDUA(DUTUStatusMsg status);
-        ElapsedTimer eInterruptProcessing;
-        Timestamp ts;
 
         bool sendProcessedSW;
         int lastProcessedAlpha;
         int lastProcessedBeta;
 
-        // TO BE REMOVED
-        UDPNetworkDevice* _udpFromDevPC;
-        void processDEVPCMsg();
+        UDPNetworkDevice* _udpFromStatusEmu;
+        void processStatusEmuMsg();
+
+        int REFRESH_DCU_STATUS_ON_GDS_INTERVAL;
+
 };
 
 

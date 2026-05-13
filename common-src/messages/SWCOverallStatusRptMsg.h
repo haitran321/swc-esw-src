@@ -38,6 +38,8 @@ public:
 
     inline void setSWCMode(SWC_MODE mode);
 
+    inline void setOLTEMode(SWC_MODE mode);
+
     inline void setAlphaDUStatus(HealthState health);
 
     inline void setBetaDUStatus(HealthState health);
@@ -56,9 +58,9 @@ public:
 
     inline void setTUHWStatus(HealthState health);
 
-    inline void setAlphaDCUStatus(int dcu, HealthState health);
+    inline void setAlphaDCUStatus(int dcu, DCUHealthState health);
 
-    inline void setBetaDCUStatus(int dcu, HealthState health);
+    inline void setBetaDCUStatus(int dcu, DCUHealthState health);
 
     inline void setLastProcessedAlpha(int alpha);
 
@@ -85,6 +87,11 @@ void SWCOverallStatusRptMsg::setSWCConfig(SWC_CONFIG config)
 void SWCOverallStatusRptMsg::setSWCMode(SWC_MODE mode)
 {
     _data.swcMode = mode;
+}
+
+void SWCOverallStatusRptMsg::setOLTEMode(SWC_MODE mode)
+{
+    _data.olteMode = mode;
 }
 
 void SWCOverallStatusRptMsg::setAlphaDUStatus(HealthState health)
@@ -132,12 +139,12 @@ void SWCOverallStatusRptMsg::setTUHWStatus(HealthState health)
     _data.testUnitHWStatus = health;
 }
 
-void SWCOverallStatusRptMsg::setAlphaDCUStatus(int dcu, HealthState health)
+void SWCOverallStatusRptMsg::setAlphaDCUStatus(int dcu, DCUHealthState health)
 {
     _data.alphaDCU[dcu] = health;
 }
 
-void SWCOverallStatusRptMsg::setBetaDCUStatus(int dcu, HealthState health)
+void SWCOverallStatusRptMsg::setBetaDCUStatus(int dcu, DCUHealthState health)
 {
     _data.betaDCU[dcu] = health;
 }

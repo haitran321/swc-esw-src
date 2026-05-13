@@ -41,6 +41,8 @@ class TUHWMgr : public Uncopyable
 
         DUTUStatusType readTUStatus();
 
+        void processTUEmulatorStatus(int statusReg);
+
     protected:
         /**
          * Sends pertinent state data for this event processor to standard output.
@@ -59,9 +61,11 @@ class TUHWMgr : public Uncopyable
         int MODULE_TYPE;
 
         int _brdCtrVal;
-
         int _diagRegVal;
         int _armInitReady;
+
+        int USE_STATUS_EMULATOR;
+        int emTUStatusReg;
 };
 
 

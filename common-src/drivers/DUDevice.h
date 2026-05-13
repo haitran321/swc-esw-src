@@ -53,6 +53,8 @@ typedef enum
     DU_TEST_MODE_SYSTEM_CONFIG_MASK         = 0x00000060,    /* Bits 5..6 */
     DU_TEST_MODE_DCU_CMD_MASK               = 0x00000700,    /* Bits 8..10 */
     DU_SHUTDOWN_CMD_MASK                    = 0x00001000,    /* Bit 12 */
+    DU_TEST_MODE_SWC_MODE_CMD_MASK          = 0x00002000,    /* Bit 13 */
+    DU_TEST_MODE_OLTE_MODE_CMD_MASK         = 0x00004000,    /* Bit 14 */
     DU_SCAN_LIMIT_CENTER_FREQ_MASK          = 0x00030000,    /* Bits 16..17 */
     DU_SOFT_RESET_MASK                      = 0x80000000,    /* Bit 31 */
 }DU_BOARD_CONTROL_ENUM;
@@ -114,8 +116,8 @@ typedef enum
 {
     DU_SYSTEM_STATUS_MASK            = 0x80000F3F,    /* Bits 0..5, 8..11 */
     DU_SYSTEM_CONFIG_MASK            = 0x00000003,    /* Bit 0..1 */
-    DU_MODE_MASK                     = 0x00000004,    /* Bit 2 */
-    DU_OFFLINE_TEST_ENABLED_MASK     = 0x00000008,    /* Bit 3 */
+    DU_ATB_MODE_MASK                 = 0x00000004,    /* Bit 2 */
+    DU_OLTE_MODE_MASK                = 0x00000008,    /* Bit 3 */
     DU_BORESIGHT_LAST_CMD_MASK       = 0x00000010,    /* Bit 4 */
     DU_CAL_LAST_CMD_MASK             = 0x00000020,    /* Bit 5 */
     DU_SPI_HEALTH_LAST_CMD_MASK      = 0x00000100,    /* Bit 8 */
@@ -152,7 +154,8 @@ typedef enum
 {
     DU_STATUS_TO_TWGS_MASK              = 0x7FFFFFFF,    /* Bits 0..30 */
     // Data Type = Config Status
-    DU_MODE_STATUS_MASK                 = 0x00000008,    /* Bit 3 */
+    DU_OLTE_MODE_STATUS_MASK            = 0x00000004,    /* Bit 2 */
+    DU_SWC_MODE_STATUS_MASK             = 0x00000008,    /* Bit 3 */
     DU_CONFIG_STATUS_MASK               = 0x00000030,    /* Bit 4..5 */
     // Define Data Type
     DU_DATA_TYPE_MASK                   = 0x000000C0,    /* Bit 6..7 */

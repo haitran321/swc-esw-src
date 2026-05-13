@@ -69,8 +69,8 @@ typedef struct
 
 typedef enum
 {
-    TestSourceTU = 0,       // analog
-    TestSourceDU = 1        // digital
+    Analog = 0,       
+    Digital = 1       
 } TestSource;
 
 typedef enum
@@ -112,6 +112,7 @@ typedef struct
     HealthState swcStatus;
     SWC_CONFIG  swcConfig;
     SWC_MODE    swcMode;
+    SWC_MODE    olteMode;
     HealthState swcAlphaDUStatus;
     HealthState swcBetaDUStatus;
     DCURolledUpStatus swcAlphaDCURolledUpStatus;
@@ -123,8 +124,8 @@ typedef struct
     HealthState testUnitHWStatus;
     int lastProcessedAlpha;
     int lastProcessedBeta;
-    HealthState alphaDCU[NUM_DCU];
-    HealthState betaDCU[NUM_DCU];
+    DCUHealthState alphaDCU[NUM_DCU];
+    DCUHealthState betaDCU[NUM_DCU];
 } SWCOverallStatusDataType;
 
 /** Status Report message data  */
@@ -133,31 +134,6 @@ typedef struct
     MODULE_TYPE moduleType;
     int processedKSine;
 } SWCProcessedSteerWordDataType;
-
-//typedef struct
-//{
-//    int bypassStatus;
-//    int modeStatus;
-//    HealthState overallStatus;
-//    HealthState clockStatus;
-//    HealthState locValid;
-//    HealthState spiCommStatus;
-//    HealthState steeringWordCompare;
-//    int fwLoc;
-//    int dcuFWMajorRev;
-//    int dcuFWMinorRev;
-//    RFCC_CH dcuType;
-//    int crcStatus;
-//} DCUFWStatus;
-//
-//typedef struct
-//{
-//    RFCC_CH group;
-//    int loc;
-//    int duplicate;
-//    int fwStatusReg;
-//    DCUFWStatus dcuFWStatus;
-//} DCUStatus;
 
 typedef struct
 {
@@ -169,7 +145,7 @@ typedef struct
     int dcuFWMinorRev;
     int bypassStatus;
     int modeStatus;
-    HealthState overallStatus;
+    DCUHealthState overallStatus;
     HealthState clockStatus;
     HealthState spiCommStatus;
     HealthState crcStatus;
@@ -190,18 +166,21 @@ struct DCUStatusWithID
 typedef enum
 {
     ShutdownCmdAck      = 1,
+    InitCompleteAck     = 2,
 } SWCAckType;
 
 typedef struct
 {
+    int modType;
     SWCAckType ackType;
 } SWCAckDataType;
 
 typedef struct
 {
-    HealthState overallStatus;
+    HealthState overallStatus;      // bitResult
     HealthState readyStatus;
     HealthState highTempAlarm;
+    HealthState overTempAlarm;
     HealthState vccintAlarm;
     HealthState vccauxAlarm;
     HealthState vbramAlarm;

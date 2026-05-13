@@ -45,6 +45,7 @@ class TUCmdMgr : public EventProcessor
         UDPNetworkDevice* _fromTestServer;
         UDPNetworkDevice* _toTestServer;
         void processTestServerMsg();
+        void sendAckToTestServer(SWCAckType ackType);
 
         UDPNetworkDevice* _localHWStatus;
 
@@ -61,9 +62,11 @@ class TUCmdMgr : public EventProcessor
         void processWLSPInterrupt();
         TimerDevice* _timerDevStatus;
         void processStatusTimer();
-        ElapsedTimer eInterruptProcessing;
         Timestamp ts;
         void sendTUStatusToDUA(DUTUStatusMsg status);
+
+        UDPNetworkDevice* _udpFromStatusEmu;
+        void processStatusEmuMsg();
 };
 
 

@@ -1,0 +1,21 @@
+#
+# SWC SAP Data File.
+#
+
+#######################################################################
+###### Test Server SAPS################################################
+
+
+
+#######################################################################
+###### DUs/TU SAPS########################################################
+
+# Nominal spacing of status timer, in seconds
+SAP_STATUS_TIMER_INTERVAL_SECONDS = 10
+
+# Number of failed DCUs to set the DCU rolled up status to Yellow
+SAP_YELLOW_OP_THRESHOLD = 1
+
+# Number of failed DCUs to set the DCU rolled up status to Red
+SAP_RED_OP_THRESHOLD = 90
+

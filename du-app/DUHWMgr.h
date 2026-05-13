@@ -55,27 +55,11 @@ class DUHWMgr : public Uncopyable
         int getSysConfigStatus();
 
         void readSWCStatus(SWC_STATUS_DATA_TYPE dataType);
-        void readDCUStatus();
+        void readDCUStatus(bool sendCurrentDCUList = false);
         DCUStatus readDCUFWStatus(int reg);
+        STATUS validateDCUFWStatus(DCUStatus status);
 
-        void setDCUStatusToTwgs(RFCC_CH group, HealthState health, int dcuNum);
-
-        // To be removed.  This is to allow the emulator to set the status
-        void processEmulatorStatus(HealthState swcrOverall_,
-                                   SWC_CONFIG sysConfig_,
-                                   SWC_MODE mode_,
-                                   HealthState alphaDUStatus_,
-                                   HealthState betaDUStatus_,
-                                   DCURolledUpStatus alphaDCURolledUpStatus_,
-                                   DCURolledUpStatus betaDCURolledUpStatus_,
-                                   HealthState tempStatus_,
-                                   HealthState pwr12VStatus_,
-                                   HealthState pwr24VStatus_,
-                                   HealthState atbStatus_,
-                                   RFCC_CH dcuGroup_,
-                                   HealthState dcuStatus_,
-                                   int dcuNum_);
-        void processDCUEmulatorStatus(RFCC_CH dcuGroup, int dcuNum, int dcuFWStatus);
+        void setDCUStatusToTwgs(RFCC_CH group, DCUHealthState health, int dcuNum);
 
         SWCOverallStatusDataType getSWCStatus();
 
@@ -112,7 +96,22 @@ class DUHWMgr : public Uncopyable
         HealthState getSWCOverallStatus();
         SWC_CONFIG getSWCConfigStatus();
         SWC_MODE getSWCModeStatus();
-        int getTestEnabledStatus();
+        SWC_MODE getOLTEModeStatus();
+
+
+        void processSWCREmulatorStatus(SWC_CONFIG sysConfig_,
+                           SWC_MODE mode_,
+                           SWC_MODE olte_,
+                           HealthState tempStatus_,
+                           HealthState pwr12VStatus_,
+                           HealthState pwr24VStatus_,
+                           HealthState atbStatus_,
+                           DCURolledUpStatus alphaDCURolledUpStatus_,
+                           DCURolledUpStatus betaDCURolledUpStatus_);
+
+        void processDUEmulatorStatus(int statusReg);
+
+        void processDCUEmulatorStatus(int dcuNum, int dcuFWStatus);
 
     protected:
         /**
@@ -141,8 +140,8 @@ class DUHWMgr : public Uncopyable
         int _armInitReady;
         HealthState _swcrOverall;
         SWC_CONFIG _sysConfig;
-        SWC_MODE _mode;
-        int _testEnabled;
+        SWC_MODE _swcMode;
+        SWC_MODE _olteMode;
         DUTUStatusType _alphaDUStatus;
         DUTUStatusType _betaDUStatus;
         DUTUStatusType _tuStatus;
@@ -154,19 +153,26 @@ class DUHWMgr : public Uncopyable
         HealthState _atbStatus;
         RFCC_CH _dcuGroup;
         int _dcuNum;
+        int DCU_CHECK_VERSION_FLAG;
+        int DCU_MAJOR_VERSION;
+        int DCU_MINOR_VERSION;
+        int SAP_RED_OP_THRESHOLD;
+        int SAP_YELLOW_OP_THRESHOLD;
+        DCUStatus resetDCU;
 
         std::deque<DCUStatusWithID> _dcuSendDeque;
         // This store the dcu data at index based on the dcu number from the FW
         DCUStatus _dcuStatus[NUM_RFCC_CH][NUM_DCU];
         bool _dcuLocOccupied[NUM_DCU];
 
-        std::vector<int> _masterDCUList;
+        std::vector<int> _initialDCUList;
         std::vector<int> _currentDCUList;
 
         void setOverallStatusBit(int val);
         void setDataTypeBit(SWC_STATUS_DATA_TYPE val);
         void setConfigBit(int val);
-        void setModeBit(int val);
+        void setSWCModeBit(int val);
+        void setOLTEModeBit(int val);
         void setAlphaOverallStatusBit(int val);
         void setBetaOverallStatusBit(int val);
         void setAlphaDCURolledUpStatusBit(int val);
@@ -180,8 +186,14 @@ class DUHWMgr : public Uncopyable
         void setDCUNumberStatusBit(int val);
 
         int USE_STATUS_EMULATOR;
-        int fakeDCUFWStatus[NUM_RFCC_CH][NUM_DCU];
-
+        int emDCUFWStatus[NUM_RFCC_CH][NUM_DCU];
+        int emDUStatusReg;
+        HealthState emTempStatus;
+        HealthState emPwr12VStatus;
+        HealthState emPwr24VStatus;
+        HealthState emAtbStatus;
+        DCURolledUpStatus emAlphaDCURolledUpStatus;
+        DCURolledUpStatus emBetaDCURolledUpStatus;
 };
 
 

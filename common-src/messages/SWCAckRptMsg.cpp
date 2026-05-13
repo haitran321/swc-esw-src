@@ -17,6 +17,7 @@ STATUS SWCAckRptMsg::buildMsg()
     }
 
     // Byte swap from Local to Network
+    _data.modType = (int)toNetworkInt(_data.modType);
     _data.ackType = (SWCAckType)toNetworkInt(_data.ackType);
 
     // Add data to message.

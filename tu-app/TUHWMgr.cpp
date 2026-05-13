@@ -47,6 +47,17 @@ STATUS TUHWMgr::initialize()
     rc = rc || configs.get("STEERING_WORD_PULSE_DURATION", STEERING_WORD_PULSE_DURATION);
     rc = rc || configs.get("RLTD_PRE_TRIGGER_TIME", RLTD_PRE_TRIGGER_TIME);
 
+    // For testing.  To be removed
+    rc = rc || configs.get("USE_STATUS_EMULATOR", USE_STATUS_EMULATOR);
+    if (USE_STATUS_EMULATOR == 1)
+    {
+        emTUStatusReg = 0x80000001;
+    }
+    else
+    {
+        emTUStatusReg = 0x0;
+    }
+
     // Open /dev/mem device
     _tuDev = new TUDevice(APB_BUS_OFFSET);
     if (_tuDev->open() == ERROR)
@@ -65,6 +76,9 @@ STATUS TUHWMgr::initialize()
     printf("getFirmwareVersionReg = 0x%x\n", _tuDev->getFWVerReg());
     printf("getBoardStatusReg = 0x%x\n", _tuDev->getBrdStatusReg());
     printf("getBoardControlReg = 0x%x\n", _tuDev->getBrdCtrlReg());
+
+    _logger.logDebug("MODULE_TYPE = %d, FW Verison = 0x%x, board status = 0x%x, board control = 0x%x",
+                     MODULE_TYPE, _tuDev->getFWVerReg(), _tuDev->getBrdStatusReg(), _tuDev->getBrdCtrlReg());
     
     _brdCtrVal = DeviceUtilities::readMask(TU_BRD_CTRL_MASK, _tuDev->getBrdCtrlReg());
 
@@ -81,6 +95,11 @@ STATUS TUHWMgr::initialize()
     // Set ARM Init Reg to indicate the app is ready
     _armInitReady = DeviceUtilities::updateReg(TU_APP_INIT_STATUS_MASK, _armInitReady, READY);
     _tuDev->setARMInitStatusReg(_armInitReady);
+
+    printf("getBoardControlReg = 0x%x\n", _tuDev->getBrdCtrlReg());
+    _logger.logDebug("getBoardControlReg = 0x%x", _tuDev->getBrdCtrlReg());
+
+    _logger.logDebug("Successfully initialize TUMHWMgr");
 
     return OK;
 }
@@ -139,21 +158,34 @@ DUTUStatusType TUHWMgr::readTUStatus()
 {
     int status = _tuDev->getBrdStatusReg();
 
-    // TO BE REMOVED
-//  status = 0x80000001;
-    status = 0x00000018;
-
     _logger.logDebug("TU %d Status for 0x%x module", MODULE_TYPE, status);
     printf("TU %d Status for 0x%x module\n", MODULE_TYPE, status);
+
+    if (USE_STATUS_EMULATOR == 1)
+    {
+        status = emTUStatusReg;
+
+        _logger.logDebug("USE_STATUS_EMULATOR: TU Status for 0x%x module", status);
+        printf("USE_STATUS_EMULATOR: TU Status for 0x%x module\n", status);
+    }
 
     DUTUStatusType tuStatus;
     tuStatus.overallStatus = (HealthState)(DeviceUtilities::readMask(TU_BIT_RESULT_MASK, status));
     tuStatus.readyStatus = (HealthState)(DeviceUtilities::readMask(TU_READY_STATUS_MASK, status));
-    tuStatus.highTempAlarm = (HealthState)(DeviceUtilities::readMask(TU_HIGH_TEMP_ALARM_MASK, status));
-    tuStatus.vccintAlarm = (HealthState)(DeviceUtilities::readMask(TU_VCC_INT_ALARM_MASK, status));
-    tuStatus.vccauxAlarm = (HealthState)(DeviceUtilities::readMask(TU_VCC_AUX_ALARM_MASK, status));
-    tuStatus.vbramAlarm = (HealthState)(DeviceUtilities::readMask(TU_VBRAM_ALARM_MASK, status));
+    tuStatus.highTempAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_HIGH_TEMP_ALARM_MASK, status)) & 0x1);
+    tuStatus.overTempAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_OVER_TEMP_ALARM_MASK, status)) & 0x1);
+    tuStatus.vccintAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_VCC_INT_ALARM_MASK, status)) & 0x1);
+    tuStatus.vccauxAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_VCC_AUX_ALARM_MASK, status)) & 0x1);
+    tuStatus.vbramAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_VBRAM_ALARM_MASK, status)) & 0x1);
 
     return (tuStatus);
+}
+
+void TUHWMgr::processTUEmulatorStatus(int statusReg)
+{
+    printf("From SWCR Status Emulator: setting TU status to 0x%x\n", statusReg);
+    _logger.logDebug("From SWCR Status Emulator: setting TU status to 0x%x", statusReg);
+
+    emTUStatusReg = statusReg;
 }
 

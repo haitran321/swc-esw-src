@@ -67,6 +67,20 @@ typedef enum
     GO    = 1
 } HealthState;
 
+// DCU overall status:
+// To TWGS: 0 = No-Go, 1 = Go
+// To TS:   2 = No-Go, 3 = Go
+// Needs to do this so the TS will see:
+// 0 = White, 2 = No-Go, 3 = Go
+// To TWGS will be the LSB, so:
+// No-Go = 2 (bit-10): TWGS = 0, TS = 2
+// Go = 3 (bit-11): TWGS = 1, TS = 3
+typedef enum
+{
+    DCU_NO_GO = 2,
+    DCU_GO    = 3
+} DCUHealthState;
+
 typedef enum
 {
     DCU_ROLLED_UP_ERROR    = 0,

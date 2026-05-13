@@ -32,6 +32,8 @@ public:
     */
     virtual STATUS buildMsg();
 
+    inline void setModuleType(int mod);
+
     inline void setAckType(SWCAckType ack);
 
 private:
@@ -41,6 +43,11 @@ private:
     SWCAckDataType _data;
 
 };
+
+void SWCAckRptMsg::setModuleType(int mod)
+{
+    _data.modType = mod;
+}
 
 void SWCAckRptMsg::setAckType(SWCAckType ack)
 {

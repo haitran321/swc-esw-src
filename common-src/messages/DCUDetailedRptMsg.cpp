@@ -25,7 +25,7 @@ STATUS DCUDetailedStatusRptMsg::buildMsg()
     _data.dcuFWMinorRev = (int)toNetworkInt(_data.dcuFWMinorRev);
     _data.bypassStatus = (int)toNetworkInt(_data.bypassStatus);
     _data.modeStatus = (int)toNetworkInt(_data.modeStatus);
-    _data.overallStatus = (HealthState)toNetworkInt(_data.overallStatus);
+    _data.overallStatus = (DCUHealthState)toNetworkInt(_data.overallStatus);
     _data.clockStatus = (HealthState)toNetworkInt(_data.clockStatus);
     _data.spiCommStatus = (HealthState)toNetworkInt(_data.spiCommStatus);
     _data.crcStatus = (HealthState)toNetworkInt(_data.crcStatus);

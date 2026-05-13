@@ -1,6 +1,3 @@
-/**
-* $Id: DUBCmdMgr.cpp 6638 2011-03-10 23:07:51Z ste38548 $ 
-*/
 #include <stdio.h>
 #include <sstream>
 #include <unistd.h>
@@ -12,6 +9,7 @@
 #include "SWCAckRptMsg.h"
 #include "SWCProcessedSteeringWordRptMsg.h"
 #include "ConfigDataManager.h"
+#include "SAPDataManager.h"
 #include "DeviceFactory.h"
 #include "EndianUtils.h"
 #include "ScanLimitCheck.h"
@@ -20,8 +18,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-//#define PRINT_DEBUG
 
 /**
  * Constructor
@@ -32,11 +28,12 @@ DUBCmdMgr::DUBCmdMgr() :
     _fromTestServer(NULL),
     _toTestServer(NULL),
     _localHWStatus(NULL),
-    _udpFromDevPC(NULL),
+    _udpFromStatusEmu(NULL),
     _duHWMgr(DUHWMgr::getInstance()),
     _uioDevSL(NULL),
     _uioDevConfig(NULL),
-    _timerDevStatus(NULL)
+    _timerDevStatus(NULL),
+    REFRESH_DCU_STATUS_ON_GDS_INTERVAL(6)
 {
 }
 
@@ -54,8 +51,8 @@ DUBCmdMgr::~DUBCmdMgr()
     delete _localHWStatus;
     _localHWStatus = NULL;
 
-    delete _udpFromDevPC;
-    _udpFromDevPC = NULL;
+    delete _udpFromStatusEmu;
+    _udpFromStatusEmu = NULL;
 
     delete _uioDevSL;
     _uioDevSL = NULL;
@@ -93,6 +90,14 @@ STATUS DUBCmdMgr::start()
 
     ConfigDataManager& configs = ConfigDataManager::getInstance();
 
+    printf("\nLoading SAP file\n");
+    if (SAPDataManager::getInstance().load() != OK)
+    {
+        printf("Error loading Config file\n");
+    }
+
+    SAPDataManager& saps = SAPDataManager::getInstance();
+
     // Get IP addresses
     rc = rc || configs.get("TEST_SERVER_IP_ADDRESS", TEST_SERVER_IP_ADDRESS);
     rc = rc || configs.get("ALPHA_IP_ADDRESS", ALPHA_IP_ADDRESS);
@@ -107,19 +112,16 @@ STATUS DUBCmdMgr::start()
     // Get port number to/from Local HW devices
     rc = rc || configs.get("LOCAL_HW_STATUS_PORT", LOCAL_HW_STATUS_PORT);
 
-    // For Dev PC  - TO BE REMOVED
-    string DEV_PC_IP_ADDRESS;
-    int FROM_DEV_PC_PORT;
-    int TO_DEV_PC_PORT;
-    rc = rc || configs.get("DEV_PC_IP_ADDRESS", DEV_PC_IP_ADDRESS);
-    rc = rc || configs.get("FROM_DEV_PC_PORT", FROM_DEV_PC_PORT);
-    rc = rc || configs.get("TO_DEV_PC_PORT", TO_DEV_PC_PORT);
+    // For Status Emulator
+    int FROM_STATUS_EMULATOR_PORT;
+    rc = rc || configs.get("FROM_STATUS_EMULATOR_PORT", FROM_STATUS_EMULATOR_PORT);
 
     // Configuration parameters
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
 
     // Status parameters
     rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
+    rc = rc || configs.get("REFRESH_DCU_STATUS_ON_GDS_INTERVAL", REFRESH_DCU_STATUS_ON_GDS_INTERVAL);
 
     // Setup Logger
     _logger.initialize();
@@ -185,26 +187,26 @@ STATUS DUBCmdMgr::start()
     _logger.logInfo("Successfully created _localHWStatus device");
     printf("Successfully created _localHWStatus device\n");
 
-    // Incoming from Dev PC device
+    // Incoming from status emulator device
     devName.clear();
-    devName << "UDP Server From Dev PC";
-    devName << BETA_IP_ADDRESS << ":" << FROM_DEV_PC_PORT;
+    devName << "UDP Server From Status Emulator";
+    devName << BETA_IP_ADDRESS << ":" << FROM_STATUS_EMULATOR_PORT;
 
-    _udpFromDevPC = new UDPNetworkDevice(NetworkServer, BETA_IP_ADDRESS, FROM_DEV_PC_PORT, false);
-    _udpFromDevPC->setName(devName.str());
+    _udpFromStatusEmu = new UDPNetworkDevice(NetworkServer, BETA_IP_ADDRESS, FROM_STATUS_EMULATOR_PORT, false);
+    _udpFromStatusEmu->setName(devName.str());
 
-    if (_udpFromDevPC->open() != OK)
+    if (_udpFromStatusEmu->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _udpFromDevPC->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _udpFromStatusEmu->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_udpFromDevPC, READ_EVENT, 1, static_cast<EventFunc>(&DUBCmdMgr::processDEVPCMsg)) != OK)
+    if (addEvent(*_udpFromStatusEmu, READ_EVENT, 1, static_cast<EventFunc>(&DUBCmdMgr::processStatusEmuMsg)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _udpFromDevPC->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _udpFromStatusEmu->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _udpFromDevPC device");
-    printf("Successfully created _udpFromDevPC device\n");
+    _logger.logInfo("Successfully created _udpFromStatusEmu device");
+    printf("Successfully created _udpFromStatusEmu device\n");
 
     // Initialize HW Manager
     _duHWMgr.initialize(MODULE_TYPE);
@@ -214,6 +216,7 @@ STATUS DUBCmdMgr::start()
     bduStatus.msgID = BETA_DU_STATUS;
     bduStatus.dutuStatus = _duHWMgr.readDUStatus();
     sendDUBStatusToDUA(bduStatus);
+    _logger.logInfo("Sent DUB status to DUA");
     usleep(1*1000);   // Sleep 1 msecs
 
     // Read and send Beta DCUs status to Alpha DU
@@ -230,6 +233,7 @@ STATUS DUBCmdMgr::start()
             usleep(1*1000);   // Sleep 1 msecs
         }
     }
+    _logger.logInfo("Sent DUB DCUs status to DUA");
 
     // Open UIO device for Scan Limit HW Interrupt
     _uioDevSL = new UIODevice(AXI_INT_121_OFFSET, 0);
@@ -245,6 +249,7 @@ STATUS DUBCmdMgr::start()
         return ERROR;
     }
     _logger.logInfo("Successfully created _uioDevSL device");
+    printf("Successfully created _uioDevSL device\n");
 
     // Map UIO address
     _uioDevSL->mmap();
@@ -264,6 +269,7 @@ STATUS DUBCmdMgr::start()
         return ERROR;
     }
     _logger.logInfo("Successfully created _uioDevConfig device");
+    printf("Successfully created _uioDevConfig device\n");
 
     // Map UIO address
     _uioDevConfig->mmap();
@@ -285,6 +291,10 @@ STATUS DUBCmdMgr::start()
         return ERROR;
     }
     _logger.logInfo("Successfully created _timerDevStatus device");
+    printf("Successfully created _timerDevStatus device\n");
+
+    // Notify Test Server
+    sendAckToTestServer(InitCompleteAck);
 
     EventProcessor::start();
 
@@ -293,15 +303,6 @@ STATUS DUBCmdMgr::start()
 
 void DUBCmdMgr::processSLInterrupt()
 {
-//  eInterruptProcessing.reset();
-//  eInterruptProcessing.start();
-
-    uint64_t startTimeNSec = ts.GetNanoSecondsSinceMidnight();
-
-#ifdef PRINT_DEBUG
-    printf("In processSLInterrupt()\n");
-#endif
-
     size_t bytesRead = 0;
     int pending = 0;
 
@@ -390,26 +391,14 @@ void DUBCmdMgr::processSLInterrupt()
         swRptMsg.setProcessedKSine(lastProcessedBeta);
         swRptMsg.buildMsg();
         int msgSize = swRptMsg.getBufSize();
-        printf("swRptMsg msgSize = %d, id = %d\n", msgSize, swRptMsg.getMsgId());
         swRptMsg.headerByteSwapToNetwork();
         
         _toTestServer->write(swRptMsg.getBuf(), msgSize);
     }
-
-//  eInterruptProcessing.stop();
-//  printf("SW Scan Limit Check took %f\n", eInterruptProcessing.secs());
-
-    uint64_t stopTimeNSec = ts.GetNanoSecondsSinceMidnight();
-//  printf("SW Scan Limit Check took %ld\n", stopTimeNSec - startTimeNSec);
-
 }
 
 void DUBCmdMgr::processConfigInterrupt()
 {
-#ifdef PRINT_DEBUG
-    printf("In processConfigInterrupt()\n");
-#endif
-
     size_t bytesRead = 0;
     int pending = 0;
 
@@ -423,7 +412,7 @@ void DUBCmdMgr::processConfigInterrupt()
     {
         // Reset test source back 0 (TU = 0)
         // Should already be 0 but just to be safe 
-        _duHWMgr.setTestSrcInTestMode(TestSourceTU);
+        _duHWMgr.setTestSrcInTestMode(Analog);
     }
 
     // Does CmdMgr need to set anything based on config?  
@@ -436,33 +425,7 @@ void DUBCmdMgr::processStatusTimer()
 
     timerCounter++;
 
-//  if (timerCounter % 100 == 0)
-//  {
-        printf("In processTimer: timerCounter = %d\n", timerCounter);
-//  }
-
-    // For testing Fake Beta DCUs status
-    // To be removed
-    if (timerCounter == 3)
-    {
-        // Disconnect DCU 102
-        _duHWMgr.processDCUEmulatorStatus(BETA, 48, 0xffffffff);
-    }
-    if (timerCounter == 6)
-    {
-        // Reconnect DCU 102
-        _duHWMgr.processDCUEmulatorStatus(BETA, 48, 0x3e661b);
-    }
-    if (timerCounter == 9)
-    {
-        // Set DCU 69 to have the same location as 80
-        _duHWMgr.processDCUEmulatorStatus(BETA, 58, 0x3e501b);
-    }
-    if (timerCounter == 12)
-    {
-        // Set DCU 69 back to correct address
-        _duHWMgr.processDCUEmulatorStatus(BETA, 58, 0x3e451b);
-    }
+    _logger.logDebug("In processTimer: timerCounter = %d", timerCounter);
 
     // Read Beta DU status and send to Alpha DU
     DUTUStatusMsg bduStatus;
@@ -473,17 +436,25 @@ void DUBCmdMgr::processStatusTimer()
 
     printf("Read all DCUs status to update local queue.\n");
     _logger.logDebug("Read all DCUs status to update local queue.");
-    _duHWMgr.readDCUStatus();
+    if (timerCounter % REFRESH_DCU_STATUS_ON_GDS_INTERVAL == 0)
+    {
+        // Read DCU status and send current DCU status list
+        _duHWMgr.readDCUStatus(true);
+    }
+    else
+    {
+        // Only read dCU status
+        _duHWMgr.readDCUStatus();
+    }
 
     int dequeSize = _duHWMgr.getDCUStatusDequeSize();
     printf("DCU status deque size = %d\n", dequeSize);
     _logger.logDebug("DCU status deque size = %d", dequeSize);
 
-    // TO BE REMOVED WHEN RUNNING ON ACTUAL DU HW THAT HAS INTERRUPT
-    for (int dcu = 0; dcu < NUM_DCU; dcu++)
+    // Send DCU status to Alpha DU
+    for (int i = 0; i < dequeSize; i++) 
     {
-        int dequeSize = _duHWMgr.getDCUStatusDequeSize();
-        if (dequeSize > 0)
+        if (_duHWMgr.getDCUStatusDequeSize() > 0)
         {
             DCUStatus dcuStatus = _duHWMgr.getDCUStatusFromDeque();
             BetaDCUStatusMsg status;
@@ -494,12 +465,12 @@ void DUBCmdMgr::processStatusTimer()
         }
     }
 
+    // Reset timer
     _timerDevStatus->read();
 }
 
 void DUBCmdMgr::processTestServerMsg()
 {
-    printf("In processIncomingMsg()\n");
     size_t bytesRead = 0;
 
     CommandMessage *msg = new CommandMessage();
@@ -507,43 +478,34 @@ void DUBCmdMgr::processTestServerMsg()
     // Read UDP data
     if (_fromTestServer->read(msg->getBuf(), MAX_MSG_SIZE, bytesRead) != OK)
     {
+        _logger.logDebug("error reading from _udpIncoming");
         printf("error reading from _udpIncoming\n");
         return;
-    }
-    else
-    {
-        printf("Successfully read %d bytes\n", (int)bytesRead);
     }
 
     msg->setTotalMsgSize(bytesRead);
     msg->byteSwapHeaderToLocal();
 
-    _logger.logInfo("Processing incoming messages: msgId = %d", msg->getMsgId());
-    printf("Processing incoming messages: msgId = %d\n", msg->getMsgId());
+    _logger.logInfo("DUB ProcessTestServerMsg: Processing incoming messages: msgId = %d", msg->getMsgId());
+    printf("DUB ProcessTestServerMsg: Processing incoming messages: msgId = %d\n", msg->getMsgId());
 
     switch (msg->getMsgId())
     {
     case SHUTDOWN_CMD_MSG_ID:
         {
-            _logger.logInfo("In SHUTDOWN_CMD_MSG_ID case");
             ShutdownCmdMsg *cloneShutdownMsg = new ShutdownCmdMsg(msg->getBuf(), msg->getBufSize());
             cloneShutdownMsg->byteSwapToLocal();
-            printf("msg id = %d, option = %d\n", cloneShutdownMsg->getMsgId(), cloneShutdownMsg->getType());
+            _logger.logInfo("In SHUTDOWN_CMD_MSG_ID case: shutdown option = %d", cloneShutdownMsg->getType());
 
-            SWCAckRptMsg shutdownAckRptMsg;
-            shutdownAckRptMsg.setAckType(ShutdownCmdAck);
-            shutdownAckRptMsg.buildMsg();
-            int msgSize = shutdownAckRptMsg.getBufSize();
-            printf("SWCAckRptMsg msgSize = %d\n", msgSize);
-            shutdownAckRptMsg.headerByteSwapToNetwork();
-            _toTestServer->write(shutdownAckRptMsg.getBuf(), sizeof(SWCAckRptMsg));
+            // Notify Test Server
+            sendAckToTestServer(ShutdownCmdAck);
 
             if (cloneShutdownMsg->getType() == PowerOff)
             {
                 printf("****Calling System Shutdown****\n");
                 _logger.logInfo("****Calling System Shutdown****");
                 sleep(3);
-                reboot(RB_POWER_OFF);
+//              reboot(RB_POWER_OFF);
             }
             else
             {
@@ -562,11 +524,8 @@ void DUBCmdMgr::processTestServerMsg()
 
             static int SteeringCmdCounter = 0;
             SteeringCmdCounter++;
-//          if ((SteeringCmdCounter % 100) == 0)
-//          {
-                printf("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d\n", SteeringCmdCounter);
-//          }
 
+            printf("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d\n", SteeringCmdCounter);
             _logger.logInfo("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d", SteeringCmdCounter);
 
             SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(cloneSteeringCmdMsg->getDataBufPos());
@@ -578,10 +537,10 @@ void DUBCmdMgr::processTestServerMsg()
 
             // Check for Offline Mode from HW or Test Enabled from HW or Force Test Mode from Config File
             // Force Test Mode from Config File set SWCR mode to offline
-            if ((_duHWMgr.getSWCModeStatus() == OFFLINE) || (_duHWMgr.getTestEnabledStatus() == 1) || (FORCE_TEST_MODE == TEST))
+            if ((_duHWMgr.getSWCModeStatus() == OFFLINE) || (_duHWMgr.getOLTEModeStatus() == OFFLINE) || (FORCE_TEST_MODE == TEST))
             {
                 // Set KSine Regs
-                if (params->testSource == TestSourceDU)
+                if (params->testSource == Digital)
                 {
                     // Set test source based on command
                     _duHWMgr.setTestSrcInTestMode(params->testSource);
@@ -591,13 +550,13 @@ void DUBCmdMgr::processTestServerMsg()
 
                     if (params->RLCP == On)
                     {
-                        printf("Setting RLCP to On\n");
+                        _logger.logDebug("Setting RLCP to On");
                         _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
                         _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_BORESIGHT);
                     }
                     if (params->RLSC == On)
                     {
-                        printf("Setting RLSC to On\n");
+                        _logger.logDebug("Setting RLSC to On");
                         _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
                         _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_CALIBRATION);
                     }
@@ -609,7 +568,7 @@ void DUBCmdMgr::processTestServerMsg()
                     _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
 
                     // Reset test source back 0 (TU = 0)
-                    _duHWMgr.setTestSrcInTestMode(TestSourceTU);
+                    _duHWMgr.setTestSrcInTestMode(Analog);
                 }
             }
 
@@ -623,11 +582,8 @@ void DUBCmdMgr::processTestServerMsg()
 
             static int StatusRequestCmdCounter = 0;
             StatusRequestCmdCounter++;
-//          if ((StatusRequestCmdCounter % 100) == 0)
-//          {
-                printf("===> STATUS_REQUEST_CMD_MSG_ID: StatusRequestCmdCounter = %d\n", StatusRequestCmdCounter);
-//          }
 
+            printf("===> STATUS_REQUEST_CMD_MSG_ID: StatusRequestCmdCounter = %d\n", StatusRequestCmdCounter);
             _logger.logInfo("===> STATUS_REQUEST_CMD_MSG_ID: StatusRequestCmdCounter = %d", StatusRequestCmdCounter);
 
             StatusRequestCmdDataType *params = reinterpret_cast<StatusRequestCmdDataType *>(cloneStatusRequestCmdMsg->getDataBufPos());
@@ -657,6 +613,18 @@ void DUBCmdMgr::processTestServerMsg()
     }
 }
 
+void DUBCmdMgr::sendAckToTestServer(SWCAckType ackType)
+{
+    SWCAckRptMsg ackRptMsg;
+    ackRptMsg.setModuleType(MODULE_TYPE);
+    ackRptMsg.setAckType(ackType);
+    ackRptMsg.buildMsg();
+    int msgSize = ackRptMsg.getBufSize();
+    ackRptMsg.headerByteSwapToNetwork();
+    
+    _toTestServer->write(ackRptMsg.getBuf(), msgSize);
+}
+
 void DUBCmdMgr::sendDCUStatusToDUA(BetaDCUStatusMsg status)
 {
     _localHWStatus->write(&status, sizeof(BetaDCUStatusMsg));
@@ -667,37 +635,42 @@ void DUBCmdMgr::sendDUBStatusToDUA(DUTUStatusMsg status)
     _localHWStatus->write(&status, sizeof(DUTUStatusMsg));
 }
 
-void DUBCmdMgr::processDEVPCMsg()
+#define EMU_MSG_ID_SWCR_STATUS 1
+#define EMU_MSG_ID_DUA_STATUS 2
+#define EMU_MSG_ID_DUB_STATUS 3
+#define EMU_MSG_ID_TU_STATUS 4
+#define EMU_MSG_ID_DCU_STATUS 5
+
+void DUBCmdMgr::processStatusEmuMsg()
 {
     size_t bytesRead = 0;
 
-    int num_data = 15;
+    int num_data = 14;
     int status[num_data];
 
     // Read UDP data
-    if (_udpFromDevPC->read((char *)&status[0], sizeof(int)*num_data, bytesRead) != OK)
+    if (_udpFromStatusEmu->read((char *)&status[0], sizeof(int)*num_data, bytesRead) != OK)
     {
-        printf("error reading from _udpFromDevPC\n");
+        printf("Error reading from _udpFromStatusEmu\n");
+        _logger.logDebug("Error reading from _udpFromStatusEmu");
         return;
+    }
+
+    int msg_id = status[0];
+    printf("Received data from SWCR Status Emulator: msg id = %d\n", msg_id);
+    _logger.logDebug("Received data from SWCR Status Emulator: msg id = %d", msg_id);
+
+    if (msg_id == EMU_MSG_ID_DUB_STATUS)
+    {
+        _duHWMgr.processDUEmulatorStatus(status[1]);
+    }
+    else if (msg_id == EMU_MSG_ID_DCU_STATUS)
+    {
+        _duHWMgr.processDCUEmulatorStatus(status[1], status[2]);
     }
     else
     {
-        printf("processDEVPCMsg Successfully read %d bytes\n", (int)bytesRead);
+        printf("Error: this SWCR Status Emulator is not being processed by this component\n");
+        _logger.logDebug("Error: this SWCR Status Emulator is not being processed by this component");
     }
-
-    _duHWMgr.processEmulatorStatus(HealthState(status[1]),
-                                   SWC_CONFIG(status[2]),
-                                   SWC_MODE(status[3]),
-                                   HealthState(status[4]),
-                                   HealthState(status[5]),
-                                   DCURolledUpStatus(status[6]),
-                                   DCURolledUpStatus(status[7]),
-                                   HealthState(status[8]),
-                                   HealthState(status[9]),
-                                   HealthState(status[10]),
-                                   HealthState(status[11]),
-                                   RFCC_CH(status[12]),
-                                   HealthState(status[13]),
-                                   status[14]);
-
 }

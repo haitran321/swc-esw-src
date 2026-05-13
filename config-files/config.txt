@@ -1,8 +1,8 @@
 #
-# $Id: config.txt 8897 2016-02-19 20:24:56Z tra18693 $
+# SWC Configuration Data File.
 #
-# Configuration Data file.
-#
+
+USE_STATUS_EMULATOR = 0
 
 # IP Addresses
 TEST_SERVER_IP_ADDRESS = 172.16.50.10
@@ -28,14 +28,20 @@ LOGGER_PORT = 3030
 # Trace = 1, Debug = 2, Info = 3, Error = 4
 LOG_LEVEL = 2
 
-# For testing with USIL Dev PC
-DEV_PC_IP_ADDRESS = 172.16.80.92
-FROM_DEV_PC_PORT = 3040
-TO_DEV_PC_PORT = 3041
-
-USE_STATUS_EMULATOR = 0
+# For Status Emulator
+FROM_STATUS_EMULATOR_PORT = 3040
 
 STATUS_TIMER_INTERVAL_SECONDS = 10
+
+# STATUS_TIMER_INTERVAL_SECONDS * REFRESH_DCU_STATUS_ON_GDS_INTERVAL
+REFRESH_DCU_STATUS_ON_GDS_INTERVAL = 3
+DCU_NUM_TO_REFRESH_GDS = 199
+
+# Number of failed DCUs to set the DCU rolled up status to Yellow
+SAP_YELLOW_OP_THRESHOLD = 1
+
+# Number of failed DCUs to set the DCU rolled up status to Red
+SAP_RED_OP_THRESHOLD = 90
 
 # FORCE_TEST_MODE
 # 0 = Normal
@@ -49,7 +55,7 @@ DCU_SPI_DELAY3 = 18
 DCU_SPI_DELAY4 = 18
 
 # DCU SCLK Readback Delay (fine adjustment)
-DCU_SCLK_READBACK_DELAY = 0
+DCU_SCLK_READBACK_DELAY = 14
 
 # Scan Limit center freq selection
 # 0 = 442MHz
@@ -65,4 +71,9 @@ RLCP_PULSE_DURATION = 8000
 RLSC_PULSE_DURATION = 8000
 STEERING_WORD_PULSE_DURATION = 300
 RLTD_PRE_TRIGGER_TIME = 0
+
+# DCU FW version
+DCU_CHECK_VERSION_FLAG = 1
+DCU_MAJOR_VERSION = 0
+DCU_MINOR_VERSION = 6
 

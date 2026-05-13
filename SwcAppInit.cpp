@@ -12,7 +12,7 @@
 
 int main(int argc, char *argv[])
 {
-    printf("****In SwiAppInit: num arg = %d, arg[0] = %s, arg[1] = %s\n", argc, argv[0], argv[1]);
+    printf("****In SwcAppInit: num arg = %d, arg[0] = %s, arg[1] = %s\n", argc, argv[0], argv[1]);
 
     if (argc == 2)
     {

@@ -20,6 +20,7 @@ STATUS SWCOverallStatusRptMsg::buildMsg()
     _data.swcStatus = (HealthState)toNetworkInt(_data.swcStatus);
     _data.swcConfig = (SWC_CONFIG)toNetworkInt(_data.swcConfig);
     _data.swcMode = (SWC_MODE)toNetworkInt(_data.swcMode);
+    _data.olteMode = (SWC_MODE)toNetworkInt(_data.olteMode);
     _data.swcAlphaDUStatus = (HealthState)toNetworkInt(_data.swcAlphaDUStatus);
     _data.swcBetaDUStatus = (HealthState)toNetworkInt(_data.swcBetaDUStatus);
     _data.swcAlphaDCURolledUpStatus = (DCURolledUpStatus)toNetworkInt(_data.swcAlphaDCURolledUpStatus);
@@ -33,8 +34,8 @@ STATUS SWCOverallStatusRptMsg::buildMsg()
     _data.lastProcessedBeta = (int)toNetworkInt(_data.lastProcessedBeta);
     for (int i = 0; i < NUM_DCU; i++)
     {
-        _data.alphaDCU[i] = (HealthState)toNetworkInt(_data.alphaDCU[i]);
-        _data.betaDCU[i] = (HealthState)toNetworkInt(_data.betaDCU[i]);
+        _data.alphaDCU[i] = (DCUHealthState)toNetworkInt(_data.alphaDCU[i]);
+        _data.betaDCU[i] = (DCUHealthState)toNetworkInt(_data.betaDCU[i]);
     }
 
     // Add data to message.
