@@ -1,0 +1,280 @@
+#include <stdio.h>
+
+#include "DUCmdMgrBase.h"
+#include "DeviceUtilities.h"
+#include "ScanLimitCheck.h"
+
+DUCmdMgrBase::DUCmdMgrBase(MODULE_TYPE moduleType) :
+    CmdMgrBase(moduleType),
+    _duHWMgr(DUHWMgr::getInstance()),
+    _uioDevSL(NULL),
+    _uioDevConfig(NULL),
+    _timerDevStatus(NULL),
+    sendProcessedSW(false),
+    lastProcessedAlpha(0),
+    lastProcessedBeta(0),
+    REFRESH_DCU_STATUS_ON_GDS_INTERVAL(6),
+    _statusTimerCounter(0),
+    _steeringCmdCounter(0),
+    _statusRequestCmdCounter(0)
+{
+}
+
+DUCmdMgrBase::~DUCmdMgrBase()
+{
+    delete _uioDevSL;
+    _uioDevSL = NULL;
+
+    delete _uioDevConfig;
+    _uioDevConfig = NULL;
+
+    delete _timerDevStatus;
+    _timerDevStatus = NULL;
+}
+
+STATUS DUCmdMgrBase::initializeDUCommonDevices(int statusTimerIntervalSeconds)
+{
+    _uioDevSL = new UIODevice(AXI_INT_121_OFFSET, 0);
+
+    if (_uioDevSL->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _uioDevSL->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_uioDevSL, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgrBase::processSLInterrupt)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _uioDevSL->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _uioDevSL device");
+    printf("Successfully created _uioDevSL device\n");
+
+    _uioDevSL->mmap();
+    _uioDevSL->clearInterrupt();
+
+    _uioDevConfig = new UIODevice(AXI_INT_122_OFFSET, 1);
+
+    if (_uioDevConfig->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _uioDevConfig->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_uioDevConfig, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgrBase::processConfigInterrupt)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _uioDevConfig->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _uioDevConfig device");
+    printf("Successfully created _uioDevConfig device\n");
+
+    _uioDevConfig->mmap();
+    _uioDevConfig->clearInterrupt();
+
+    timespec init = { statusTimerIntervalSeconds, 0 };
+    timespec timeout = { statusTimerIntervalSeconds, 0 };
+    _timerDevStatus = new TimerDevice(init, timeout);
+
+    if (_timerDevStatus->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _timerDevStatus->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_timerDevStatus, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgrBase::processStatusTimer)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _timerDevStatus->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _timerDevStatus device");
+    printf("Successfully created _timerDevStatus device\n");
+
+    return OK;
+}
+
+void DUCmdMgrBase::handleSteeringCommand(const SteeringCmdDataType& params)
+{
+    _steeringCmdCounter++;
+    _logger.logInfo("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d", _steeringCmdCounter);
+
+    if ((_duHWMgr.getSWCModeStatus() == OFFLINE) || (_duHWMgr.getOLTEModeStatus() == OFFLINE) || (FORCE_TEST_MODE == TEST))
+    {
+        if (params.testSource == Digital)
+        {
+            _duHWMgr.setTestSrcInTestMode(params.testSource);
+
+            _duHWMgr.setArmKSine(ALPHA, params.alpha);
+            _duHWMgr.setArmKSine(BETA, params.beta);
+
+            if (params.RLCP == On)
+            {
+                _logger.logDebug("Setting RLCP to On");
+                _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
+                _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_BORESIGHT);
+            }
+            if (params.RLSC == On)
+            {
+                _logger.logDebug("Setting RLSC to On");
+                _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_INVALID);
+                _duHWMgr.sendDCUCmdInTestMode(DCU_CMD_CALIBRATION);
+            }
+
+            _duHWMgr.toggleSWTrigger();
+
+            _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
+            _duHWMgr.setTestSrcInTestMode(Analog);
+        }
+    }
+}
+
+void DUCmdMgrBase::handleStatusRequest(const StatusRequestCmdDataType& params)
+{
+    _statusRequestCmdCounter++;
+    _logger.logInfo("===> STATUS_REQUEST_CMD_MSG_ID: StatusRequestCmdCounter = %d", _statusRequestCmdCounter);
+
+    if (params.requestType == StartSendingProcessedSteeringWord)
+    {
+        sendProcessedSW = true;
+        return;
+    }
+
+    if (params.requestType == StopSendingProcessedSteeringWord)
+    {
+        sendProcessedSW = false;
+        return;
+    }
+
+    handleDUStatusRequest(params);
+}
+
+void DUCmdMgrBase::processSLInterrupt()
+{
+    size_t bytesRead = 0;
+    int pending = 0;
+
+    _uioDevSL->read((char *)&pending, sizeof(int), bytesRead);
+    printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
+    _logger.logDebug("Reading scan limit interrupt, number of interrupt = %d", pending);
+    _uioDevSL->clearInterrupt();
+
+    int armAlpha = _duHWMgr.getArmKSine(ALPHA);
+    if ((armAlpha & 0x200) != 0)
+    {
+        armAlpha |= 0xfffffc00;
+    }
+
+    int armBeta = _duHWMgr.getArmKSine(BETA);
+    if ((armBeta & 0x200) != 0)
+    {
+        armBeta |= 0xfffffc00;
+    }
+
+    int atbAlpha = _duHWMgr.getAtbKSine(ALPHA);
+    if ((atbAlpha & 0x200) != 0)
+    {
+        atbAlpha |= 0xfffffc00;
+    }
+
+    int atbBeta = _duHWMgr.getAtbKSine(BETA);
+    if ((atbBeta & 0x200) != 0)
+    {
+        atbBeta |= 0xfffffc00;
+    }
+
+    printf("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d\n", atbAlpha, atbBeta, armAlpha, armBeta);
+    _logger.logDebug("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d", atbAlpha, atbBeta, armAlpha, armBeta);
+
+    int armSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(armBeta));
+    int atbSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
+    int fwSLResult = _duHWMgr.getFWScanLimitCheckStatus();
+
+    printf("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d\n",
+           fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
+    _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d",
+                     fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
+
+    lastProcessedAlpha = atbAlpha;
+    lastProcessedBeta = atbBeta;
+
+    if (_duHWMgr.getOverallSPIStatus() == FAILED)
+    {
+        printf("Last SPI transfer status has no failures.\n");
+        _logger.logDebug("Last SPI transfer status has no failures.");
+    }
+    else
+    {
+        printf("Last SPI transfer status has failures.\n");
+        _logger.logDebug("Last SPI transfer status has failures.");
+    }
+
+    handlePendingDcuStatusAfterScanLimit();
+
+    if (sendProcessedSW)
+    {
+        sendProcessedSteeringWordReport(getProcessedKSineForReport());
+    }
+}
+
+void DUCmdMgrBase::processConfigInterrupt()
+{
+    size_t bytesRead = 0;
+    int pending = 0;
+
+    _uioDevConfig->read((char *)&pending, sizeof(int), bytesRead);
+    printf("Reading config changed interrupt, number of interrupt = %d\n", pending);
+    _logger.logDebug("Reading config changed interrupt, number of interrupt = %d", pending);
+    _uioDevConfig->clearInterrupt();
+
+    handleConfigInterruptRefresh();
+
+    if (_duHWMgr.getSWCModeStatus() == ONLINE)
+    {
+        _duHWMgr.setTestSrcInTestMode(Analog);
+    }
+}
+
+void DUCmdMgrBase::processStatusTimer()
+{
+    _statusTimerCounter++;
+    _logger.logDebug("In processTimer: timerCounter = %d", _statusTimerCounter);
+
+    handlePreDcuStatusTimer();
+
+    printf("Read all DCUs status to update local queue.\n");
+    _logger.logDebug("Read all DCUs status to update local queue.");
+    if (_statusTimerCounter % REFRESH_DCU_STATUS_ON_GDS_INTERVAL == 0)
+    {
+        _duHWMgr.readDCUStatus(true);
+    }
+    else
+    {
+        _duHWMgr.readDCUStatus();
+    }
+
+    int dequeSize = _duHWMgr.getDCUStatusDequeSize();
+    printf("DCU status deque size = %d\n", dequeSize);
+    _logger.logDebug("DCU status deque size = %d", dequeSize);
+
+    handlePostDcuStatusTimer(dequeSize);
+
+    _timerDevStatus->read();
+}
+
+void DUCmdMgrBase::sendProcessedSteeringWordReport(int processedKSine)
+{
+    SWCProcessedSteeringWordRptMsg swRptMsg;
+    swRptMsg.setModuleType(static_cast<MODULE_TYPE>(_moduleType));
+    swRptMsg.setProcessedKSine(processedKSine);
+    swRptMsg.buildMsg();
+    int msgSize = swRptMsg.getBufSize();
+    swRptMsg.headerByteSwapToNetwork();
+
+    _toTestServer->write(swRptMsg.getBuf(), msgSize);
+}
+
+void DUCmdMgrBase::handlePostDcuStatusTimer(int dequeSize)
+{
+    (void)dequeSize;
+}
+
+void DUCmdMgrBase::handleConfigInterruptRefresh()
+{
+}

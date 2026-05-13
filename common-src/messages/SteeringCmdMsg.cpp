@@ -13,14 +13,35 @@ STATUS SteeringCmdMsg::validateData()
 {
     // Validate header record length against expected record length.
 
-    if (_header->recLen != sizeof(SteeringCmdMsg))
+    if (_header->recLen != sizeof(SteeringCmdDataType))
     {
         printf("ERROR::InvalidRecordLength, Steering Command (recLen = %d record size = %d)",
-               _header->recLen, sizeof(SteeringCmdDataType));
+               _header->recLen, static_cast<int>(sizeof(SteeringCmdDataType)));
         return (ERROR);
     }
 
     // Validate data content.
+
+    if (_data->testSource < Analog || _data->testSource > Digital)
+    {
+        printf("ERROR::InvalidCommandData, Steering Command testSource = %d)",
+               _data->testSource);
+        return (ERROR);
+    }
+
+    if (_data->RLCP < Off || _data->RLCP > On)
+    {
+        printf("ERROR::InvalidCommandData, Steering Command RLCP = %d)",
+               _data->RLCP);
+        return (ERROR);
+    }
+
+    if (_data->RLSC < Off || _data->RLSC > On)
+    {
+        printf("ERROR::InvalidCommandData, Steering Command RLSC = %d)",
+               _data->RLSC);
+        return (ERROR);
+    }
 
     return (OK);
 }

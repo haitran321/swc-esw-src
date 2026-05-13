@@ -1,37 +1,22 @@
 #include <stdio.h>
 #include <sstream>
 #include <unistd.h>
-#include <cmath>
-#include <sys/reboot.h>
+
 #include "TUCmdMgr.h"
-#include "ShutdownCmdMsg.h"
-#include "SteeringCmdMsg.h"
-#include "SWCAckRptMsg.h"
 #include "ConfigDataManager.h"
 #include "SAPDataManager.h"
-#include "DeviceFactory.h"
-#include "EndianUtils.h"
 #include "ScanLimitCheck.h"
-#include "DeviceUtilities.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 /**
  * Constructor
  */
 TUCmdMgr::TUCmdMgr() :
-    MODULE_TYPE(TU),
-    _logger(Logger::getInstance()),
-    _fromTestServer(NULL),
-    _toTestServer(NULL),
+    CmdMgrBase(TU),
     _localHWStatus(NULL),
     _tuHWMgr(TUHWMgr::getInstance()),
     _uioDevSL(NULL),
     _uioDevWLSP(NULL),
-    _timerDevStatus(NULL),
-    _udpFromStatusEmu(NULL)
+    _timerDevStatus(NULL)
 {
 }
 
@@ -40,12 +25,6 @@ TUCmdMgr::TUCmdMgr() :
  */
 TUCmdMgr::~TUCmdMgr()
 {
-    delete _fromTestServer;
-    _fromTestServer = NULL;
-
-    delete _toTestServer;
-    _toTestServer = NULL;
-
     delete _localHWStatus;
     _localHWStatus = NULL;
 
@@ -57,9 +36,6 @@ TUCmdMgr::~TUCmdMgr()
 
     delete _timerDevStatus;
     _timerDevStatus = NULL;
-
-    delete _udpFromStatusEmu;
-    _udpFromStatusEmu = NULL;
 }
 
 /** 
@@ -93,8 +69,6 @@ STATUS TUCmdMgr::start()
     {
         printf("Error loading Config file\n");
     }
-
-    SAPDataManager& saps = SAPDataManager::getInstance();
 
     // Get IP addresses
     rc = rc || configs.get("TEST_SERVER_IP_ADDRESS", TEST_SERVER_IP_ADDRESS);
@@ -130,46 +104,17 @@ STATUS TUCmdMgr::start()
         return (ERROR);
     }
 
-    _logger.logInfo("MODULE_TYPE = %d", MODULE_TYPE);
+    _logger.logInfo("MODULE_TYPE = %d", _moduleType);
 
-    stringstream devName;
-
-    // From Test Server device for commands
-    devName.clear();
-    devName << "UDP Server ";
-    devName << TEST_UNIT_IP_ADDRESS << ":" << FROM_TEST_SERVER_PORT;
-
-    _fromTestServer = new UDPNetworkDevice(NetworkServer, TEST_UNIT_IP_ADDRESS, FROM_TEST_SERVER_PORT, false);
-    _fromTestServer->setName(devName.str());
-
-    if (_fromTestServer->open() != OK)
+    if (initializeCommonCommandDevices(TEST_UNIT_IP_ADDRESS, TEST_SERVER_IP_ADDRESS,
+                                       FROM_TEST_SERVER_PORT, TO_TEST_SERVER_PORT,
+                                       FROM_STATUS_EMULATOR_PORT) != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _fromTestServer->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_fromTestServer, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processTestServerMsg)) != OK)
-    {
-        _logger.logInfo("ERROR adding event to dev %s", _fromTestServer->getName().c_str());
-        return ERROR;
-    }
-    _logger.logInfo("Successfully created _fromTestServer device");
-    printf("Successfully created _fromTestServer device\n");
-
-    devName.clear();
-    devName << "UDP Client For Test Server";
-    devName << TEST_SERVER_IP_ADDRESS << ":" << TO_TEST_SERVER_PORT;
-    _toTestServer = new UDPNetworkDevice(NetworkClient, TEST_SERVER_IP_ADDRESS, TO_TEST_SERVER_PORT, false);
-    _toTestServer->setName(devName.str());
-
-    if (_toTestServer->open() != OK)
-    {
-        _logger.logInfo("ERROR openning dev %s", _toTestServer->getName().c_str());
-        return ERROR;
-    }
-    _logger.logInfo("Successfully created _toTestServer device");
-    printf("Successfully created _toTestServer device\n");
 
     // From HW devices - Outbound for TU
+    stringstream devName;
     devName.clear();
     devName << "UDP Client ";
     devName << ALPHA_IP_ADDRESS << ":" << LOCAL_HW_STATUS_PORT;
@@ -184,27 +129,6 @@ STATUS TUCmdMgr::start()
     _logger.logInfo("Successfully created _localHWStatus device");
     printf("Successfully created _localHWStatus device\n");
 
-   // Incoming from status emulator device
-    devName.clear();
-    devName << "UDP Server From Status Emulator";
-    devName << TEST_UNIT_IP_ADDRESS << ":" << FROM_STATUS_EMULATOR_PORT;
-
-    _udpFromStatusEmu = new UDPNetworkDevice(NetworkServer, TEST_UNIT_IP_ADDRESS, FROM_STATUS_EMULATOR_PORT, false);
-    _udpFromStatusEmu->setName(devName.str());
-
-    if (_udpFromStatusEmu->open() != OK)
-    {
-        _logger.logInfo("ERROR openning dev %s", _udpFromStatusEmu->getName().c_str());
-        return ERROR;
-    }
-    if (addEvent(*_udpFromStatusEmu, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processStatusEmuMsg)) != OK)
-    {
-        _logger.logInfo("ERROR adding event to dev %s", _udpFromStatusEmu->getName().c_str());
-        return ERROR;
-    }
-    _logger.logInfo("Successfully created _udpFromStatusEmu device");
-    printf("Successfully created _udpFromStatusEmu device\n");
-
     // Initialize HW Manager
     _tuHWMgr.initialize();
 
@@ -213,7 +137,7 @@ STATUS TUCmdMgr::start()
     tuStatus.msgID = TU_STATUS;
     tuStatus.dutuStatus = _tuHWMgr.readTUStatus();
     sendTUStatusToDUA(tuStatus);
-    usleep(1*1000);   // Sleep 1 msecs
+    usleep(1 * 1000);   // Sleep 1 msecs
 
     // Open UIO device for Scan Limit HW Interrupt
     _uioDevSL = new UIODevice(AXI_INT_121_OFFSET, 0);
@@ -303,7 +227,6 @@ void TUCmdMgr::processSLInterrupt()
 
     printf("fwSLResult = 0x%x(%d), swSLResult = %d\n", fwSLResult, fwSLResult & 0x1, swSLResult);
     _logger.logDebug("fwSLResult = 0x%x(%d), swSLResult = %d", fwSLResult, fwSLResult & 0x1, swSLResult);
-
 }
 
 void TUCmdMgr::processWLSPInterrupt()
@@ -330,115 +253,51 @@ void TUCmdMgr::processStatusTimer()
     tuStatus.msgID = TU_STATUS;
     tuStatus.dutuStatus = _tuHWMgr.readTUStatus();
     sendTUStatusToDUA(tuStatus);
-    usleep(1*1000);   // Sleep 1 msecs
+    usleep(1 * 1000);   // Sleep 1 msecs
 
-	_timerDevStatus->read();
+    _timerDevStatus->read();
 }
 
-void TUCmdMgr::processTestServerMsg()
+const char *TUCmdMgr::getCommandMgrName() const
 {
-    size_t bytesRead = 0;
+    return "TU";
+}
 
-    CommandMessage *msg = new CommandMessage();
+void TUCmdMgr::handleSteeringCommand(const SteeringCmdDataType& params)
+{
+    static int SteeringCmdCounter = 0;
+    SteeringCmdCounter++;
 
-    // Read UDP data
-    if (_fromTestServer->read(msg->getBuf(), MAX_MSG_SIZE, bytesRead) != OK)
+    _logger.logInfo("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d", SteeringCmdCounter);
+
+    // Set KSine Regs
+    if (params.testSource == Analog)
     {
-        printf("Error reading from _udpFromRIMS\n");
-        _logger.logDebug("Error reading from _udpFromRIMS");
-        return;
-    }
+        _tuHWMgr.setArmKSine(ALPHA, params.alpha);
+        _tuHWMgr.setArmKSine(BETA, params.beta);
 
-    msg->setTotalMsgSize(bytesRead);
-    msg->byteSwapHeaderToLocal();
-
-    _logger.logInfo("TU ProcessTestServerMsg: Processing incoming messages: msgId = %d", msg->getMsgId());
-    printf("TU ProcessTestServerMsg: Processing incoming messages: msgId = %d\n", msg->getMsgId());
-
-    switch (msg->getMsgId())
-    {
-    case SHUTDOWN_CMD_MSG_ID:
+        if (params.RLCP == On)
         {
-            ShutdownCmdMsg *cloneShutdownMsg = new ShutdownCmdMsg(msg->getBuf(), msg->getBufSize());
-            cloneShutdownMsg->byteSwapToLocal();
-            _logger.logInfo("In SHUTDOWN_CMD_MSG_ID case: shutdown option = %d", cloneShutdownMsg->getType());
-
-            // Notify Test Server
-            sendAckToTestServer(ShutdownCmdAck);
-
-            if (cloneShutdownMsg->getType() == PowerOff)
-            {
-                printf("****Calling System Shutdown****\n");
-                _logger.logInfo("****Calling System Shutdown****");
-                sleep(3);
-//              reboot(RB_POWER_OFF);
-            }
-            else
-            {
-                printf("****Calling System Reboot****\n");
-                _logger.logInfo("****Calling System Reboot****");
-                sleep(3);
-                reboot(RB_AUTOBOOT);
-            }
-            break;
+            _tuHWMgr.setRLCPSignal(On);
         }
-    case STEERING_CMD_MSG_ID:
+        if (params.RLSC == On)
         {
-            SteeringCmdMsg *cloneSteeringCmdMsg = new SteeringCmdMsg(msg->getBuf(), msg->getBufSize());
-            cloneSteeringCmdMsg->byteSwapToLocal();
-            int numActions = cloneSteeringCmdMsg->getDataSize() / sizeof(SteeringCmdDataType);
-
-            static int SteeringCmdCounter = 0;
-            SteeringCmdCounter++;
-
-            _logger.logInfo("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d", SteeringCmdCounter);
-
-            SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(cloneSteeringCmdMsg->getDataBufPos());
-
-            printf("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d\n",
-                   params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
-            _logger.logDebug("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d",
-                             params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
-
-            // Set KSine Regs
-            if (params->testSource == Analog)
-            {
-                _tuHWMgr.setArmKSine(ALPHA, params->alpha);
-                _tuHWMgr.setArmKSine(BETA, params->beta);
-
-                if (params->RLCP == On)
-                {
-                    _tuHWMgr.setRLCPSignal(On);
-                }
-                if (params->RLSC == On)
-                {
-                    _tuHWMgr.setRLSCSignal(On);
-                }
-
-                // Toggle RLTD signal to start steering words processing 
-                _tuHWMgr.toggleRLTDSignal();
-
-                // Reset RLCP and RLSC back to off
-                _tuHWMgr.setRLCPSignal(Off);
-                _tuHWMgr.setRLSCSignal(Off);
-            }
-
-            break;
+            _tuHWMgr.setRLSCSignal(On);
         }
-        // printf("Successfully write from readUdpData\n");
+
+        // Toggle RLTD signal to start steering words processing
+        _tuHWMgr.toggleRLTDSignal();
+
+        // Reset RLCP and RLSC back to off
+        _tuHWMgr.setRLCPSignal(Off);
+        _tuHWMgr.setRLSCSignal(Off);
     }
 }
 
-void TUCmdMgr::sendAckToTestServer(SWCAckType ackType)
+void TUCmdMgr::handleStatusRequest(const StatusRequestCmdDataType& params)
 {
-    SWCAckRptMsg ackRptMsg;
-    ackRptMsg.setModuleType(MODULE_TYPE);
-    ackRptMsg.setAckType(ackType);
-    ackRptMsg.buildMsg();
-    int msgSize = ackRptMsg.getBufSize();
-    ackRptMsg.headerByteSwapToNetwork();
-    
-    _toTestServer->write(ackRptMsg.getBuf(), msgSize);
+    printf("ERROR: Invalid status request of %d\n", params.requestType);
+    _logger.logError("ERROR: Invalid status request of %d", params.requestType);
 }
 
 void TUCmdMgr::sendTUStatusToDUA(DUTUStatusMsg status)
@@ -452,24 +311,9 @@ void TUCmdMgr::sendTUStatusToDUA(DUTUStatusMsg status)
 #define EMU_MSG_ID_TU_STATUS 4
 #define EMU_MSG_ID_DCU_STATUS 5
 
-void TUCmdMgr::processStatusEmuMsg()
+void TUCmdMgr::handleStatusEmulatorMessage(int msg_id, const int *status, int numData)
 {
-    size_t bytesRead = 0;
-
-    int num_data = 14;
-    int status[num_data];
-
-    // Read UDP data
-    if (_udpFromStatusEmu->read((char *)&status[0], sizeof(int)*num_data, bytesRead) != OK)
-    {
-        printf("Error reading from _udpFromStatusEmu\n");
-        _logger.logDebug("Error reading from _udpFromStatusEmu");
-        return;
-    }
-
-    int msg_id = status[0];
-    printf("Received data from SWCR Status Emulator: msg id = %d\n", msg_id);
-    _logger.logDebug("Received data from SWCR Status Emulator: msg id = %d", msg_id);
+    (void)numData;
 
     if (msg_id == EMU_MSG_ID_TU_STATUS)
     {
@@ -481,7 +325,4 @@ void TUCmdMgr::processStatusEmuMsg()
         _logger.logDebug("Error: this SWCR Status Emulator is not being processed by this component");
     }
 }
-
-
-
 

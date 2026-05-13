@@ -1,26 +1,25 @@
 #include <stdio.h>
 #include <iostream>
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include "Device.h"
 
 Device::Device() :
-_fd(NO_FD),
-_name("")
+    _fd(NO_FD),
+    _name("")
 {
 }
 
 Device::Device(const char *name) :
-_fd(NO_FD),
-_name(name)
+    _fd(NO_FD),
+    _name(name)
 {
 }
 
 Device::Device(const string &name) :
-_fd(NO_FD),
-_name(name)
+    _fd(NO_FD),
+    _name(name)
 {
 }
 
@@ -111,7 +110,7 @@ int Device::control(int function, int params)
 
 int Device::getStatus(int function, void *results)
 {
-   return(::ioctl(_fd, function, reinterpret_cast<int*>(results)));
+   return(::ioctl(_fd, function, reinterpret_cast<int *>(results)));
 }
 
 int Device::control(int function)
@@ -121,7 +120,7 @@ int Device::control(int function)
 
 int Device::close()
 {
-	int status = OK;
+   int status = OK;
 
    // Close device.
 
@@ -137,7 +136,7 @@ Device::~Device()
 {
    try
    {
-      int status = close();
+      close();
    }
    catch(...)
    {

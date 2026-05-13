@@ -22,7 +22,7 @@ STATUS ShutdownCmdMsg::validateData()
 
    // Validate data content.
 
-   if (_data->type < Reboot || _data->type > PowerOff)
+   if (_data->type < RestartApp || _data->type > PowerOff)
    {
       printf("ERROR::InvalidCommandData, Shutdown Command (type = %d)",
                 _data->type);

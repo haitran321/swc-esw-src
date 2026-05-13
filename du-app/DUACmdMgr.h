@@ -4,15 +4,10 @@
 #ifndef DUACmdMgr_H
 #define DUACmdMgr_H
 
-#include "EventProcessor.h"
+#include "DUCmdMgrBase.h"
 #include "UDPNetworkDevice.h"
-#include "SWCMsgTypes.h"
-#include "DUHWMgr.h"
-#include "UIODevice.h"
-#include "TimerDevice.h"
-#include "Logger.h"
 
-class DUACmdMgr : public EventProcessor
+class DUACmdMgr : public DUCmdMgrBase
 {
     public:
         /**
@@ -36,42 +31,19 @@ class DUACmdMgr : public EventProcessor
 
     private:
 
-        int MODULE_TYPE;
-        Logger &_logger;
-
-        // Test Server Device
-        UDPNetworkDevice* _fromTestServer;
-        UDPNetworkDevice* _toTestServer;
-        void processTestServerMsg();
-        void sendAckToTestServer(SWCAckType ackType);
-
         UDPNetworkDevice* _localHWStatus;
         void processLocalHWStatusMsg();
 
-        /* Common config parameters */
-        int FORCE_TEST_MODE;
-
-        DUHWMgr &_duHWMgr;
-
-        UIODevice* _uioDevSL;
-        void processSLInterrupt();
-        UIODevice* _uioDevConfig;
-        void processConfigInterrupt();
-        TimerDevice* _timerDevStatus;
-        void processStatusTimer();
-        void calcStatus();
-
-        UDPNetworkDevice* _udpFromStatusEmu;
-        void processStatusEmuMsg();
-
-        bool sendProcessedSW;
-        int lastProcessedAlpha;
-        int lastProcessedBeta;
+        virtual const char *getCommandMgrName() const;
+        virtual void handleDUStatusRequest(const StatusRequestCmdDataType& params);
+        virtual void handlePendingDcuStatusAfterScanLimit();
+        virtual void handlePreDcuStatusTimer();
+        virtual void handleConfigInterruptRefresh();
+        virtual int getProcessedKSineForReport() const;
+        virtual void handleStatusEmulatorMessage(int msgId, const int *status, int numData);
 
         BetaDCUStatusMsg _localStatus[4];
         int localStatusCounter;
-
-        int REFRESH_DCU_STATUS_ON_GDS_INTERVAL;
 };
 
 

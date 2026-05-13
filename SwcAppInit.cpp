@@ -12,16 +12,15 @@
 
 int main(int argc, char *argv[])
 {
-    printf("****In SwcAppInit: num arg = %d, arg[0] = %s, arg[1] = %s\n", argc, argv[0], argv[1]);
+    const char *moduleType = (argc > 1) ? argv[1] : "<missing>";
+    printf("****In SwcAppInit: num arg = %d, arg[0] = %s, arg[1] = %s\n", argc, argv[0], moduleType);
 
     if (argc == 2)
     {
-        char MODULE_TYPE[2];
-        sprintf(MODULE_TYPE, "%s", argv[1]);
         printf("\n*******************************************************\n");
-        printf("MODULE_TYPE = %s\n", MODULE_TYPE);
+        printf("MODULE_TYPE = %s\n", moduleType);
 
-        if ((strcmp(MODULE_TYPE, "DUA") == 0) || (strcmp(MODULE_TYPE, "dua") == 0))
+        if ((strcmp(moduleType, "DUA") == 0) || (strcmp(moduleType, "dua") == 0))
         {
             printf("******This is DU Alpha Application******\n");
         
@@ -36,7 +35,7 @@ int main(int argc, char *argv[])
                 cmdMgr->start();
             }
         }
-        else if ((strcmp(MODULE_TYPE, "DUB") == 0) || (strcmp(MODULE_TYPE, "dub") == 0))
+        else if ((strcmp(moduleType, "DUB") == 0) || (strcmp(moduleType, "dub") == 0))
         {
             printf("******This is DU Beta Application******\n");
         
@@ -51,7 +50,7 @@ int main(int argc, char *argv[])
                 cmdMgr->start();
             }
         }
-        else if ((strcmp(MODULE_TYPE, "TU") == 0) || (strcmp(MODULE_TYPE, "tu") == 0))
+        else if ((strcmp(moduleType, "TU") == 0) || (strcmp(moduleType, "tu") == 0))
         {
             printf("******This is TU Application******\n");
         

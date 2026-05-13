@@ -844,6 +844,18 @@ void DUHWMgr::processBetaDCUStatus(DCUStatus status)
 
 DCUStatus DUHWMgr::getDCUStatusFromSW(RFCC_CH type, int dcuNum)
 {
+    DCUStatus status = {};
+
+    if ((type < ALPHA) || (type >= NUM_RFCC_CH) || (dcuNum <= 0) || (dcuNum >= NUM_DCU))
+    {
+        status.group = (type >= ALPHA && type < NUM_RFCC_CH) ? type : ALPHA;
+        status.loc = dcuNum;
+        status.locStatus = NO_GO;
+        status.overallStatus = DCU_NO_GO;
+        _logger.logError("ERROR: Invalid DCU status request type=%d dcuNum=%d", type, dcuNum);
+        return status;
+    }
+
     return (_dcuStatus[type][dcuNum]);
 }
 

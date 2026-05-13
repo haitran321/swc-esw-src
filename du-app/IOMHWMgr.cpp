@@ -1,26 +1,20 @@
-#include <unistd.h>     // for sleep()
-#include <cmath>
 #include "IOMHWMgr.h"
-#include "DeviceUtilities.h"
 #include "ConfigDataManager.h"
+
 #include <iostream>
 #include <iomanip>
 #include <bitset>
-#include <cstring>
 #include <modbus.h>
-#include <errno.h>
-
-
 
 IOMHWMgr::IOMHWMgr() :
-	 _logger(Logger::getInstance()),
-	 _modbusCtx(nullptr)
+    _logger(Logger::getInstance()),
+    _modbusCtx(nullptr)
 {
 }
 
 IOMHWMgr::~IOMHWMgr()
 {
-	close();
+    close();
 }
 
 IOMHWMgr &IOMHWMgr::getInstance()
@@ -31,7 +25,8 @@ IOMHWMgr &IOMHWMgr::getInstance()
 
 void IOMHWMgr::close()
 {
-    if (_modbusCtx != nullptr) {
+    if (_modbusCtx != nullptr)
+    {
         modbus_close(_modbusCtx);
         modbus_free(_modbusCtx);
         _modbusCtx = nullptr;
@@ -57,23 +52,25 @@ STATUS IOMHWMgr::initialize()
     rc = rc || configs.get("IO_MODULE_IP_ADDRESS", IO_MODULE_IP_ADDRESS);
     rc = rc || configs.get("IO_MODULE_PORT", IO_MODULE_PORT);
 
-    const char* ip_address = IO_MODULE_IP_ADDRESS.c_str();
+    const char *ipAddress = IO_MODULE_IP_ADDRESS.c_str();
 
     // Create Modbus TCP context
-    _modbusCtx = modbus_new_tcp(ip_address, IO_MODULE_PORT);
-    if (_modbusCtx == nullptr) {
+    _modbusCtx = modbus_new_tcp(ipAddress, IO_MODULE_PORT);
+    if (_modbusCtx == nullptr)
+    {
         _logger.logError("Unable to create Modbus context");
         printf("Unable to create Modbus context\n");
-        return -1;
+        return ERROR;
     }
 
     // Connect
-    if (modbus_connect(_modbusCtx) == -1) {
-        _logger.logError("Connection failed"); //can add more detail if wanted
-        printf("Connection failed\n"); //can add more detail if wanted
+    if (modbus_connect(_modbusCtx) == -1)
+    {
+        _logger.logError("Connection failed");
+        printf("Connection failed\n");
         modbus_free(_modbusCtx);
         _modbusCtx = nullptr;
-        return -1;
+        return ERROR;
     }
 
     return rc;
@@ -85,7 +82,8 @@ IOMStatusDataType IOMHWMgr::readStatus()
 
     IOMStatusDataType status = {0};
 
-    if (_modbusCtx == nullptr) {
+    if (_modbusCtx == nullptr)
+    {
         _logger.logError("Modbus context not initialized");
         printf("Modbus context not initialized\n");
         return status;
@@ -96,9 +94,10 @@ IOMStatusDataType IOMHWMgr::readStatus()
 
     // Read 16 discrete inputs starting at address 0
     int rc = modbus_read_input_bits(_modbusCtx, 0, 16, bits);
-    if (rc == -1) {
-    	_logger.logError("Read failed");
-    	modbus_close(_modbusCtx);
+    if (rc == -1)
+    {
+        _logger.logError("Read failed");
+        modbus_close(_modbusCtx);
         modbus_free(_modbusCtx);
         _modbusCtx = nullptr;
         return status;
@@ -123,7 +122,8 @@ IOMStatusDataType IOMHWMgr::readStatus()
 
     // Print raw response bytes
     std::cout << "Raw response bytes: ";
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 16; i++)
+    {
         std::cout << std::hex << std::setw(2) << std::setfill('0')
                   << static_cast<int>(bits[i]) << " ";
     }
@@ -131,8 +131,10 @@ IOMStatusDataType IOMHWMgr::readStatus()
 
     // Build 16-bit word
     uint16_t word = 0;
-    for (int ch = 0; ch < 16; ch++) {
-        if (bits[ch]) {
+    for (int ch = 0; ch < 16; ch++)
+    {
+        if (bits[ch])
+        {
             word |= (1 << ch);
         }
     }
@@ -145,11 +147,11 @@ IOMStatusDataType IOMHWMgr::readStatus()
 
     // Print channel states
     std::cout << "\nChannel state:\n";
-    for (int ch = 0; ch < 16; ch++) {
+    for (int ch = 0; ch < 16; ch++)
+    {
         std::cout << "CH" << std::setw(2) << std::setfill('0') << (ch + 1)
                   << ": " << (bits[ch] ? "ON" : "OFF") << "\n";
     }
 
     return status;
 }
-

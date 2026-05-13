@@ -4,7 +4,7 @@
 #ifndef TUCmdMgr_H
 #define TUCmdMgr_H
 
-#include "EventProcessor.h"
+#include "CmdMgrBase.h"
 #include "UDPNetworkDevice.h"
 #include "SWCMsgTypes.h"
 #include "TUHWMgr.h"
@@ -14,7 +14,7 @@
 #include "ElapsedTimer.h"
 #include "Timestamp.h"
 
-class TUCmdMgr : public EventProcessor
+class TUCmdMgr : public CmdMgrBase
 {
     public:
         /**
@@ -38,19 +38,7 @@ class TUCmdMgr : public EventProcessor
 
     private:
 
-        int MODULE_TYPE;
-        Logger &_logger;
-
-        // Test Server Device
-        UDPNetworkDevice* _fromTestServer;
-        UDPNetworkDevice* _toTestServer;
-        void processTestServerMsg();
-        void sendAckToTestServer(SWCAckType ackType);
-
         UDPNetworkDevice* _localHWStatus;
-
-        /* Common config parameters */
-        int FORCE_TEST_MODE;
 
         void processIncomingMsg();
 
@@ -65,8 +53,10 @@ class TUCmdMgr : public EventProcessor
         Timestamp ts;
         void sendTUStatusToDUA(DUTUStatusMsg status);
 
-        UDPNetworkDevice* _udpFromStatusEmu;
-        void processStatusEmuMsg();
+        virtual const char *getCommandMgrName() const;
+        virtual void handleSteeringCommand(const SteeringCmdDataType& params);
+        virtual void handleStatusRequest(const StatusRequestCmdDataType& params);
+        virtual void handleStatusEmulatorMessage(int msgId, const int *status, int numData);
 };
 
 

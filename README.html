@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>SWC DU/TU Software Overview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            margin: 40px auto;
+            max-width: 900px;
+            padding: 0 20px;
+            color: #1f2933;
+            background: #ffffff;
+        }
+
+        h1, h2, h3 {
+            color: #102a43;
+        }
+
+        code {
+            font-family: "Courier New", monospace;
+            background: #f0f4f8;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        ul {
+            padding-left: 24px;
+        }
+    </style>
+</head>
+<body>
+    <h1>SWC DU/TU Software Overview</h1>
+
+    <h2>Purpose</h2>
+    <p>
+        This project contains the C++ software for the SWC Distribution Unit environment.
+        It runs in one of three module roles:
+    </p>
+    <ul>
+        <li><code>DUA</code>: DU Alpha controller</li>
+        <li><code>DUB</code>: DU Beta controller</li>
+        <li><code>TU</code>: Test Unit controller</li>
+    </ul>
+    <p>
+        The executable entry point is <code>SwcAppInit.cpp</code>. At startup it selects
+        the correct command manager based on the module type argument and starts the
+        corresponding event-driven application.
+    </p>
+
+    <h2>High-Level Architecture</h2>
+    <p>
+        The software is organized around command managers that receive commands from a
+        test server, interact with local hardware devices, and report status back over UDP.
+    </p>
+    <ul>
+        <li>
+            <code>DUACmdMgr</code><br>
+            Handles the DU Alpha role, maintains local SWC status, receives forwarded
+            Beta DU/DCU and TU status, and sends detailed status reports to the test server.
+        </li>
+        <li>
+            <code>DUBCmdMgr</code><br>
+            Handles the DU Beta role, reads local Beta DU/DCU hardware status, and forwards
+            those updates to DU Alpha.
+        </li>
+        <li>
+            <code>TUCmdMgr</code><br>
+            Handles the TU role, processes steering-related TU hardware actions, and forwards
+            TU status to DU Alpha.
+        </li>
+    </ul>
+    <p>Shared command-processing logic is centralized in:</p>
+    <ul>
+        <li>
+            <code>common-src/common/CmdMgrBase.*</code><br>
+            Shared command socket setup, command decoding, status-emulator input, and
+            test-server acknowledgements.
+        </li>
+        <li>
+            <code>du-app/DUCmdMgrBase.*</code><br>
+            Shared DU-specific behavior such as DU interrupt setup, steering command
+            handling, DU status timers, and processed steering-word reporting.
+        </li>
+    </ul>
+
+    <h2>Main Components</h2>
+
+    <h3>Shared Source</h3>
+    <p><code>common-src/</code> contains code shared across all module types.</p>
+    <ul>
+        <li>
+            <code>common/</code><br>
+            Common managers and utilities such as config loading, SAP data loading,
+            scan-limit helpers, byte-order helpers, and shared command-manager base classes.
+        </li>
+        <li>
+            <code>framework/</code><br>
+            Event loop, device abstractions, timers, UDP networking, logging, and utility support classes.
+        </li>
+        <li>
+            <code>drivers/</code><br>
+            Hardware-facing device wrappers for DU, TU, UIO, and low-level register helpers.
+        </li>
+        <li>
+            <code>messages/</code><br>
+            Command and report message definitions used for communication with the test server and local modules.
+        </li>
+    </ul>
+
+    <h3>DU-Specific Source</h3>
+    <p><code>du-app/</code> contains DU hardware managers and DU command managers.</p>
+    <ul>
+        <li><code>DUHWMgr</code><br>DU hardware access and status aggregation.</li>
+        <li><code>IOMHWMgr</code><br>I/O module status access over Modbus TCP.</li>
+        <li><code>DUACmdMgr</code><br>Alpha DU application logic.</li>
+        <li><code>DUBCmdMgr</code><br>Beta DU application logic.</li>
+        <li><code>DUCmdMgrBase</code><br>Shared DU command-manager behavior.</li>
+    </ul>
+
+    <h3>TU-Specific Source</h3>
+    <p><code>tu-app/</code> contains TU command and hardware management.</p>
+    <ul>
+        <li><code>TUHWMgr</code><br>TU hardware access and control.</li>
+        <li><code>TUCmdMgr</code><br>TU application logic.</li>
+    </ul>
+
+    <h2>Runtime Model</h2>
+    <p>The applications are event driven.</p>
+    <ul>
+        <li>UDP sockets are used to receive commands from the test server.</li>
+        <li>UDP sockets are used to send reports and acknowledgements back to the test server.</li>
+        <li>DUA also receives forwarded status from DUB and TU over a local UDP channel.</li>
+        <li>UIO devices are used for hardware interrupt notification.</li>
+        <li>Timer devices trigger periodic status reads and refresh behavior.</li>
+    </ul>
+    <p>Typical responsibilities at runtime:</p>
+    <ul>
+        <li>process shutdown, steering, and status request commands</li>
+        <li>read hardware status registers</li>
+        <li>perform scan-limit checks</li>
+        <li>maintain DU/TU/DCU status state</li>
+        <li>forward local status between modules when required</li>
+        <li>send status reports and acknowledgements to the test server</li>
+    </ul>
+
+    <h2>Entry Point</h2>
+    <p><code>SwcAppInit.cpp</code> expects a single module-type argument:</p>
+    <ul>
+        <li><code>DUA</code></li>
+        <li><code>DUB</code></li>
+        <li><code>TU</code></li>
+    </ul>
+    <p>Based on that argument it constructs and starts one of:</p>
+    <ul>
+        <li><code>DUACmdMgr</code></li>
+        <li><code>DUBCmdMgr</code></li>
+        <li><code>TUCmdMgr</code></li>
+    </ul>
+
+    <h2>Configuration</h2>
+    <p>Runtime configuration is primarily driven by <code>config-files/config.txt</code>.</p>
+    <p>Important configuration areas include:</p>
+    <ul>
+        <li>IP addresses for the test server, logger, Alpha DU, Beta DU, TU, and I/O module</li>
+        <li>UDP port assignments for command, status, logger, and emulator traffic</li>
+        <li>status refresh intervals</li>
+        <li>force-test-mode control</li>
+        <li>DCU SPI timing values</li>
+        <li>scan-limit settings</li>
+        <li>TU pulse timing</li>
+        <li>DCU firmware version expectations</li>
+    </ul>
+    <p>Additional configuration and startup artifacts live under <code>config-files/</code>, including:</p>
+    <ul>
+        <li><code>devices.conf</code></li>
+        <li><code>logger.conf</code></li>
+        <li><code>sap.txt</code></li>
+        <li><code>myapp-init/</code></li>
+    </ul>
+
+    <h2>Build and Development</h2>
+    <p>
+        The checked-in build description is the SlickEdit project file
+        <code>swc-esw-src.vpj</code>.
+    </p>
+    <p>Configured targets include:</p>
+    <ul>
+        <li>Debug compile and link</li>
+        <li>Release compile and link</li>
+        <li>workspace build and rebuild via <code>vsbuild</code></li>
+    </ul>
+    <p>The project does not include a repo-local CMake or Make build system.</p>
+
+    <h2>Hardware and Supporting Assets</h2>
+    <ul>
+        <li>
+            <code>firmware/</code><br>
+            Reference FPGA/XSA artifacts and register-definition documents for DU, TU, and emulator environments.
+        </li>
+        <li>
+            <code>documentation/</code><br>
+            Supporting notes and register-definition spreadsheets.
+        </li>
+        <li>
+            <code>libmodbus/stage/</code><br>
+            Staged Modbus headers and libraries used by the I/O module integration.
+        </li>
+    </ul>
+
+    <h2>Security and Operational Notes</h2>
+    <ul>
+        <li>Treat all network input, emulator input, and configuration values as untrusted.</li>
+        <li>
+            Hardware access is performed through device abstractions and memory-mapped register interfaces,
+            so changes should remain explicit and easy to review.
+        </li>
+        <li>DUA is the main aggregation point for overall system status visibility.</li>
+        <li>DUB and TU primarily provide role-specific control and status forwarding into the larger SWC status flow.</li>
+    </ul>
+</body>
+</html>
