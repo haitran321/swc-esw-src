@@ -108,7 +108,7 @@ STATUS TUCmdMgr::start()
 
     if (initializeCommonCommandDevices(TEST_UNIT_IP_ADDRESS, TEST_SERVER_IP_ADDRESS,
                                        FROM_TEST_SERVER_PORT, TO_TEST_SERVER_PORT,
-                                       FROM_STATUS_EMULATOR_PORT) != OK)
+                                       FROM_STATUS_EMULATOR_PORT, STATUS_TIMER_INTERVAL_SECONDS) != OK)
     {
         return ERROR;
     }
@@ -197,9 +197,6 @@ STATUS TUCmdMgr::start()
     _logger.logInfo("Successfully created _timerDevStatus device");
     printf("Successfully created _timerDevStatus device\n");
 
-    // Notify Test Server
-    sendAckToTestServer(InitCompleteAck);
-
     EventProcessor::start();
 
     return OK;
@@ -242,11 +239,7 @@ void TUCmdMgr::processWLSPInterrupt()
 
 void TUCmdMgr::processStatusTimer()
 {
-    static int timerCounter = 0;
-
-    timerCounter++;
-
-    _logger.logDebug("In processTimer: timerCounter = %d", timerCounter);
+    CmdMgrBase::processStatusTimer();
 
     // Read TU status and send to Alpha DU
     DUTUStatusMsg tuStatus;

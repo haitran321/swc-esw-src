@@ -95,7 +95,7 @@ STATUS DUBCmdMgr::start()
 
     if (initializeCommonCommandDevices(BETA_IP_ADDRESS, TEST_SERVER_IP_ADDRESS,
                                        FROM_TEST_SERVER_PORT, TO_TEST_SERVER_PORT,
-                                       FROM_STATUS_EMULATOR_PORT) != OK)
+                                       FROM_STATUS_EMULATOR_PORT, STATUS_TIMER_INTERVAL_SECONDS) != OK)
     {
         return ERROR;
     }
@@ -143,13 +143,10 @@ STATUS DUBCmdMgr::start()
     }
     _logger.logInfo("Sent DUB DCUs status to DUA");
 
-    if (initializeDUCommonDevices(STATUS_TIMER_INTERVAL_SECONDS) != OK)
+    if (initializeDUCommonDevices() != OK)
     {
         return ERROR;
     }
-
-    // Notify Test Server
-    sendAckToTestServer(InitCompleteAck);
 
     EventProcessor::start();
 

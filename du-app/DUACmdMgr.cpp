@@ -99,7 +99,7 @@ STATUS DUACmdMgr::start()
 
     if (initializeCommonCommandDevices(ALPHA_IP_ADDRESS, TEST_SERVER_IP_ADDRESS,
                                        FROM_TEST_SERVER_PORT, TO_TEST_SERVER_PORT,
-                                       FROM_STATUS_EMULATOR_PORT) != OK)
+                                       FROM_STATUS_EMULATOR_PORT, STATUS_TIMER_INTERVAL_SECONDS) != OK)
     {
         return ERROR;
     }
@@ -132,12 +132,13 @@ STATUS DUACmdMgr::start()
     // Read Alpha DU status
     _duHWMgr.processDUAStatus(_duHWMgr.readDUStatus());
 
-    if (initializeDUCommonDevices(STATUS_TIMER_INTERVAL_SECONDS) != OK)
+    if (initializeDUCommonDevices() != OK)
     {
         return ERROR;
     }
 
     // Notify Test Server
+    _logger.logInfo("%s sending InitCompleteAck Test Server msg 1", getCommandMgrName());
     sendAckToTestServer(InitCompleteAck);
 
     EventProcessor::start();

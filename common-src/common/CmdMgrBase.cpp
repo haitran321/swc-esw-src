@@ -10,13 +10,17 @@
 #include "StatusRequestCmdMsg.h"
 #include "SWCAckRptMsg.h"
 
+#include "Timestamp.h"
+
 CmdMgrBase::CmdMgrBase(MODULE_TYPE moduleType) :
     _logger(Logger::getInstance()),
     _moduleType(moduleType),
     _fromTestServer(NULL),
     _toTestServer(NULL),
     _udpFromStatusEmu(NULL),
-    FORCE_TEST_MODE(0)
+    FORCE_TEST_MODE(0),
+    _timerDevStatus(NULL),
+    _statusTimerCounter(0)
 {
 }
 
@@ -36,7 +40,8 @@ STATUS CmdMgrBase::initializeCommonCommandDevices(const std::string& bindIp,
                                                   const std::string& testServerIp,
                                                   int fromTestServerPort,
                                                   int toTestServerPort,
-                                                  int fromStatusEmulatorPort)
+                                                  int fromStatusEmulatorPort,
+                                                  int statusTimerIntervalSeconds)
 {
     std::stringstream devName;
 
@@ -89,6 +94,23 @@ STATUS CmdMgrBase::initializeCommonCommandDevices(const std::string& bindIp,
     }
     _logger.logInfo("Successfully created _udpFromStatusEmu device");
     printf("Successfully created _udpFromStatusEmu device\n");
+
+    timespec init = { statusTimerIntervalSeconds, 0 };
+    timespec timeout = { statusTimerIntervalSeconds, 0 };
+    _timerDevStatus = new TimerDevice(init, timeout);
+
+    if (_timerDevStatus->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _timerDevStatus->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_timerDevStatus, READ_EVENT, 1, static_cast<EventFunc>(&CmdMgrBase::processStatusTimer)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _timerDevStatus->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _timerDevStatus device");
+    printf("Successfully created _timerDevStatus device\n");
 
     return OK;
 }
@@ -158,6 +180,9 @@ void CmdMgrBase::processTestServerMsg()
 
         case STEERING_CMD_MSG_ID:
         {
+            uint64_t currentTimeNSec = ts.GetNanoSecondsSinceMidnight();
+            _logger.logDebug("******timestamp = %ld", currentTimeNSec);
+            printf("******timestamp = %ld\n", currentTimeNSec);
             SteeringCmdMsg steeringCmdMsg(msg.getBuf(), msg.getBufSize());
             steeringCmdMsg.byteSwapToLocal();
             if (steeringCmdMsg.validateData() != OK)
@@ -236,5 +261,18 @@ void CmdMgrBase::handleShutdownCommand(ShutdownOption shutdownType)
         _logger.logInfo("****Calling System Reboot****");
         sleep(3);
         reboot(RB_AUTOBOOT);
+    }
+}
+
+void CmdMgrBase::processStatusTimer()
+{
+    _statusTimerCounter++;
+    _logger.logDebug("%s In processStatusTimer: timerCounter = %d", getCommandMgrName(), _statusTimerCounter);
+
+    if (_statusTimerCounter == 1)
+    {
+        printf("%s sending InitCompleteAck Test Server", getCommandMgrName());
+        _logger.logInfo("%s sending InitCompleteAck Test Server", getCommandMgrName());
+        sendAckToTestServer(InitCompleteAck);
     }
 }

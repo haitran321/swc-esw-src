@@ -9,12 +9,10 @@ DUCmdMgrBase::DUCmdMgrBase(MODULE_TYPE moduleType) :
     _duHWMgr(DUHWMgr::getInstance()),
     _uioDevSL(NULL),
     _uioDevConfig(NULL),
-    _timerDevStatus(NULL),
     sendProcessedSW(false),
     lastProcessedAlpha(0),
     lastProcessedBeta(0),
     REFRESH_DCU_STATUS_ON_GDS_INTERVAL(6),
-    _statusTimerCounter(0),
     _steeringCmdCounter(0),
     _statusRequestCmdCounter(0)
 {
@@ -32,7 +30,7 @@ DUCmdMgrBase::~DUCmdMgrBase()
     _timerDevStatus = NULL;
 }
 
-STATUS DUCmdMgrBase::initializeDUCommonDevices(int statusTimerIntervalSeconds)
+STATUS DUCmdMgrBase::initializeDUCommonDevices()
 {
     _uioDevSL = new UIODevice(AXI_INT_121_OFFSET, 0);
 
@@ -69,23 +67,6 @@ STATUS DUCmdMgrBase::initializeDUCommonDevices(int statusTimerIntervalSeconds)
 
     _uioDevConfig->mmap();
     _uioDevConfig->clearInterrupt();
-
-    timespec init = { statusTimerIntervalSeconds, 0 };
-    timespec timeout = { statusTimerIntervalSeconds, 0 };
-    _timerDevStatus = new TimerDevice(init, timeout);
-
-    if (_timerDevStatus->open() != OK)
-    {
-        _logger.logInfo("ERROR openning dev %s", _timerDevStatus->getName().c_str());
-        return ERROR;
-    }
-    if (addEvent(*_timerDevStatus, READ_EVENT, 1, static_cast<EventFunc>(&DUCmdMgrBase::processStatusTimer)) != OK)
-    {
-        _logger.logInfo("ERROR adding event to dev %s", _timerDevStatus->getName().c_str());
-        return ERROR;
-    }
-    _logger.logInfo("Successfully created _timerDevStatus device");
-    printf("Successfully created _timerDevStatus device\n");
 
     return OK;
 }
@@ -233,8 +214,7 @@ void DUCmdMgrBase::processConfigInterrupt()
 
 void DUCmdMgrBase::processStatusTimer()
 {
-    _statusTimerCounter++;
-    _logger.logDebug("In processTimer: timerCounter = %d", _statusTimerCounter);
+    CmdMgrBase::processStatusTimer();
 
     handlePreDcuStatusTimer();
 

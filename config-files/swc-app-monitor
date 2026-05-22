@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Define the process name to monitor
+PROCESS_NAME="swc-esw-app.elf"
+# Define the interval in seconds
+INTERVAL=60
+
+while true; do
+  if pgrep "$PROCESS_NAME" > /dev/null; then
+    echo "$(date): $PROCESS_NAME is running."
+  else
+    echo "$(date): $PROCESS_NAME is NOT running!"
+    # Optional: Command to restart the process
+    /mnt/sd-mmcblk0p1/run/swc-app-launcher ${1,,} &
+  fi
+  sleep $INTERVAL
+done

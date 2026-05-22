@@ -608,9 +608,9 @@ void DUHWMgr::readDCUStatus(bool sendCurrentDCUList)
         status = readDCUFWStatus(reg);
 
 //      printf("****Reg = %d: last read = %d, now = %d\n", reg, _dcuStatus[_rfccType][reg].loc, status.loc);
-        _logger.logDebug("****Read DCU stauts: reg = %d: last read = %d, now = %d", reg, _dcuStatus[_rfccType][reg].loc, status.loc);
+        _logger.logDebug("****Read DCU status: reg = %d: last read = %d, now = %d", reg, _dcuStatus[_rfccType][reg].loc, status.loc);
 
-        if ((status.loc > 0) && (status.loc < 153))
+        if ((status.loc > 0) && (status.loc < 153) && (status.locStatus == GO))
         {
             processDCUStatus(status);
         }
@@ -691,7 +691,6 @@ DCUStatus DUHWMgr::readDCUFWStatus(int reg)
             DeviceUtilities::readMask(DCU_BYPASS_STATUS_MASK, fwStatus);
         status.modeStatus =
             DeviceUtilities::readMask(DCU_MODE_STATUS_MASK, fwStatus);
-        // Change from HealthState to DCUHealthState
         status.overallStatus =
             (DCUHealthState)(DeviceUtilities::readMask(DCU_BIT_OVERALL_STATUS_MASK, fwStatus) + 0x2);
         status.clockStatus =
@@ -705,6 +704,8 @@ DCUStatus DUHWMgr::readDCUFWStatus(int reg)
     }
     else
     {
+        // Set DCU overall status to NO_GO
+        status.overallStatus = (DCUHealthState)(0x2);
 //      printf("ERROR: invalid loc %d for reg %d with fw value 0x%x\n", status.loc, reg, fwStatus);
         _logger.logDebug("ERROR: invalid loc %d for reg %d with fw value 0x%x", status.loc, reg, fwStatus);
     }
@@ -735,10 +736,18 @@ STATUS DUHWMgr::validateDCUFWStatus(DCUStatus status)
         rc = ERROR;
     }
 
+    // Check correct RFCC group
+    if (status.group != _rfccType)
+    {
+//      printf("Incorrect rfcc group: expected %d, received %d\n", _rfccType, status.group);
+        _logger.logDebug("Incorrect rfcc group: expected %d, received %d", _rfccType, status.group);
+        rc = ERROR;
+    }
+
     // Check FW version
     if (DCU_CHECK_VERSION_FLAG == 1)
     {
-        if ((status.dcuFWMajorRev != DCU_MAJOR_VERSION) && (status.dcuFWMinorRev != DCU_MINOR_VERSION))
+        if ((status.dcuFWMajorRev != DCU_MAJOR_VERSION) || (status.dcuFWMinorRev != DCU_MINOR_VERSION))
         {
 //          printf("Failed validateDCUFWStatus: DCU version major = %d, minor = %d\n", status.dcuFWMajorRev, status.dcuFWMinorRev);
 //          _logger.logDebug("Failed validateDCUFWStatus: DCU version major = %d, minor = %d", status.dcuFWMajorRev, status.dcuFWMinorRev);
@@ -746,6 +755,12 @@ STATUS DUHWMgr::validateDCUFWStatus(DCUStatus status)
         }
 //      printf("validateDCUFWStatus skipping DCU version check\n");
         _logger.logDebug("validateDCUFWStatus skipping DCU version check");
+    }
+
+    // If failing default status.locStatus to NO GO
+    if (rc == ERROR)
+    {
+        status.locStatus = NO_GO;
     }
 
     return rc;

@@ -4,7 +4,6 @@
 #include "CmdMgrBase.h"
 #include "DUHWMgr.h"
 #include "SWCProcessedSteeringWordRptMsg.h"
-#include "TimerDevice.h"
 #include "UIODevice.h"
 
 class DUCmdMgrBase : public CmdMgrBase
@@ -15,7 +14,7 @@ class DUCmdMgrBase : public CmdMgrBase
     protected:
         explicit DUCmdMgrBase(MODULE_TYPE moduleType);
 
-        STATUS initializeDUCommonDevices(int statusTimerIntervalSeconds);
+        STATUS initializeDUCommonDevices();
 
         virtual void handleSteeringCommand(const SteeringCmdDataType& params);
         virtual void handleStatusRequest(const StatusRequestCmdDataType& params);
@@ -23,7 +22,6 @@ class DUCmdMgrBase : public CmdMgrBase
         DUHWMgr &_duHWMgr;
         UIODevice *_uioDevSL;
         UIODevice *_uioDevConfig;
-        TimerDevice *_timerDevStatus;
         bool sendProcessedSW;
         int lastProcessedAlpha;
         int lastProcessedBeta;
@@ -35,15 +33,14 @@ class DUCmdMgrBase : public CmdMgrBase
         virtual void handlePostDcuStatusTimer(int dequeSize);
         virtual void handleConfigInterruptRefresh();
         virtual int getProcessedKSineForReport() const = 0;
+        virtual void processStatusTimer();
 
     private:
         void processSLInterrupt();
         void processConfigInterrupt();
-        void processStatusTimer();
-
+        
         void sendProcessedSteeringWordReport(int processedKSine);
 
-        int _statusTimerCounter;
         int _steeringCmdCounter;
         int _statusRequestCmdCounter;
 };

@@ -49,7 +49,6 @@ class TUCmdMgr : public CmdMgrBase
         UIODevice* _uioDevWLSP;
         void processWLSPInterrupt();
         TimerDevice* _timerDevStatus;
-        void processStatusTimer();
         Timestamp ts;
         void sendTUStatusToDUA(DUTUStatusMsg status);
 
@@ -57,6 +56,7 @@ class TUCmdMgr : public CmdMgrBase
         virtual void handleSteeringCommand(const SteeringCmdDataType& params);
         virtual void handleStatusRequest(const StatusRequestCmdDataType& params);
         virtual void handleStatusEmulatorMessage(int msgId, const int *status, int numData);
+        virtual void processStatusTimer();
 };
 
 
