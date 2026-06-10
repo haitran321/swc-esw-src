@@ -13,10 +13,10 @@
 TUCmdMgr::TUCmdMgr() :
     CmdMgrBase(TU),
     _localHWStatus(NULL),
+    _localHWCommand(NULL),
     _tuHWMgr(TUHWMgr::getInstance()),
     _uioDevSL(NULL),
-    _uioDevWLSP(NULL),
-    _timerDevStatus(NULL)
+    _uioDevWLSP(NULL)
 {
 }
 
@@ -28,14 +28,14 @@ TUCmdMgr::~TUCmdMgr()
     delete _localHWStatus;
     _localHWStatus = NULL;
 
+    delete _localHWCommand;
+    _localHWCommand = NULL;
+
     delete _uioDevSL;
     _uioDevSL = NULL;
 
     delete _uioDevWLSP;
     _uioDevWLSP = NULL;
-
-    delete _timerDevStatus;
-    _timerDevStatus = NULL;
 }
 
 /** 
@@ -53,6 +53,7 @@ STATUS TUCmdMgr::start()
     int FROM_TEST_SERVER_PORT;
     int WARM_RESTART_PORT;
     int LOCAL_HW_STATUS_PORT;
+    int LOCAL_HW_COMMAND_PORT;
     int TO_TEST_SERVER_PORT;
     int STATUS_TIMER_INTERVAL_SECONDS;
 
@@ -83,6 +84,7 @@ STATUS TUCmdMgr::start()
 
     // Get port number to/from Local HW devices
     rc = rc || configs.get("LOCAL_HW_STATUS_PORT", LOCAL_HW_STATUS_PORT);
+    rc = rc || configs.get("LOCAL_HW_COMMAND_PORT", LOCAL_HW_COMMAND_PORT);
 
     // For Status Emulator
     int FROM_STATUS_EMULATOR_PORT;
@@ -93,6 +95,9 @@ STATUS TUCmdMgr::start()
 
     // Status parameters
     rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
+
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
 
     // Setup Logger
     _logger.initialize();
@@ -129,6 +134,28 @@ STATUS TUCmdMgr::start()
     _logger.logInfo("Successfully created _localHWStatus device");
     printf("Successfully created _localHWStatus device\n");
 
+    // From HW devices - Inbound for TU
+    devName.str("");
+    devName.clear();
+    devName << "UDP Server ";
+    devName << TEST_UNIT_IP_ADDRESS << ":" << LOCAL_HW_COMMAND_PORT;
+
+    _localHWCommand = new UDPNetworkDevice(NetworkServer, TEST_UNIT_IP_ADDRESS, LOCAL_HW_COMMAND_PORT, false);
+    _localHWCommand->setName(devName.str());
+
+    if (_localHWCommand->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _localHWCommand->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_localHWCommand, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processLocalHWCommandMsg)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _localHWCommand->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _localHWCommand device");
+    printf("Successfully created _localHWCommand device\n");
+
     // Initialize HW Manager
     _tuHWMgr.initialize();
 
@@ -137,6 +164,12 @@ STATUS TUCmdMgr::start()
     tuStatus.msgID = TU_STATUS;
     tuStatus.dutuStatus = _tuHWMgr.readTUStatus();
     sendTUStatusToDUA(tuStatus);
+    usleep(1 * 1000);   // Sleep 1 msecs
+
+    // Request config/mode
+    ConfigModeRequestMsg request;
+    request.msgID = CONFIG_MODE_REQUEST;
+    _localHWStatus->write(&request, sizeof(ConfigModeRequestMsg));
     usleep(1 * 1000);   // Sleep 1 msecs
 
     // Open UIO device for Scan Limit HW Interrupt
@@ -179,24 +212,6 @@ STATUS TUCmdMgr::start()
     _uioDevWLSP->mmap();
     _uioDevWLSP->clearInterrupt();
 
-    // Status Timer
-    timespec init = { STATUS_TIMER_INTERVAL_SECONDS, 0 };
-    timespec timeout = { STATUS_TIMER_INTERVAL_SECONDS, 0 };
-    _timerDevStatus = new TimerDevice(init, timeout);
-
-    if (_timerDevStatus->open() != OK)
-    {
-        _logger.logInfo("ERROR openning dev %s", _timerDevStatus->getName().c_str());
-        return ERROR;
-    }
-    if (addEvent(*_timerDevStatus, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processStatusTimer)) != OK)
-    {
-        _logger.logInfo("ERROR adding event to dev %s", _timerDevStatus->getName().c_str());
-        return ERROR;
-    }
-    _logger.logInfo("Successfully created _timerDevStatus device");
-    printf("Successfully created _timerDevStatus device\n");
-
     EventProcessor::start();
 
     return OK;
@@ -208,22 +223,31 @@ void TUCmdMgr::processSLInterrupt()
     int pending = 0;
 
     _uioDevSL->read((char *)&pending, sizeof(int), bytesRead);
-    printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
-    _logger.logDebug("Reading scan limit interrupt, number of interrupt = %d", pending);
+    if (_verbose)
+    {
+        printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
+    }
+    _logger.logDebug("%s reading scan limit interrupt, number of interrupt = %d", getCommandMgrName(), pending);
     _uioDevSL->clearInterrupt();
 
     // Get FW SL check status
     int alpha = _tuHWMgr.getArmKSine(ALPHA);
     int beta = _tuHWMgr.getArmKSine(BETA);
 
-    printf("alpha = %d, beta = %d\n", alpha, beta);
+    if (_verbose)
+    {
+        printf("alpha = %d, beta = %d\n", alpha, beta);
+    }
     _logger.logDebug("alpha = %d, beta = %d", alpha, beta);
 
     int swSLResult = runSWScanLimitCheck(float(alpha), float(beta));
     int fwSLResult = _tuHWMgr.getFWScanLimitCheckStatus();
 
-    printf("fwSLResult = 0x%x(%d), swSLResult = %d\n", fwSLResult, fwSLResult & 0x1, swSLResult);
-    _logger.logDebug("fwSLResult = 0x%x(%d), swSLResult = %d", fwSLResult, fwSLResult & 0x1, swSLResult);
+    if (_verbose)
+    {
+        printf("fwSLResult = 0x%x(%d), swSLResult = %d\n", fwSLResult, fwSLResult & 0x1, swSLResult);
+    }
+    _logger.logDebug("%s fwSLResult = 0x%x(%d), swSLResult = %d", getCommandMgrName(), fwSLResult, fwSLResult & 0x1, swSLResult);
 }
 
 void TUCmdMgr::processWLSPInterrupt()
@@ -232,8 +256,11 @@ void TUCmdMgr::processWLSPInterrupt()
     int pending = 0;
 
     _uioDevWLSP->read((char *)&pending, sizeof(int), bytesRead);
-    printf("Reading WLSP interrupt, number of interrupt = %d\n", pending);
-    _logger.logDebug("Reading WLSP changed interrupt, number of interrupt = %d", pending);
+    if (_verbose){
+        printf("Reading WLSP interrupt, number of interrupt = %d\n", pending);
+    
+    _logger.logDebug("%s reading WLSP changed interrupt, number of interrupt = %d", getCommandMgrName(), pending);
+    }
     _uioDevWLSP->clearInterrupt();
 }
 
@@ -262,12 +289,23 @@ void TUCmdMgr::handleSteeringCommand(const SteeringCmdDataType& params)
     SteeringCmdCounter++;
 
     _logger.logInfo("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d", SteeringCmdCounter);
-
+    
     // Set KSine Regs
     if (params.testSource == Analog)
     {
+        if (_verbose)
+        {
+            printf("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d\n", SteeringCmdCounter);
+        }
         _tuHWMgr.setArmKSine(ALPHA, params.alpha);
         _tuHWMgr.setArmKSine(BETA, params.beta);
+
+        // Setup TU for 1 action
+        _tuHWMgr.setNumTest(1);
+        _tuHWMgr.setNumInc(0);
+        _tuHWMgr.setRLTDPeriod(0);
+        _tuHWMgr.setAlphaInc(0);
+        _tuHWMgr.setBetaInc(0);
 
         if (params.RLCP == On)
         {
@@ -293,9 +331,73 @@ void TUCmdMgr::handleStatusRequest(const StatusRequestCmdDataType& params)
     _logger.logError("ERROR: Invalid status request of %d", params.requestType);
 }
 
+void TUCmdMgr::handleStressTestCommand(const StressTestCmdDataType& params)
+{
+    static int StressTestCmdCounter = 0;
+    StressTestCmdCounter++;
+
+    _logger.logInfo("===> STRESS_TEST_CMD_MSG_ID: StressTestCmdCounter = %d", StressTestCmdCounter);
+    _logger.logDebug("Stress Test: numTest = %d, numInc = %d, spacing = %d, alpha = %d, alpha inc = %d, beta = %d, beta inc = %d",
+           params.numTest, params.numInc, params.spacingUsec, params.alpha, params.alphaInc, params.beta, params.betaInc);
+    if (_verbose)
+    {
+        printf("Stress Test: numTest = %d, numInc = %d, spacing = %d, alpha = %d, alpha inc = %d, beta = %d, beta inc = %d\n",
+               params.numTest, params.numInc, params.spacingUsec, params.alpha, params.alphaInc, params.beta, params.betaInc);
+    }
+
+    _tuHWMgr.setArmKSine(ALPHA, params.alpha);
+    _tuHWMgr.setArmKSine(BETA, params.beta);
+
+    // Setup TU for 1 action
+    _tuHWMgr.setNumTest(params.numTest);
+    _tuHWMgr.setNumInc(params.numInc);
+    _tuHWMgr.setRLTDPeriod(params.spacingUsec);
+    _tuHWMgr.setAlphaInc(params.alphaInc);
+    _tuHWMgr.setBetaInc(params.betaInc);
+
+    // Toggle RLTD signal to start steering words processing
+    _tuHWMgr.toggleRLTDSignal();
+}
+
 void TUCmdMgr::sendTUStatusToDUA(DUTUStatusMsg status)
 {
     _localHWStatus->write(&status, sizeof(DUTUStatusMsg));
+}
+
+void TUCmdMgr::processLocalHWCommandMsg()
+{
+    size_t bytesRead = 0;
+    const int localCommandBufferCount = sizeof(_configModeCmdMsg) / sizeof(_configModeCmdMsg[0]);
+    ConfigModeCmdMsg *configModeCmdMsg = &_configModeCmdMsg[configModeCmdCounter];
+    configModeCmdCounter++;
+
+    if (configModeCmdCounter >= localCommandBufferCount)
+    {
+        configModeCmdCounter = 0;
+    }
+
+    // Read UDP data
+    if (_localHWCommand->read((char *)configModeCmdMsg, sizeof(ConfigModeCmdMsg), bytesRead) != OK)
+    {
+        printf("Error reading from _localHWCommand\n");
+        _logger.logDebug("Error reading from _localHWCommand");
+        return;
+    }
+
+    // Get message id
+    if (configModeCmdMsg->msgID == CONFIG_MODE_CMD)
+    {
+        if (_verbose)
+        {
+            printf("Received configModeCmdMsg: config %d mode %d oltd = %d\n", configModeCmdMsg->configMode.swcConfig,
+                   configModeCmdMsg->configMode.swcMode, configModeCmdMsg->configMode.olteMode);
+        }
+        _logger.logDebug("Received configModeCmdMsg: config %d mode %d oltd = %d", configModeCmdMsg->configMode.swcConfig,
+                         configModeCmdMsg->configMode.swcMode, configModeCmdMsg->configMode.olteMode);
+        _tuHWMgr.setConfig(configModeCmdMsg->configMode.swcConfig);
+        _tuHWMgr.setMode(configModeCmdMsg->configMode.swcMode);
+        _tuHWMgr.setOLTE(configModeCmdMsg->configMode.olteMode);
+    }
 }
 
 #define EMU_MSG_ID_SWCR_STATUS 1
@@ -318,4 +420,3 @@ void TUCmdMgr::handleStatusEmulatorMessage(int msg_id, const int *status, int nu
         _logger.logDebug("Error: this SWCR Status Emulator is not being processed by this component");
     }
 }
-

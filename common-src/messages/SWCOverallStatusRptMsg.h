@@ -152,13 +152,11 @@ void SWCOverallStatusRptMsg::setBetaDCUStatus(int dcu, DCUHealthState health)
 void SWCOverallStatusRptMsg::setLastProcessedAlpha(int alpha)
 {
     _data.lastProcessedAlpha = alpha;
-    printf("lastProcessedAlpha = %d\n", _data.lastProcessedAlpha);
 }
 
 void SWCOverallStatusRptMsg::setLastProcessedBeta(int beta)
 {
     _data.lastProcessedBeta = beta;
-    printf("lastProcessedBeta = %d\n", _data.lastProcessedBeta);
 }
 
 #endif

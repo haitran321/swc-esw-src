@@ -47,6 +47,9 @@ STATUS TUHWMgr::initialize()
     rc = rc || configs.get("STEERING_WORD_PULSE_DURATION", STEERING_WORD_PULSE_DURATION);
     rc = rc || configs.get("RLTD_PRE_TRIGGER_TIME", RLTD_PRE_TRIGGER_TIME);
 
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
+
     // For testing.  To be removed
     rc = rc || configs.get("USE_STATUS_EMULATOR", USE_STATUS_EMULATOR);
     if (USE_STATUS_EMULATOR == 1)
@@ -73,9 +76,12 @@ STATUS TUHWMgr::initialize()
     _armInitReady = DeviceUtilities::updateReg(TU_OS_INIT_STATUS_MASK, _armInitReady, READY);
     _tuDev->setARMInitStatusReg(_armInitReady);
 
-    printf("getFirmwareVersionReg = 0x%x\n", _tuDev->getFWVerReg());
-    printf("getBoardStatusReg = 0x%x\n", _tuDev->getBrdStatusReg());
-    printf("getBoardControlReg = 0x%x\n", _tuDev->getBrdCtrlReg());
+    if (_verbose)
+    {
+        printf("getFirmwareVersionReg = 0x%x\n", _tuDev->getFWVerReg());
+        printf("getBoardStatusReg = 0x%x\n", _tuDev->getBrdStatusReg());
+        printf("getBoardControlReg = 0x%x\n", _tuDev->getBrdCtrlReg());
+    }
 
     _logger.logDebug("MODULE_TYPE = %d, FW Verison = 0x%x, board status = 0x%x, board control = 0x%x",
                      MODULE_TYPE, _tuDev->getFWVerReg(), _tuDev->getBrdStatusReg(), _tuDev->getBrdCtrlReg());
@@ -96,7 +102,10 @@ STATUS TUHWMgr::initialize()
     _armInitReady = DeviceUtilities::updateReg(TU_APP_INIT_STATUS_MASK, _armInitReady, READY);
     _tuDev->setARMInitStatusReg(_armInitReady);
 
-    printf("getBoardControlReg = 0x%x\n", _tuDev->getBrdCtrlReg());
+    if (_verbose)
+    {
+        printf("getBoardControlReg = 0x%x\n", _tuDev->getBrdCtrlReg());
+    }
     _logger.logDebug("getBoardControlReg = 0x%x", _tuDev->getBrdCtrlReg());
 
     _logger.logDebug("Successfully initialize TUMHWMgr");
@@ -117,6 +126,11 @@ void TUHWMgr::setReg(int offset, int data)
 int TUHWMgr::getBrdStatus()
 {
     return (_tuDev->getBrdStatusReg());
+}
+
+int TUHWMgr::getBrdCtrl()
+{
+    return (_tuDev->getBrdCtrlReg());
 }
 
 int TUHWMgr::getArmKSine(RFCC_CH ch)
@@ -154,19 +168,96 @@ void TUHWMgr::setRLSCSignal(CmdOnOff flag)
     _tuDev->setBrdCtrlReg(_brdCtrVal);
 }
 
+void TUHWMgr::setConfig(SWC_CONFIG config)
+{
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SYSTEM_CONFIG_MASK, _brdCtrVal, config);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
+}
+
+void TUHWMgr::setMode(SWC_MODE mode)
+{
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SYSTEM_MODE_MASK, _brdCtrVal, mode);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
+}
+
+void TUHWMgr::setOLTE(SWC_MODE olte)
+{
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SYSTEM_OLTE_MASK, _brdCtrVal, olte);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
+}
+
+int TUHWMgr::getRLTDPeriod()
+{
+    return(_tuDev->getRLTDPeriodReg());
+}
+
+void TUHWMgr::setRLTDPeriod(int val)
+{
+    // Converting usec to 100MHz clk count
+    _tuDev->setRLTDPeriodReg(val*100);
+}
+
+int TUHWMgr::getNumTest()
+{
+    return(_tuDev->getNumTestReg());
+}
+
+void TUHWMgr::setNumTest(int val)
+{
+    _tuDev->setNumTestReg(val);
+}
+
+int TUHWMgr::getNumInc()
+{
+    return(_tuDev->getNumIncReg());
+}
+
+void TUHWMgr::setNumInc(int val)
+{
+    _tuDev->setNumIncReg(val);
+}
+
+int TUHWMgr::getAlphaInc()
+{
+    return(_tuDev->getAlphaIncReg());
+}
+
+void TUHWMgr::setAlphaInc(int val)
+{
+    _tuDev->setAlphaIncReg(val);
+}
+
+int TUHWMgr::getBetaInc()
+{
+    return(_tuDev->getBetaIncReg());
+}
+
+void TUHWMgr::setBetaInc(int val)
+{
+    _tuDev->setBetaIncReg(val);
+}
+
 DUTUStatusType TUHWMgr::readTUStatus()
 {
+    _tuDev->setARMInitStatusReg(_armInitReady);
+
     int status = _tuDev->getBrdStatusReg();
 
     _logger.logDebug("TU %d Status for 0x%x module", MODULE_TYPE, status);
-    printf("TU %d Status for 0x%x module\n", MODULE_TYPE, status);
+    if (_verbose)
+    {
+        printf("TU %d Status for 0x%x module\n", MODULE_TYPE, status);
+    }
 
     if (USE_STATUS_EMULATOR == 1)
     {
         status = emTUStatusReg;
 
         _logger.logDebug("USE_STATUS_EMULATOR: TU Status for 0x%x module", status);
-        printf("USE_STATUS_EMULATOR: TU Status for 0x%x module\n", status);
+        if (_verbose)
+        {
+            printf("USE_STATUS_EMULATOR: TU Status for 0x%x module\n", status);
+        }
     }
 
     DUTUStatusType tuStatus;
@@ -178,12 +269,24 @@ DUTUStatusType TUHWMgr::readTUStatus()
     tuStatus.vccauxAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_VCC_AUX_ALARM_MASK, status)) & 0x1);
     tuStatus.vbramAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_VBRAM_ALARM_MASK, status)) & 0x1);
 
+    tuStatus.dieTemp = getFPGADieTemp();
+
     return (tuStatus);
+}
+
+int TUHWMgr::getFPGADieTemp()
+{
+    int adcCounts = _tuDev->getFPGADieTempReg();
+    float temp = (0.007771515 * float(adcCounts)) - 280.2308787;
+    return(int(temp + 0.5));
 }
 
 void TUHWMgr::processTUEmulatorStatus(int statusReg)
 {
-    printf("From SWCR Status Emulator: setting TU status to 0x%x\n", statusReg);
+    if (_verbose)
+    {
+        printf("From SWCR Status Emulator: setting TU status to 0x%x\n", statusReg);
+    }
     _logger.logDebug("From SWCR Status Emulator: setting TU status to 0x%x", statusReg);
 
     emTUStatusReg = statusReg;

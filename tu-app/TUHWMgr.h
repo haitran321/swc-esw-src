@@ -29,6 +29,7 @@ class TUHWMgr : public Uncopyable
         void setReg(int offset, int data);
 
         int getBrdStatus();
+        int getBrdCtrl();
 
         int getArmKSine(RFCC_CH ch);
         void setArmKSine(RFCC_CH ch, int val);
@@ -39,7 +40,28 @@ class TUHWMgr : public Uncopyable
         void setRLCPSignal(CmdOnOff flag);
         void setRLSCSignal(CmdOnOff flag);
 
+        void setConfig(SWC_CONFIG config);
+        void setMode(SWC_MODE mode);
+        void setOLTE(SWC_MODE olte);
+
+        int getRLTDPeriod();
+        void setRLTDPeriod(int val);
+
+        int getNumTest();
+        void setNumTest(int val);
+
+        int getNumInc();
+        void setNumInc(int val);
+
+        int getAlphaInc();
+        void setAlphaInc(int val);
+
+        int getBetaInc();
+        void setBetaInc(int val);
+
         DUTUStatusType readTUStatus();
+
+        int getFPGADieTemp();
 
         void processTUEmulatorStatus(int statusReg);
 
@@ -53,6 +75,8 @@ class TUHWMgr : public Uncopyable
 
         /* Private constructor */
         TUHWMgr();
+
+        int _verbose;
 
         Logger &_logger;
 

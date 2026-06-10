@@ -9,8 +9,6 @@
 #include "UDPNetworkDevice.h"
 #include "TimerDevice.h"
 
-#include "Timestamp.h"
-
 class CmdMgrBase : public EventProcessor
 {
     public:
@@ -31,9 +29,11 @@ class CmdMgrBase : public EventProcessor
         virtual const char *getCommandMgrName() const = 0;
         virtual void handleSteeringCommand(const SteeringCmdDataType& params) = 0;
         virtual void handleStatusRequest(const StatusRequestCmdDataType& params) = 0;
+        virtual void handleStressTestCommand(const StressTestCmdDataType& params) = 0;
         virtual void handleStatusEmulatorMessage(int msgId, const int *status, int numData) = 0;
         virtual void processStatusTimer();
 
+        int _verbose;
         Logger &_logger;
         MODULE_TYPE _moduleType;
         UDPNetworkDevice *_fromTestServer;
@@ -47,9 +47,6 @@ class CmdMgrBase : public EventProcessor
         void processTestServerMsg();
         void processStatusEmuMsg();
         void handleShutdownCommand(ShutdownOption shutdownType);
-
-        Timestamp ts;
-
 };
 
 #endif

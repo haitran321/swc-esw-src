@@ -135,24 +135,24 @@ int TUDevice::getSteeringWordPulseDurReg()
     return (regs->steeringWordPulseDur);
 }
 
-void TUDevice::setPBPEmulationPeriodReg(int val)
+void TUDevice::setRLTDPeriodReg(int val)
 {
-    regs->pbpEmulationPeriod = val;
+    regs->rltdPeriod = val;
 }
 
-int TUDevice::getPBPEmulationPeriodReg()
+int TUDevice::getRLTDPeriodReg()
 {
-    return (regs->pbpEmulationPeriod);
+    return (regs->rltdPeriod);
 }
 
-void TUDevice::setPBPEmulationRunsReg(int val)
+void TUDevice::setNumTestReg(int val)
 {
-    regs->pbpEmulationRuns = val;
+    regs->rltdRuns = val;
 }
 
-int TUDevice::getPBPEmulationRunsReg()
+int TUDevice::getNumTestReg()
 {
-    return (regs->pbpEmulationRuns);
+    return (regs->rltdRuns);
 }
 
 void TUDevice::setRLTDPreTimeReg(int val)
@@ -163,6 +163,41 @@ void TUDevice::setRLTDPreTimeReg(int val)
 int TUDevice::getRLTDPreTimeReg()
 {
     return (regs->rltdPreTime);
+}
+
+void TUDevice::setNumIncReg(int val)
+{
+    regs->numInc = val;
+}
+
+int TUDevice::getNumIncReg()
+{
+    return (regs->numInc);
+}
+
+void TUDevice::setAlphaIncReg(int val)
+{
+    regs->alphaInc = val;
+}
+
+int TUDevice::getAlphaIncReg()
+{
+    return (regs->alphaInc);
+}
+
+void TUDevice::setBetaIncReg(int val)
+{
+    regs->betaInc = val;
+}
+
+int TUDevice::getBetaIncReg()
+{
+    return (regs->betaInc);
+}
+
+int TUDevice::getFPGADieTempReg()
+{
+    return (regs->fpgaDieTemp);
 }
 
 void TUDevice::setDiagInfoReg(int val)

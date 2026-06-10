@@ -10,15 +10,15 @@
 
 typedef struct
 {
-    int ch1; // bad bit
-    int ch2; // bad bit
-    int atbIOMStatus;  //ch 3
-    int ch4;
-    int tempIOMStatus;  // ch 5
-    int ch6;
-    int ps12IOMStatus;  // ch 7
+    int configBit0; 
+    int configBit1; 
+    int mode; 
+    int ps12;
+    int ps24;  
+    int temp;
+    int ch7;  
     int ch8;
-    int ps24IOMStatus;  //  ch 9
+    int ch9;  
     int ch10;
     int ch11;
     int ch12;
@@ -55,6 +55,8 @@ class IOMHWMgr : public Uncopyable
 
         /* Private constructor */
         IOMHWMgr();
+
+        int _verbose;
 
         Logger &_logger;
 

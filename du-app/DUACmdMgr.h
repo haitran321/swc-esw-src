@@ -31,8 +31,12 @@ class DUACmdMgr : public DUCmdMgrBase
 
     private:
 
+        int VERBOSE;
+
         UDPNetworkDevice* _localHWStatus;
+        UDPNetworkDevice* _localHWCommand;
         void processLocalHWStatusMsg();
+        void SendConfigModeMsg();
 
         virtual const char *getCommandMgrName() const;
         virtual void handleDUStatusRequest(const StatusRequestCmdDataType& params);

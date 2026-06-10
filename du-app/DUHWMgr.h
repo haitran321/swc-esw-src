@@ -97,6 +97,7 @@ class DUHWMgr : public Uncopyable
         SWC_CONFIG getSWCConfigStatus();
         SWC_MODE getSWCModeStatus();
         SWC_MODE getOLTEModeStatus();
+        int getFPGADieTemp();
 
 
         void processSWCREmulatorStatus(SWC_CONFIG sysConfig_,
@@ -125,6 +126,7 @@ class DUHWMgr : public Uncopyable
         DUHWMgr();
 
         int MODULE_TYPE;
+        int _verbose;
 
         Logger &_logger;
 
@@ -171,8 +173,6 @@ class DUHWMgr : public Uncopyable
         void setOverallStatusBit(int val);
         void setDataTypeBit(SWC_STATUS_DATA_TYPE val);
         void setConfigBit(int val);
-        void setSWCModeBit(int val);
-        void setOLTEModeBit(int val);
         void setAlphaOverallStatusBit(int val);
         void setBetaOverallStatusBit(int val);
         void setAlphaDCURolledUpStatusBit(int val);

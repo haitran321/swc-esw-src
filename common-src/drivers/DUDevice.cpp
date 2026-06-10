@@ -150,6 +150,11 @@ void DUDevice::setDCUSPIDelay4Reg(int val)
     regs->dcuSPIDelay4 = val;
 }
 
+int DUDevice::getFPGADieTempReg()
+{
+    return (regs->fpgaDieTemp);
+}
+
 int DUDevice::getDiagInfoReg()
 {
     return (regs->diagInfo);

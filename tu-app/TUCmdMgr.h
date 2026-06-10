@@ -9,7 +9,6 @@
 #include "SWCMsgTypes.h"
 #include "TUHWMgr.h"
 #include "UIODevice.h"
-#include "TimerDevice.h"
 #include "Logger.h"
 #include "ElapsedTimer.h"
 #include "Timestamp.h"
@@ -35,10 +34,12 @@ class TUCmdMgr : public CmdMgrBase
          * Sends pertinent state data for this event processor to standard output.
         */
         //virtual void printInfo();
+        virtual void processStatusTimer();
 
     private:
 
         UDPNetworkDevice* _localHWStatus;
+        UDPNetworkDevice* _localHWCommand;
 
         void processIncomingMsg();
 
@@ -48,15 +49,18 @@ class TUCmdMgr : public CmdMgrBase
         void processSLInterrupt();
         UIODevice* _uioDevWLSP;
         void processWLSPInterrupt();
-        TimerDevice* _timerDevStatus;
         Timestamp ts;
         void sendTUStatusToDUA(DUTUStatusMsg status);
+        void processLocalHWCommandMsg();
 
         virtual const char *getCommandMgrName() const;
         virtual void handleSteeringCommand(const SteeringCmdDataType& params);
         virtual void handleStatusRequest(const StatusRequestCmdDataType& params);
+        virtual void handleStressTestCommand(const StressTestCmdDataType& params);
         virtual void handleStatusEmulatorMessage(int msgId, const int *status, int numData);
-        virtual void processStatusTimer();
+
+        ConfigModeCmdMsg _configModeCmdMsg[4];
+        int configModeCmdCounter;
 };
 
 

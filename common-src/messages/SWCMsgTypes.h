@@ -28,6 +28,7 @@ typedef enum
     DCU_DETAILED_STATUS_RPT_MSG_ID  = 13,
     SWC_ACK_RPT_MSG_ID              = 14,
     SWC_PROCESSED_SW_RPT_MSG_ID     = 15,
+    STRESS_TEST_CMD_MSG_ID          = 16,
 } MessageId;
 
 /** Test Server message header */
@@ -184,6 +185,7 @@ typedef struct
     HealthState vccintAlarm;
     HealthState vccauxAlarm;
     HealthState vbramAlarm;
+    int dieTemp;
 } DUTUStatusType;
 
 typedef struct
@@ -227,12 +229,21 @@ enum
     ShutdownError
 };
 
+typedef struct
+{
+    SWC_CONFIG  swcConfig;
+    SWC_MODE    swcMode;
+    SWC_MODE    olteMode;
+} ConfigModeCmdType;
+
 // Internal messages between embedded SW components: DU Alpha, DU Beta, Test Unit
 typedef enum 
 {
-    BETA_DCU_STATUS = 1,
-    BETA_DU_STATUS  = 2,
-    TU_STATUS       = 3
+    BETA_DCU_STATUS     = 1,
+    BETA_DU_STATUS      = 2,
+    TU_STATUS           = 3,
+    CONFIG_MODE_REQUEST = 4,
+    CONFIG_MODE_CMD     = 5, 
 }InternalMsgID;
 
 typedef struct
@@ -246,5 +257,27 @@ typedef struct
     InternalMsgID msgID;
     DUTUStatusType dutuStatus;
 }DUTUStatusMsg;
+
+typedef struct
+{
+    InternalMsgID msgID;
+}ConfigModeRequestMsg;
+
+typedef struct
+{
+    InternalMsgID msgID;
+    ConfigModeCmdType configMode;
+}ConfigModeCmdMsg;
+
+typedef struct
+{
+    int numTest;
+    int numInc;
+    int spacingUsec;
+    int alpha;
+    int alphaInc;
+    int beta;
+    int betaInc;
+} StressTestCmdDataType;
 
 #endif

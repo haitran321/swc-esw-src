@@ -25,9 +25,6 @@ DUCmdMgrBase::~DUCmdMgrBase()
 
     delete _uioDevConfig;
     _uioDevConfig = NULL;
-
-    delete _timerDevStatus;
-    _timerDevStatus = NULL;
 }
 
 STATUS DUCmdMgrBase::initializeDUCommonDevices()
@@ -126,27 +123,24 @@ void DUCmdMgrBase::handleStatusRequest(const StatusRequestCmdDataType& params)
     handleDUStatusRequest(params);
 }
 
+void DUCmdMgrBase::handleStressTestCommand(const StressTestCmdDataType& params)
+{
+    printf("ERROR: Not processing stress test command\n");
+    _logger.logError("ERROR: Not processing stress test command");
+}
+
 void DUCmdMgrBase::processSLInterrupt()
 {
     size_t bytesRead = 0;
     int pending = 0;
 
     _uioDevSL->read((char *)&pending, sizeof(int), bytesRead);
-    printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
-    _logger.logDebug("Reading scan limit interrupt, number of interrupt = %d", pending);
+    if (_verbose)
+    {
+        printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
+    }
+    _logger.logDebug("%d reading scan limit interrupt, number of interrupt = %d", getCommandMgrName(), pending);
     _uioDevSL->clearInterrupt();
-
-    int armAlpha = _duHWMgr.getArmKSine(ALPHA);
-    if ((armAlpha & 0x200) != 0)
-    {
-        armAlpha |= 0xfffffc00;
-    }
-
-    int armBeta = _duHWMgr.getArmKSine(BETA);
-    if ((armBeta & 0x200) != 0)
-    {
-        armBeta |= 0xfffffc00;
-    }
 
     int atbAlpha = _duHWMgr.getAtbKSine(ALPHA);
     if ((atbAlpha & 0x200) != 0)
@@ -160,29 +154,41 @@ void DUCmdMgrBase::processSLInterrupt()
         atbBeta |= 0xfffffc00;
     }
 
-    printf("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d\n", atbAlpha, atbBeta, armAlpha, armBeta);
-    _logger.logDebug("atbAlpha = %d, atbBeta = %d, armAlpha = %d, armBeta = %d", atbAlpha, atbBeta, armAlpha, armBeta);
+    if (_verbose)
+    {
+        printf("atbAlpha = %d, atbBeta = %d\n", atbAlpha, atbBeta);
+    }
+    _logger.logDebug("%d atbAlpha = %d, atbBeta = %d", getCommandMgrName(), atbAlpha, atbBeta);
 
-    int armSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(armBeta));
     int atbSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
     int fwSLResult = _duHWMgr.getFWScanLimitCheckStatus();
 
-    printf("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d\n",
-           fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
-    _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d, armSWSLResult = %d",
-                     fwSLResult, fwSLResult & 0x1, atbSWSLResult, armSWSLResult);
+    if (_verbose)
+    {
+        printf("fwSLResult = 0x%x(%d), atbSWSLResult = %d\n",
+               fwSLResult, fwSLResult & 0x1, atbSWSLResult);
+    }
+
+    _logger.logDebug("%s fwSLResult = 0x%x(%d), atbSWSLResult = %d",
+                     getCommandMgrName(), fwSLResult, fwSLResult & 0x1, atbSWSLResult);
 
     lastProcessedAlpha = atbAlpha;
     lastProcessedBeta = atbBeta;
 
     if (_duHWMgr.getOverallSPIStatus() == FAILED)
     {
-        printf("Last SPI transfer status has no failures.\n");
+        if (_verbose)
+        {
+            printf("Last SPI transfer status has no failures.\n");
+        }
         _logger.logDebug("Last SPI transfer status has no failures.");
     }
     else
     {
-        printf("Last SPI transfer status has failures.\n");
+        if (_verbose)
+        {
+            printf("Last SPI transfer status has failures.\n");
+        }
         _logger.logDebug("Last SPI transfer status has failures.");
     }
 
@@ -200,8 +206,11 @@ void DUCmdMgrBase::processConfigInterrupt()
     int pending = 0;
 
     _uioDevConfig->read((char *)&pending, sizeof(int), bytesRead);
-    printf("Reading config changed interrupt, number of interrupt = %d\n", pending);
-    _logger.logDebug("Reading config changed interrupt, number of interrupt = %d", pending);
+    if (_verbose)
+    {
+        printf("Reading config changed interrupt, number of interrupt = %d\n", pending);
+    }
+    _logger.logDebug("%s reading config changed interrupt, number of interrupt = %d", getCommandMgrName(), pending);
     _uioDevConfig->clearInterrupt();
 
     handleConfigInterruptRefresh();
@@ -218,7 +227,10 @@ void DUCmdMgrBase::processStatusTimer()
 
     handlePreDcuStatusTimer();
 
-    printf("Read all DCUs status to update local queue.\n");
+    if (_verbose)
+    {
+        printf("Read all DCUs status to update local queue.\n");
+    }
     _logger.logDebug("Read all DCUs status to update local queue.");
     if (_statusTimerCounter % REFRESH_DCU_STATUS_ON_GDS_INTERVAL == 0)
     {
@@ -230,7 +242,10 @@ void DUCmdMgrBase::processStatusTimer()
     }
 
     int dequeSize = _duHWMgr.getDCUStatusDequeSize();
-    printf("DCU status deque size = %d\n", dequeSize);
+    if (_verbose)
+    {
+        printf("DCU status deque size = %d\n", dequeSize);
+    }
     _logger.logDebug("DCU status deque size = %d", dequeSize);
 
     handlePostDcuStatusTimer(dequeSize);

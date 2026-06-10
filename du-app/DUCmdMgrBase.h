@@ -18,6 +18,7 @@ class DUCmdMgrBase : public CmdMgrBase
 
         virtual void handleSteeringCommand(const SteeringCmdDataType& params);
         virtual void handleStatusRequest(const StatusRequestCmdDataType& params);
+        virtual void handleStressTestCommand(const StressTestCmdDataType& params);
 
         DUHWMgr &_duHWMgr;
         UIODevice *_uioDevSL;

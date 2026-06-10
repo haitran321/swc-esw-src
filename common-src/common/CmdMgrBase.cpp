@@ -8,6 +8,7 @@
 #include "ShutdownCmdMsg.h"
 #include "SteeringCmdMsg.h"
 #include "StatusRequestCmdMsg.h"
+#include "StressTestCmdMsg.h"
 #include "SWCAckRptMsg.h"
 
 #include "Timestamp.h"
@@ -34,6 +35,9 @@ CmdMgrBase::~CmdMgrBase()
 
     delete _udpFromStatusEmu;
     _udpFromStatusEmu = NULL;
+
+    delete _timerDevStatus;
+    _timerDevStatus = NULL;
 }
 
 STATUS CmdMgrBase::initializeCommonCommandDevices(const std::string& bindIp,
@@ -95,6 +99,12 @@ STATUS CmdMgrBase::initializeCommonCommandDevices(const std::string& bindIp,
     _logger.logInfo("Successfully created _udpFromStatusEmu device");
     printf("Successfully created _udpFromStatusEmu device\n");
 
+    if (statusTimerIntervalSeconds <= 0)
+    {
+        _logger.logError("Invalid STATUS_TIMER_INTERVAL_SECONDS value: %d", statusTimerIntervalSeconds);
+        return ERROR;
+    }
+
     timespec init = { statusTimerIntervalSeconds, 0 };
     timespec timeout = { statusTimerIntervalSeconds, 0 };
     _timerDevStatus = new TimerDevice(init, timeout);
@@ -142,7 +152,10 @@ void CmdMgrBase::processTestServerMsg()
     if (bytesRead < sizeof(MsgHeaderType))
     {
         _logger.logError("%s received undersized command packet: %d", getCommandMgrName(), static_cast<int>(bytesRead));
-        printf("%s received undersized command packet: %d\n", getCommandMgrName(), static_cast<int>(bytesRead));
+        if (_verbose)
+        {
+            printf("%s received undersized command packet: %d\n", getCommandMgrName(), static_cast<int>(bytesRead));
+        }
         return;
     }
 
@@ -158,8 +171,11 @@ void CmdMgrBase::processTestServerMsg()
 
     _logger.logInfo("%s ProcessTestServerMsg: Processing incoming messages: msgId = %d",
                     getCommandMgrName(), msg.getMsgId());
-    printf("%s ProcessTestServerMsg: Processing incoming messages: msgId = %d\n",
-           getCommandMgrName(), msg.getMsgId());
+    if (_verbose)
+    {
+        printf("%s ProcessTestServerMsg: Processing incoming messages: msgId = %d\n",
+               getCommandMgrName(), msg.getMsgId());
+    }
 
     switch (msg.getMsgId())
     {
@@ -180,9 +196,6 @@ void CmdMgrBase::processTestServerMsg()
 
         case STEERING_CMD_MSG_ID:
         {
-            uint64_t currentTimeNSec = ts.GetNanoSecondsSinceMidnight();
-            _logger.logDebug("******timestamp = %ld", currentTimeNSec);
-            printf("******timestamp = %ld\n", currentTimeNSec);
             SteeringCmdMsg steeringCmdMsg(msg.getBuf(), msg.getBufSize());
             steeringCmdMsg.byteSwapToLocal();
             if (steeringCmdMsg.validateData() != OK)
@@ -192,8 +205,11 @@ void CmdMgrBase::processTestServerMsg()
             }
 
             SteeringCmdDataType *params = reinterpret_cast<SteeringCmdDataType *>(steeringCmdMsg.getDataBufPos());
-            printf("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d\n",
-                   params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
+            if (_verbose)
+            {
+                printf("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d\n",
+                       params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
+            }
             _logger.logDebug("Test Src = %d, Alpha = %d, Beta = %d, RLCP = %d, RLSC = %d",
                              params->testSource, params->alpha, params->beta, params->RLCP, params->RLSC);
             handleSteeringCommand(*params);
@@ -212,11 +228,41 @@ void CmdMgrBase::processTestServerMsg()
 
             StatusRequestCmdDataType *params =
                 reinterpret_cast<StatusRequestCmdDataType *>(statusRequestCmdMsg.getDataBufPos());
-            printf("requestType = %d, dcuNum = %d\n", params->requestType, params->dcuNum);
+            if (_verbose)
+            {
+                printf("requestType = %d, dcuNum = %d\n", params->requestType, params->dcuNum);
+            }
             _logger.logDebug("requestType = %d, dcuNum = %d", params->requestType, params->dcuNum);
             handleStatusRequest(*params);
             break;
         }
+
+        case STRESS_TEST_CMD_MSG_ID:
+        {
+            StressTestCmdMsg stressTestCmdMsg(msg.getBuf(), msg.getBufSize());
+            stressTestCmdMsg.byteSwapToLocal();
+            if (stressTestCmdMsg.validateData() != OK)
+            {
+                _logger.logError("%s received invalid stess test command", getCommandMgrName());
+                return;
+            }
+
+            StressTestCmdDataType *params =
+                reinterpret_cast<StressTestCmdDataType *>(stressTestCmdMsg.getDataBufPos());
+            if (_verbose)
+            {
+                printf("numTest = %d, numAction = %d, spacingUsec = %d, "
+                       "alpha = %d, alphaInc = %d, "
+                       "beta = %d, betaInc = %d\n",
+                       params->numTest, params->numInc, params->spacingUsec,
+                       params->alpha, params->alphaInc,
+                       params->beta, params->betaInc);
+            }
+//          _logger.logDebug("requestType = %d, dcuNum = %d", params->requestType, params->dcuNum);
+            handleStressTestCommand(*params);
+            break;
+        }
+
 
         default:
             printf("ERROR: Invalid command msgId %d\n", msg.getMsgId());
@@ -239,7 +285,10 @@ void CmdMgrBase::processStatusEmuMsg()
     }
 
     int msgId = status[0];
-    printf("Received data from SWCR Status Emulator: msg id = %d\n", msgId);
+    if (_verbose)
+    {
+        printf("Received data from SWCR Status Emulator: msg id = %d\n", msgId);
+    }
     _logger.logDebug("Received data from SWCR Status Emulator: msg id = %d", msgId);
 
     handleStatusEmulatorMessage(msgId, status, numData);
@@ -271,7 +320,7 @@ void CmdMgrBase::processStatusTimer()
 
     if (_statusTimerCounter == 1)
     {
-        printf("%s sending InitCompleteAck Test Server", getCommandMgrName());
+        printf("%s sending InitCompleteAck Test Server\n", getCommandMgrName());
         _logger.logInfo("%s sending InitCompleteAck Test Server", getCommandMgrName());
         sendAckToTestServer(InitCompleteAck);
     }

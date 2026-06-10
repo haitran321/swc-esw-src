@@ -99,7 +99,7 @@ typedef enum
     STATUS_DATA_TYPE_ERROR      = 0,
     DATA_TYPE_CONFIG_STATUS     = 1,
     DATA_TYPE_CUSTOM_STATUS     = 2,
-    DATA_TYPE_IO_MODULE_STATUS  = 3
+    DATA_TYPE_FUTURE_USE        = 3
 }SWC_STATUS_DATA_TYPE;
 
 typedef enum
@@ -154,18 +154,15 @@ typedef enum
 {
     DU_STATUS_TO_TWGS_MASK              = 0x7FFFFFFF,    /* Bits 0..30 */
     // Data Type = Config Status
-    DU_OLTE_MODE_STATUS_MASK            = 0x00000004,    /* Bit 2 */
-    DU_SWC_MODE_STATUS_MASK             = 0x00000008,    /* Bit 3 */
+    DU_ATB_STATUS_MASK                  = 0x00000001,    /* Bit 0 */
+    DU_24V_PWR_STATUS_MASK              = 0x00000002,    /* Bit 1 */
+    DU_12V_PWR_STATUS_MASK              = 0x00000004,    /* Bit 2 */
+    DU_TEMP_STATUS_MASK                 = 0x00000008,    /* Bit 3 */
     DU_CONFIG_STATUS_MASK               = 0x00000030,    /* Bit 4..5 */
     // Define Data Type
     DU_DATA_TYPE_MASK                   = 0x000000C0,    /* Bit 6..7 */
     // Overall Status
     DU_OVERALL_STATUS_MASK              = 0x00000100,    /* Bit 8 */
-    // Data Type = COTS Status
-    DU_ATB_STATUS_MASK                  = 0x00000800,    /* Bit 11 */
-    DU_24V_PWR_STATUS_MASK              = 0x00001000,    /* Bit 12 */
-    DU_12V_PWR_STATUS_MASK              = 0x00002000,    /* Bit 13 */
-    DU_TEMP_STATUS_MASK                 = 0x00004000,    /* Bit 14 */
     // Data Type = Custom Status
     DU_BETA_DCU_ROLLED_UP_STATUS_MASK   = 0x00018000,    /* Bit 15..16 */
     DU_ALPHA_DCU_ROLLED_UP_STATUS_MASK  = 0x00060000,    /* Bit 17..18 */
@@ -229,6 +226,8 @@ public:
 
     int getDCUSPIDelay4Reg();
     void setDCUSPIDelay4Reg(int val);
+
+    int getFPGADieTempReg();
 
     void setDiagInfoReg(int val);
     int getDiagInfoReg();

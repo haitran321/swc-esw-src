@@ -20,10 +20,13 @@ typedef struct
     int rlcpPulseDur;
     int rlscPulseDur;
     int steeringWordPulseDur;
-    int pbpEmulationPeriod;
-    int pbpEmulationRuns;
+    int rltdPeriod;
+    int rltdRuns;
     int rltdPreTime;
-    int spare3[6];
+    int numInc;
+    int alphaInc;
+    int betaInc;
+    int spare3[3];
     int fpgaDieTemp;
     int vccIntVoltage;
     int vccAuxVoltage;
@@ -49,7 +52,9 @@ typedef enum
 {
     TU_BRD_CTRL_MASK                        = 0x80031364,    /* Bits 2, 5..6, 8..9, 10, 16..17 and 31 */
     TU_SW_TRIGGER_MASK                      = 0x00000004,    /* Bit 2 */
+    TU_SYSTEM_MODE_MASK                     = 0x00000010,    /* Bits 4 */
     TU_SYSTEM_CONFIG_MASK                   = 0x00000060,    /* Bits 5..6 */
+    TU_SYSTEM_OLTE_MASK                     = 0x00000080,    /* Bits 7 */
     TU_RLCP_CMD_MASK                        = 0x00000100,    /* Bits 8 */
     TU_RLSC_CMD_MASK                        = 0x00000200,    /* Bits 9 */
     TU_SHUTDOWN_MASK                        = 0x00001004,    /* Bit 12 */
@@ -124,14 +129,25 @@ public:
     void setSteeringWordPulseDurReg(int val);
     int getSteeringWordPulseDurReg();
 
-    void setPBPEmulationPeriodReg(int val);
-    int getPBPEmulationPeriodReg();
+    void setRLTDPeriodReg(int val);
+    int getRLTDPeriodReg();
 
-    void setPBPEmulationRunsReg(int val);
-    int getPBPEmulationRunsReg();
+    void setNumTestReg(int val);
+    int getNumTestReg();
 
     void setRLTDPreTimeReg(int val);
     int getRLTDPreTimeReg();
+
+    void setNumIncReg(int val);
+    int getNumIncReg();
+
+    void setAlphaIncReg(int val);
+    int getAlphaIncReg();
+
+    void setBetaIncReg(int val);
+    int getBetaIncReg();
+
+    int getFPGADieTempReg();
 
     void setDiagInfoReg(int val);
     int getDiagInfoReg();

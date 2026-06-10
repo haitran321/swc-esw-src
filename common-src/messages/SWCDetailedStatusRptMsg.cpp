@@ -26,6 +26,7 @@ STATUS SWCDetailedStatusRptMsg::buildMsg()
     _data.alphaDUStatus.vccintAlarm = (HealthState)toNetworkInt(_data.alphaDUStatus.vccintAlarm);
     _data.alphaDUStatus.vccauxAlarm = (HealthState)toNetworkInt(_data.alphaDUStatus.vccauxAlarm);
     _data.alphaDUStatus.vbramAlarm = (HealthState)toNetworkInt(_data.alphaDUStatus.vbramAlarm);
+    _data.alphaDUStatus.dieTemp = (HealthState)toNetworkInt(_data.alphaDUStatus.dieTemp);
     
     // Beta status
     _data.betaDUStatus.overallStatus = (HealthState)toNetworkInt(_data.betaDUStatus.overallStatus);
@@ -35,6 +36,7 @@ STATUS SWCDetailedStatusRptMsg::buildMsg()
     _data.betaDUStatus.vccintAlarm = (HealthState)toNetworkInt(_data.betaDUStatus.vccintAlarm);
     _data.betaDUStatus.vccauxAlarm = (HealthState)toNetworkInt(_data.betaDUStatus.vccauxAlarm);
     _data.betaDUStatus.vbramAlarm = (HealthState)toNetworkInt(_data.betaDUStatus.vbramAlarm);
+    _data.betaDUStatus.dieTemp = (HealthState)toNetworkInt(_data.betaDUStatus.dieTemp);
 
     // TU status
     _data.tuStatus.overallStatus = (HealthState)toNetworkInt(_data.tuStatus.overallStatus);
@@ -44,6 +46,7 @@ STATUS SWCDetailedStatusRptMsg::buildMsg()
     _data.tuStatus.vccintAlarm = (HealthState)toNetworkInt(_data.tuStatus.vccintAlarm);
     _data.tuStatus.vccauxAlarm = (HealthState)toNetworkInt(_data.tuStatus.vccauxAlarm);
     _data.tuStatus.vbramAlarm = (HealthState)toNetworkInt(_data.tuStatus.vbramAlarm);
+    _data.tuStatus.dieTemp = (HealthState)toNetworkInt(_data.tuStatus.dieTemp);
 
     // Add data to message.
     rc = addData(reinterpret_cast<char *>(&_data), sizeof(_data));

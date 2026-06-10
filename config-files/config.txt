@@ -2,6 +2,8 @@
 # SWC Configuration Data File.
 #
 
+VERBOSE = 0
+
 USE_STATUS_EMULATOR = 0
 
 # IP Addresses
@@ -19,6 +21,7 @@ WARM_RESTART_PORT = 9010
 
 # From Local HW devices UDP port
 LOCAL_HW_STATUS_PORT = 4020
+LOCAL_HW_COMMAND_PORT = 4030
 
 # Test Server Ports
 IO_MODULE_PORT = 502

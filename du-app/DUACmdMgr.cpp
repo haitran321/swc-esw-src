@@ -15,6 +15,7 @@
 DUACmdMgr::DUACmdMgr() :
     DUCmdMgrBase(DU_ALPHA),
     _localHWStatus(NULL),
+    _localHWCommand(NULL),
     localStatusCounter(0)
 {
 }
@@ -24,6 +25,9 @@ DUACmdMgr::DUACmdMgr() :
  */
 DUACmdMgr::~DUACmdMgr()
 {
+    delete _localHWStatus;
+    _localHWStatus = NULL;
+
     delete _localHWStatus;
     _localHWStatus = NULL;
 }
@@ -43,6 +47,7 @@ STATUS DUACmdMgr::start()
     int FROM_TEST_SERVER_PORT;
     int WARM_RESTART_PORT;
     int LOCAL_HW_STATUS_PORT;
+    int LOCAL_HW_COMMAND_PORT;
     int TO_TEST_SERVER_PORT;
     int STATUS_TIMER_INTERVAL_SECONDS;
 
@@ -73,6 +78,7 @@ STATUS DUACmdMgr::start()
 
     // Get port number to/from Local HW devices
     rc = rc || configs.get("LOCAL_HW_STATUS_PORT", LOCAL_HW_STATUS_PORT);
+    rc = rc || configs.get("LOCAL_HW_COMMAND_PORT", LOCAL_HW_COMMAND_PORT);
 
     // For Status Emulator
     int FROM_STATUS_EMULATOR_PORT;
@@ -84,6 +90,9 @@ STATUS DUACmdMgr::start()
     // Status parameters
     rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
     rc = rc || configs.get("REFRESH_DCU_STATUS_ON_GDS_INTERVAL", REFRESH_DCU_STATUS_ON_GDS_INTERVAL);
+
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
 
     // Setup Logger
     _logger.initialize();
@@ -126,6 +135,22 @@ STATUS DUACmdMgr::start()
     _logger.logInfo("Successfully created _localHWStatus device");
     printf("Successfully created _localHWStatus device\n");
 
+    // From HW devices - Outbound for DUA
+    devName.str("");
+    devName.clear();
+    devName << "UDP Client ";
+    devName << TEST_UNIT_IP_ADDRESS << ":" << LOCAL_HW_COMMAND_PORT;
+    _localHWCommand = new UDPNetworkDevice(NetworkClient, TEST_UNIT_IP_ADDRESS, LOCAL_HW_COMMAND_PORT, false);
+    _localHWCommand->setName(devName.str());
+
+    if (_localHWCommand->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _localHWCommand->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _localHWCommand device");
+    printf("Successfully created _localHWCommand device\n");
+
     // Initialize HW Manager
     _duHWMgr.initialize(_moduleType);
 
@@ -141,6 +166,9 @@ STATUS DUACmdMgr::start()
     _logger.logInfo("%s sending InitCompleteAck Test Server msg 1", getCommandMgrName());
     sendAckToTestServer(InitCompleteAck);
 
+    // Send config/mode to TU
+    SendConfigModeMsg();
+
     EventProcessor::start();
 
     return OK;
@@ -149,8 +177,12 @@ STATUS DUACmdMgr::start()
 void DUACmdMgr::handlePendingDcuStatusAfterScanLimit()
 {
     int dequeSize = _duHWMgr.getDCUStatusDequeSize();
-    printf("DCU status deque size = %d\n", dequeSize);
+    if (_verbose)
+    {
+        printf("DCU status deque size = %d\n", dequeSize);
+    }
     _logger.logDebug("DCU status deque size = %d", dequeSize);
+
     if (dequeSize > 0)
     {
         DCUStatus status = _duHWMgr.getDCUStatusFromDeque();
@@ -161,6 +193,9 @@ void DUACmdMgr::handlePendingDcuStatusAfterScanLimit()
 void DUACmdMgr::handleConfigInterruptRefresh()
 {
     _duHWMgr.readSWCStatus(DATA_TYPE_CONFIG_STATUS);
+
+    // Send config/mode to TU
+    SendConfigModeMsg();
 }
 
 void DUACmdMgr::handlePreDcuStatusTimer()
@@ -171,22 +206,22 @@ void DUACmdMgr::handlePreDcuStatusTimer()
     {
         _duHWMgr.readSWCStatus(DATA_TYPE_CUSTOM_STATUS);
         _logger.logDebug("DATA_TYPE_CUSTOM_STATUS, calcStatus bits: 0x%x", _duHWMgr.getSwcStatusToTwgs());
-        printf("DATA_TYPE_CUSTOM_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
-    }
-    else if (statusCounter == 1)
-    {
-        _duHWMgr.readSWCStatus(DATA_TYPE_IO_MODULE_STATUS);
-        _logger.logDebug("DATA_TYPE_IO_MODULE_STATUS, calcStatus bits: 0x%x", _duHWMgr.getSwcStatusToTwgs());
-        printf("DATA_TYPE_IO_MODULE_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+        if (_verbose)
+        {
+            printf("DATA_TYPE_CUSTOM_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+        }
     }
     else
     {
         _duHWMgr.readSWCStatus(DATA_TYPE_CONFIG_STATUS);
         _logger.logDebug("DATA_TYPE_CONFIG_STATUS, calcStatus bits: 0x%x", _duHWMgr.getSwcStatusToTwgs());
-        printf("DATA_TYPE_CONFIG_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+        if (_verbose)
+        {
+            printf("DATA_TYPE_CONFIG_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+        }
     }
     statusCounter++;
-    if (statusCounter >= 3)
+    if (statusCounter >= 2)
     {
         statusCounter = 0;
     }
@@ -243,13 +278,19 @@ void DUACmdMgr::handleDUStatusRequest(const StatusRequestCmdDataType& params)
         {
             type = ALPHA;
             _logger.logInfo("Sending AlphaDCUDetailedStatus Rpt for DCU %d To Test Server", params.dcuNum);
-            printf("Sending AlphaDCUDetailedStatus Rpt for DCU %d To Test Server\n", params.dcuNum);
+            if (_verbose)
+            {
+                printf("Sending AlphaDCUDetailedStatus Rpt for DCU %d To Test Server\n", params.dcuNum);
+            }
         }
         else
         {
             type = BETA;
             _logger.logInfo("Sending BetaDCUDetailedStatus Rpt for DCU %d To Test Server", params.dcuNum);
-            printf("Sending BetaDCUDetailedStatus Rpt for DCU %d To Test Server\n", params.dcuNum);
+            if (_verbose)
+            {
+                printf("Sending BetaDCUDetailedStatus Rpt for DCU %d To Test Server\n", params.dcuNum);
+            }
         }
 
         DCUDetailedStatusRptMsg dcuDetailedStatusRptMsg;
@@ -268,24 +309,37 @@ void DUACmdMgr::handleDUStatusRequest(const StatusRequestCmdDataType& params)
         swcDetailedStatus.swcStatus = _duHWMgr.getSWCOverallStatus();
 
         swcDetailedStatus.alphaDUStatus = _duHWMgr.getDUAStatus();
-        _logger.logDebug("DUA: %d, %d, %d, %d, %d, %d, %d",
+        _logger.logDebug("DUA: %d, %d, %d, %d, %d, %d, %d, %d",
                swcDetailedStatus.alphaDUStatus.overallStatus,
                swcDetailedStatus.alphaDUStatus.readyStatus,
                swcDetailedStatus.alphaDUStatus.highTempAlarm,
                swcDetailedStatus.alphaDUStatus.overTempAlarm,
                swcDetailedStatus.alphaDUStatus.vccintAlarm,
                swcDetailedStatus.alphaDUStatus.vccauxAlarm,
-               swcDetailedStatus.alphaDUStatus.vbramAlarm);
+               swcDetailedStatus.alphaDUStatus.vbramAlarm,
+               swcDetailedStatus.alphaDUStatus.dieTemp);
+
         swcDetailedStatus.betaDUStatus = _duHWMgr.getDUBStatus();
-        _logger.logDebug("DUB: %d, %d, %d, %d, %d, %d, %d",
+        _logger.logDebug("DUB: %d, %d, %d, %d, %d, %d, %d, %d",
                swcDetailedStatus.betaDUStatus.overallStatus,
                swcDetailedStatus.betaDUStatus.readyStatus,
                swcDetailedStatus.betaDUStatus.highTempAlarm,
                swcDetailedStatus.betaDUStatus.overTempAlarm,
                swcDetailedStatus.betaDUStatus.vccintAlarm,
                swcDetailedStatus.betaDUStatus.vccauxAlarm,
-               swcDetailedStatus.betaDUStatus.vbramAlarm);
+               swcDetailedStatus.betaDUStatus.vbramAlarm,
+               swcDetailedStatus.betaDUStatus.dieTemp);
+
         swcDetailedStatus.tuStatus = _duHWMgr.getTUStatus();
+        _logger.logDebug("TU: %d, %d, %d, %d, %d, %d, %d, %d",
+               swcDetailedStatus.tuStatus.overallStatus,
+               swcDetailedStatus.tuStatus.readyStatus,
+               swcDetailedStatus.tuStatus.highTempAlarm,
+               swcDetailedStatus.tuStatus.overTempAlarm,
+               swcDetailedStatus.tuStatus.vccintAlarm,
+               swcDetailedStatus.tuStatus.vccauxAlarm,
+               swcDetailedStatus.tuStatus.vbramAlarm,
+               swcDetailedStatus.tuStatus.dieTemp);
 
         SWCDetailedStatusRptMsg swcDetailedStatusRptMsg;
         swcDetailedStatusRptMsg.setSWCDetailedStatus(swcDetailedStatus);
@@ -321,7 +375,10 @@ void DUACmdMgr::processLocalHWStatusMsg()
     // Read UDP data
     if (_localHWStatus->read((char *)localStatus, sizeof(BetaDCUStatusMsg), bytesRead) != OK)
     {
-        printf("Error reading from _localHWStatus\n");
+        if (_verbose)
+        {
+            printf("Error reading from _localHWStatus\n");
+        }
         _logger.logDebug("Error reading from _localHWStatus");
         return;
     }
@@ -329,7 +386,10 @@ void DUACmdMgr::processLocalHWStatusMsg()
     // Get message id
     if (localStatus->msgID == BETA_DCU_STATUS)
     {
-        printf("Received %d bytes: Group %d DCU %d\n", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.loc);
+        if (_verbose)
+        {
+            printf("Received %d bytes: Group %d DCU %d\n", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.loc);
+        }
         _logger.logDebug("Received %d bytes: Group %d DCU %d", bytesRead, localStatus->betaDCUStatus.group, localStatus->betaDCUStatus.loc);
         // Update local SW status and add to send queue
         _duHWMgr.processBetaDCUStatus(localStatus->betaDCUStatus);
@@ -338,8 +398,11 @@ void DUACmdMgr::processLocalHWStatusMsg()
     {
         DUTUStatusMsg betaStatus;
         memcpy(&betaStatus, localStatus, sizeof(DUTUStatusMsg));
-        printf("Received %d bytes for Beta DU status: overall %d, ready %d\n", bytesRead,
-               betaStatus.dutuStatus.overallStatus, betaStatus.dutuStatus.readyStatus);
+        if (_verbose)
+        {
+            printf("Received %d bytes for Beta DU status: overall %d, ready %d\n", bytesRead,
+                   betaStatus.dutuStatus.overallStatus, betaStatus.dutuStatus.readyStatus);
+        }
         _logger.logDebug("Received  %d bytes for Beta DU status: overall %d, ready %d", bytesRead,
                          betaStatus.dutuStatus.overallStatus, betaStatus.dutuStatus.readyStatus);
         // Update local SW status and add to send queue
@@ -349,13 +412,34 @@ void DUACmdMgr::processLocalHWStatusMsg()
     {
         DUTUStatusMsg tuStatus;
         memcpy(&tuStatus, localStatus, sizeof(DUTUStatusMsg));
-        printf("Received %d bytes for TU status: overall %d, ready %d\n", bytesRead,
-               tuStatus.dutuStatus.overallStatus, tuStatus.dutuStatus.readyStatus);
+        if (_verbose)
+        {
+            printf("Received %d bytes for TU status: overall %d, ready %d\n", bytesRead,
+                   tuStatus.dutuStatus.overallStatus, tuStatus.dutuStatus.readyStatus);
+        }
         _logger.logDebug("Received  %d bytes for TU status: overall %d, ready %d", bytesRead,
                          tuStatus.dutuStatus.overallStatus, tuStatus.dutuStatus.readyStatus);
         // Update local SW status and add to send queue
         _duHWMgr.processTUStatus(tuStatus.dutuStatus);
     }
+    else if (localStatus->msgID == CONFIG_MODE_REQUEST)
+    {
+        if (_verbose)
+        {
+            printf("++++Received CONFIG_MODE_REQUEST\n");
+        }
+        SendConfigModeMsg();
+    }
+}
+
+void DUACmdMgr::SendConfigModeMsg()
+{
+    ConfigModeCmdMsg configMode;
+    configMode.msgID = CONFIG_MODE_CMD;
+    configMode.configMode.swcConfig = _duHWMgr.getSWCConfigStatus();
+    configMode.configMode.swcMode = _duHWMgr.getSWCModeStatus();
+    configMode.configMode.olteMode = _duHWMgr.getOLTEModeStatus();
+    _localHWCommand->write(&configMode, sizeof(ConfigModeCmdMsg));
 }
 
 #define EMU_MSG_ID_SWCR_STATUS 1

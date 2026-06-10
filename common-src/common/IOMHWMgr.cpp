@@ -49,6 +49,11 @@ STATUS IOMHWMgr::initialize()
     }
 
     ConfigDataManager& configs = ConfigDataManager::getInstance();
+
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
+
+    // Acromag parameters
     rc = rc || configs.get("IO_MODULE_IP_ADDRESS", IO_MODULE_IP_ADDRESS);
     rc = rc || configs.get("IO_MODULE_PORT", IO_MODULE_PORT);
 
@@ -78,8 +83,6 @@ STATUS IOMHWMgr::initialize()
 
 IOMStatusDataType IOMHWMgr::readStatus()
 {
-    printf("******In IOM readstatus\n");
-
     IOMStatusDataType status = {0};
 
     if (_modbusCtx == nullptr)
@@ -103,15 +106,15 @@ IOMStatusDataType IOMHWMgr::readStatus()
         return status;
     }
 
-    status.ch1 = bits[0];
-    status.ch2 = bits[1];
-    status.atbIOMStatus = bits[2];
-    status.ch4 = bits[3];
-    status.tempIOMStatus = bits[4];
-    status.ch6 = bits[5];
-    status.ps12IOMStatus = bits[6];
+    status.configBit0 = bits[0];
+    status.configBit1 = bits[1];
+    status.mode = bits[2];
+    status.ps12 = bits[3];
+    status.ps24 = bits[4];
+    status.temp = bits[5];
+    status.ch7 = bits[6];
     status.ch8 = bits[7];
-    status.ps24IOMStatus = bits[8];
+    status.ch9 = bits[8];
     status.ch10 = bits[9];
     status.ch11 = bits[10];
     status.ch12 = bits[11];
@@ -121,36 +124,39 @@ IOMStatusDataType IOMHWMgr::readStatus()
     status.ch16 = bits[15];
 
     // Print raw response bytes
-    std::cout << "Raw response bytes: ";
-    for (int i = 0; i < 16; i++)
+    if (_verbose)
     {
-        std::cout << std::hex << std::setw(2) << std::setfill('0')
-                  << static_cast<int>(bits[i]) << " ";
-    }
-    std::cout << std::dec << "\n";
-
-    // Build 16-bit word
-    uint16_t word = 0;
-    for (int ch = 0; ch < 16; ch++)
-    {
-        if (bits[ch])
+        std::cout << "Raw response bytes: ";
+        for (int i = 0; i < 16; i++)
         {
-            word |= (1 << ch);
+            std::cout << std::hex << std::setw(2) << std::setfill('0')
+                      << static_cast<int>(bits[i]) << " ";
         }
-    }
+        std::cout << std::dec << "\n";
 
-    std::cout << "\n16-bit word (hex): 0x"
-              << std::hex << std::setw(4) << std::setfill('0') << word << "\n";
+        // Build 16-bit word
+        uint16_t word = 0;
+        for (int ch = 0; ch < 16; ch++)
+        {
+            if (bits[ch])
+            {
+                word |= (1 << ch);
+            }
+        }
 
-    std::cout << "16-bit word (bin): "
-              << std::bitset<16>(word) << "\n";
+        std::cout << "\n16-bit word (hex): 0x"
+                  << std::hex << std::setw(4) << std::setfill('0') << word << "\n";
 
-    // Print channel states
-    std::cout << "\nChannel state:\n";
-    for (int ch = 0; ch < 16; ch++)
-    {
-        std::cout << "CH" << std::setw(2) << std::setfill('0') << (ch + 1)
-                  << ": " << (bits[ch] ? "ON" : "OFF") << "\n";
+        std::cout << "16-bit word (bin): "
+                  << std::bitset<16>(word) << "\n";
+
+        // Print channel states
+        std::cout << "\nChannel state:\n";
+        for (int ch = 0; ch < 16; ch++)
+        {
+            std::cout << "CH" << std::setw(2) << std::setfill('0') << (ch + 1)
+                      << ": " << (bits[ch] ? "ON" : "OFF") << "\n";
+        }
     }
 
     return status;

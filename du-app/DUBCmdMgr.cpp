@@ -81,6 +81,9 @@ STATUS DUBCmdMgr::start()
     rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
     rc = rc || configs.get("REFRESH_DCU_STATUS_ON_GDS_INTERVAL", REFRESH_DCU_STATUS_ON_GDS_INTERVAL);
 
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
+
     // Setup Logger
     _logger.initialize();
     _logger.logInfo("DUBCmdMgr Initializing");
@@ -165,7 +168,7 @@ void DUBCmdMgr::handlePendingDcuStatusAfterScanLimit()
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;
             sendDCUStatusToDUA(status);
-            usleep(1 * 1000);   // Sleep 1 msecs
+//          usleep(1 * 1000);   // Sleep 1 msecs
         }
     }
 }
