@@ -20,15 +20,17 @@
 
 typedef enum
 {
-    STEERING_CMD_MSG_ID             = 1,
-    SHUTDOWN_CMD_MSG_ID             = 2,
-    STATUS_REQUEST_CMD_MSG_ID       = 3,
-    SWC_OVERALL_STATUS_RPT_MSG_ID   = 11,
-    SWC_DETAILED_STATUS_RPT_MSG_ID  = 12,
-    DCU_DETAILED_STATUS_RPT_MSG_ID  = 13,
-    SWC_ACK_RPT_MSG_ID              = 14,
-    SWC_PROCESSED_SW_RPT_MSG_ID     = 15,
-    STRESS_TEST_CMD_MSG_ID          = 16,
+    STEERING_CMD_MSG_ID                 = 1,
+    SHUTDOWN_CMD_MSG_ID                 = 2,
+    STATUS_REQUEST_CMD_MSG_ID           = 3,
+    STRESS_TEST_CMD_MSG_ID              = 4,
+    REPOLL_DCU_CMD_MSG_ID               = 5,
+    SWC_OVERALL_STATUS_RPT_MSG_ID       = 11,
+    SWC_DETAILED_STATUS_RPT_MSG_ID      = 12,
+    DCU_DETAILED_STATUS_RPT_MSG_ID      = 13,
+    SWC_ACK_RPT_MSG_ID                  = 14,
+    SWC_PROCESSED_SW_RPT_MSG_ID         = 15,
+    SYSTEM_STATUS_TO_TWGS_RPT_MSG_ID    = 16,
 } MessageId;
 
 /** Test Server message header */
@@ -97,7 +99,8 @@ typedef enum
     BetaDCUDetailedStatus               = 3,
     SWCDetailedStatus                   = 4,
     StartSendingProcessedSteeringWord   = 5,
-    StopSendingProcessedSteeringWord    = 6
+    StopSendingProcessedSteeringWord    = 6,
+    SystemStatusSentToTWGS              = 7
 } StatusRequestType;
 
 /** Status Request message data  */
@@ -114,15 +117,15 @@ typedef struct
     SWC_CONFIG  swcConfig;
     SWC_MODE    swcMode;
     SWC_MODE    olteMode;
-    HealthState swcAlphaDUStatus;
-    HealthState swcBetaDUStatus;
-    DCURolledUpStatus swcAlphaDCURolledUpStatus;
-    DCURolledUpStatus swcBetaDCURolledUpStatus;
+    RolledUpStatus swcAlphaDUStatus;
+    RolledUpStatus swcBetaDUStatus;
+    RolledUpStatus swcAlphaDCURolledUpStatus;
+    RolledUpStatus swcBetaDCURolledUpStatus;
     HealthState swcTempStatus;
     HealthState swc12VPwrStatus;
     HealthState swc24VPwrStatus;
     HealthState swcATBStatus;
-    HealthState testUnitHWStatus;
+    RolledUpStatus testUnitHWStatus;
     int lastProcessedAlpha;
     int lastProcessedBeta;
     DCUHealthState alphaDCU[NUM_DCU];
@@ -135,6 +138,13 @@ typedef struct
     MODULE_TYPE moduleType;
     int processedKSine;
 } SWCProcessedSteerWordDataType;
+
+/** Status Report message data  */
+typedef struct
+{
+    int swcStatus;
+    int swcrStatus;
+} StatusSentToTWGSDataType;
 
 typedef struct
 {
@@ -178,7 +188,7 @@ typedef struct
 
 typedef struct
 {
-    HealthState overallStatus;      // bitResult
+    RolledUpStatus overallStatus;      
     HealthState readyStatus;
     HealthState highTempAlarm;
     HealthState overTempAlarm;
@@ -271,8 +281,10 @@ typedef struct
 
 typedef struct
 {
+    int numCycle;
     int numTest;
     int numInc;
+    int cycleResetTime;
     int spacingUsec;
     int alpha;
     int alphaInc;

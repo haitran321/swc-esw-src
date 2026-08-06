@@ -1,4 +1,4 @@
-# SWC DU/TU Software Overview
+# SWC DU/TU Embedded Software Overview
 
 ## Purpose
 

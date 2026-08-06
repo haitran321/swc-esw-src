@@ -9,6 +9,7 @@
 #include "SteeringCmdMsg.h"
 #include "StatusRequestCmdMsg.h"
 #include "StressTestCmdMsg.h"
+#include "RepollDCUCmdMsg.h"
 #include "SWCAckRptMsg.h"
 
 #include "Timestamp.h"
@@ -101,7 +102,7 @@ STATUS CmdMgrBase::initializeCommonCommandDevices(const std::string& bindIp,
 
     if (statusTimerIntervalSeconds <= 0)
     {
-        _logger.logError("Invalid STATUS_TIMER_INTERVAL_SECONDS value: %d", statusTimerIntervalSeconds);
+        _logger.logError("Invalid SAP_STATUS_TIMER_INTERVAL_SECONDS value: %d", statusTimerIntervalSeconds);
         return ERROR;
     }
 
@@ -263,6 +264,24 @@ void CmdMgrBase::processTestServerMsg()
             break;
         }
 
+        case REPOLL_DCU_CMD_MSG_ID:
+        {
+            RepollDCUCmdMsg repollDCUCmdMsg(msg.getBuf(), msg.getBufSize());
+            if (repollDCUCmdMsg.validateData() != OK)
+            {
+                _logger.logError("%s received invalid repoll DCU command", getCommandMgrName());
+                return;
+            }
+
+            if (_verbose)
+            {
+                printf("Received Repoll DCU Cmd Msg\n");
+            }
+            _logger.logDebug("Received Repoll DCU Cmd Msg\n");
+            handleRepollDCUCommand();
+            break;
+        }
+
 
         default:
             printf("ERROR: Invalid command msgId %d\n", msg.getMsgId());
@@ -303,6 +322,10 @@ void CmdMgrBase::handleShutdownCommand(ShutdownOption shutdownType)
         printf("****Calling System Shutdown****\n");
         _logger.logInfo("****Calling System Shutdown****");
         sleep(3);
+
+        printf("CmdMgrBase::handleShutdownCommand\n");
+        // Set indicator
+        setShutdownBit();
     }
     else
     {

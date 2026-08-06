@@ -3,19 +3,19 @@
 #
 
 #######################################################################
-###### Test Server SAPS################################################
+###### Test Server SAPS ################################################
 
-
+# Number of seconds between each update while start send is active
+SAP_UPDATE_TIME_INTERVAL = 1
 
 #######################################################################
-###### DUs/TU SAPS########################################################
+###### DUs/TU SAPS ################################################
 
 # Nominal spacing of status timer, in seconds
-SAP_STATUS_TIMER_INTERVAL_SECONDS = 10
+SAP_STATUS_TIMER_INTERVAL_SECONDS = 3
 
 # Number of failed DCUs to set the DCU rolled up status to Yellow
 SAP_YELLOW_OP_THRESHOLD = 1
 
 # Number of failed DCUs to set the DCU rolled up status to Red
 SAP_RED_OP_THRESHOLD = 90
-

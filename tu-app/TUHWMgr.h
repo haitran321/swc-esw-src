@@ -36,6 +36,8 @@ class TUHWMgr : public Uncopyable
 
         int getFWScanLimitCheckStatus();
 
+        void setShutdownBit();
+
         void toggleRLTDSignal();
         void setRLCPSignal(CmdOnOff flag);
         void setRLSCSignal(CmdOnOff flag);
@@ -44,11 +46,14 @@ class TUHWMgr : public Uncopyable
         void setMode(SWC_MODE mode);
         void setOLTE(SWC_MODE olte);
 
+        int getSWCStatus();
+        int getSWCRStatus();
+
         int getRLTDPeriod();
         void setRLTDPeriod(int val);
 
-        int getNumTest();
-        void setNumTest(int val);
+        int getNumRLTDPerCycle();
+        void setNumRLTDPerCycle(int val);
 
         int getNumInc();
         void setNumInc(int val);
@@ -58,6 +63,12 @@ class TUHWMgr : public Uncopyable
 
         int getBetaInc();
         void setBetaInc(int val);
+
+        int getCycleResetTime();
+        void setCycleResetTime(int val);
+
+        int getNumCycle();
+        void setNumCycle(int val);
 
         DUTUStatusType readTUStatus();
 

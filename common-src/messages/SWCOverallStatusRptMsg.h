@@ -40,13 +40,13 @@ public:
 
     inline void setOLTEMode(SWC_MODE mode);
 
-    inline void setAlphaDUStatus(HealthState health);
+    inline void setAlphaDUStatus(RolledUpStatus status);
 
-    inline void setBetaDUStatus(HealthState health);
+    inline void setBetaDUStatus(RolledUpStatus status);
 
-    inline void setAlphaDCURolledUpStatus(DCURolledUpStatus status);
+    inline void setAlphaDCURolledUpStatus(RolledUpStatus status);
 
-    inline void setBetaDCURolledUpStatus(DCURolledUpStatus status);
+    inline void setBetaDCURolledUpStatus(RolledUpStatus status);
 
     inline void setTempStatus(HealthState health);
 
@@ -56,7 +56,7 @@ public:
 
     inline void setATBStatus(HealthState health);
 
-    inline void setTUHWStatus(HealthState health);
+    inline void setTUHWStatus(RolledUpStatus status);
 
     inline void setAlphaDCUStatus(int dcu, DCUHealthState health);
 
@@ -94,22 +94,22 @@ void SWCOverallStatusRptMsg::setOLTEMode(SWC_MODE mode)
     _data.olteMode = mode;
 }
 
-void SWCOverallStatusRptMsg::setAlphaDUStatus(HealthState health)
+void SWCOverallStatusRptMsg::setAlphaDUStatus(RolledUpStatus status)
 {
-    _data.swcAlphaDUStatus = health;
+    _data.swcAlphaDUStatus = status;
 }
 
-void SWCOverallStatusRptMsg::setBetaDUStatus(HealthState health)
+void SWCOverallStatusRptMsg::setBetaDUStatus(RolledUpStatus status)
 {
-    _data.swcBetaDUStatus = health;
+    _data.swcBetaDUStatus = status;
 }
 
-void SWCOverallStatusRptMsg::setAlphaDCURolledUpStatus(DCURolledUpStatus status)
+void SWCOverallStatusRptMsg::setAlphaDCURolledUpStatus(RolledUpStatus status)
 {
     _data.swcAlphaDCURolledUpStatus = status;
 }
 
-void SWCOverallStatusRptMsg::setBetaDCURolledUpStatus(DCURolledUpStatus status)
+void SWCOverallStatusRptMsg::setBetaDCURolledUpStatus(RolledUpStatus status)
 {
     _data.swcBetaDCURolledUpStatus = status;
 }
@@ -134,9 +134,9 @@ void SWCOverallStatusRptMsg::setATBStatus(HealthState health)
     _data.swcATBStatus = health;
 }
 
-void SWCOverallStatusRptMsg::setTUHWStatus(HealthState health)
+void SWCOverallStatusRptMsg::setTUHWStatus(RolledUpStatus status)
 {
-    _data.testUnitHWStatus = health;
+    _data.testUnitHWStatus = status;
 }
 
 void SWCOverallStatusRptMsg::setAlphaDCUStatus(int dcu, DCUHealthState health)

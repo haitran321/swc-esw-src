@@ -145,14 +145,14 @@ int TUDevice::getRLTDPeriodReg()
     return (regs->rltdPeriod);
 }
 
-void TUDevice::setNumTestReg(int val)
+void TUDevice::setNumRLTDPerCycleReg(int val)
 {
-    regs->rltdRuns = val;
+    regs->numRLTDPerCycle = val;
 }
 
-int TUDevice::getNumTestReg()
+int TUDevice::getNumRLTDPerCycleReg()
 {
-    return (regs->rltdRuns);
+    return (regs->numRLTDPerCycle);
 }
 
 void TUDevice::setRLTDPreTimeReg(int val)
@@ -193,6 +193,26 @@ void TUDevice::setBetaIncReg(int val)
 int TUDevice::getBetaIncReg()
 {
     return (regs->betaInc);
+}
+
+void TUDevice::setCycleResetTimeReg(int val)
+{
+    regs->cycleResetTime = val;
+}
+
+int TUDevice::getCycleResetTimeReg()
+{
+    return (regs->cycleResetTime);
+}
+
+void TUDevice::setNumCycleReg(int val)
+{
+    regs->numCycle = val;
+}
+
+int TUDevice::getNumCycleReg()
+{
+    return (regs->numCycle);
 }
 
 int TUDevice::getFPGADieTempReg()

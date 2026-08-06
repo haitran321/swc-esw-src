@@ -20,13 +20,15 @@ typedef struct
     int rlcpPulseDur;
     int rlscPulseDur;
     int steeringWordPulseDur;
-    int rltdPeriod;
-    int rltdRuns;
+    int rltdPeriod;             // /RLTD period
+    int numRLTDPerCycle;       // /RLTD Runs
     int rltdPreTime;
     int numInc;
     int alphaInc;
     int betaInc;
-    int spare3[3];
+    int cycleResetTime;        // cycleRepeatTime
+    int numCycle;
+    int spare3[1];
     int fpgaDieTemp;
     int vccIntVoltage;
     int vccAuxVoltage;
@@ -57,8 +59,8 @@ typedef enum
     TU_SYSTEM_OLTE_MASK                     = 0x00000080,    /* Bits 7 */
     TU_RLCP_CMD_MASK                        = 0x00000100,    /* Bits 8 */
     TU_RLSC_CMD_MASK                        = 0x00000200,    /* Bits 9 */
-    TU_SHUTDOWN_MASK                        = 0x00001004,    /* Bit 12 */
-    TU_SL_FREQ_SEL_MASK                     = 0x0003000,     /* Bits 16..17 */
+    TU_SHUTDOWN_CMD_MASK                    = 0x00001000,    /* Bit 12 */
+    TU_SL_FREQ_SEL_MASK                     = 0x00030000,    /* Bits 16..17 */
     TU_SOFT_RESET_MASK                      = 0x80000000,    /* Bit 31 */
 }TU_BOARD_CONTROL_ENUM;
 
@@ -132,8 +134,8 @@ public:
     void setRLTDPeriodReg(int val);
     int getRLTDPeriodReg();
 
-    void setNumTestReg(int val);
-    int getNumTestReg();
+    void setNumRLTDPerCycleReg(int val);
+    int getNumRLTDPerCycleReg();
 
     void setRLTDPreTimeReg(int val);
     int getRLTDPreTimeReg();
@@ -146,6 +148,12 @@ public:
 
     void setBetaIncReg(int val);
     int getBetaIncReg();
+
+    void setCycleResetTimeReg(int val);
+    int getCycleResetTimeReg();
+
+    void setNumCycleReg(int val);
+    int getNumCycleReg();
 
     int getFPGADieTempReg();
 

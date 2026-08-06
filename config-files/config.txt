@@ -1,5 +1,7 @@
 #
-# SWC Configuration Data File.
+# $Id: config.txt 8897 2016-02-19 20:24:56Z tra18693 $
+#
+# Configuration Data file.
 #
 
 VERBOSE = 0
@@ -34,31 +36,34 @@ LOG_LEVEL = 2
 # For Status Emulator
 FROM_STATUS_EMULATOR_PORT = 3040
 
-STATUS_TIMER_INTERVAL_SECONDS = 10
-
 # STATUS_TIMER_INTERVAL_SECONDS * REFRESH_DCU_STATUS_ON_GDS_INTERVAL
 REFRESH_DCU_STATUS_ON_GDS_INTERVAL = 3
 DCU_NUM_TO_REFRESH_GDS = 199
-
-# Number of failed DCUs to set the DCU rolled up status to Yellow
-SAP_YELLOW_OP_THRESHOLD = 1
-
-# Number of failed DCUs to set the DCU rolled up status to Red
-SAP_RED_OP_THRESHOLD = 90
 
 # FORCE_TEST_MODE
 # 0 = Normal
 # 1 = Force test, no RLTD but needs SW trigger
 FORCE_TEST_MODE = 0
 
-# DCU SPI Cable Delays (course adjustment)
-DCU_SPI_DELAY1 = 18
-DCU_SPI_DELAY2 = 18
-DCU_SPI_DELAY3 = 18
-DCU_SPI_DELAY4 = 18
+# For ALPHA DCUs
+# ALPHA DCU SPI Cable Delays (course adjustment)
+ALPHA_DCU_SPI_DELAY1 = 30
+ALPHA_DCU_SPI_DELAY2 = 30
+ALPHA_DCU_SPI_DELAY3 = 30
+ALPHA_DCU_SPI_DELAY4 = 30
 
-# DCU SCLK Readback Delay (fine adjustment)
-DCU_SCLK_READBACK_DELAY = 14
+# ALPHA DCU SCLK Readback Delay (fine adjustment)
+ALPHA_DCU_SCLK_READBACK_DELAY = 8 
+
+# For BETA DCUs
+# BETA DCU SPI Cable Delays (course adjustment)
+BETA_DCU_SPI_DELAY1 = 27
+BETA_DCU_SPI_DELAY2 = 27
+BETA_DCU_SPI_DELAY3 = 27
+BETA_DCU_SPI_DELAY4 = 27
+
+# BETA DCU SCLK Readback Delay (fine adjustment)
+BETA_DCU_SCLK_READBACK_DELAY = 2
 
 # Scan Limit center freq selection
 # 0 = 442MHz
@@ -78,5 +83,5 @@ RLTD_PRE_TRIGGER_TIME = 0
 # DCU FW version
 DCU_CHECK_VERSION_FLAG = 1
 DCU_MAJOR_VERSION = 0
-DCU_MINOR_VERSION = 6
+DCU_MINOR_VERSION = 7
 

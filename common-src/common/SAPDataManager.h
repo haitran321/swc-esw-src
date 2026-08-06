@@ -2,6 +2,7 @@
 #define SAPDataManager_H
 
 #include <string>
+#include <iostream>
 #include "Uncopyable.h"
 #include "Properties.h"
 
@@ -48,8 +49,7 @@ template <class T> STATUS SAPDataManager::get(const std::string &name, T &value)
     STATUS status = Properties::get(name, value);
     if (status != OK)
     {
-        printf("ERROR:  Failed to resolve SAP [%s] from %s\n",
-                    name.c_str(), loadedFrom.c_str());
+        std::cout << "ERROR:  Failed to resolve SAP " << name.c_str() << " from " << loadedFrom.c_str() << std::endl;
     }
 
     return status;

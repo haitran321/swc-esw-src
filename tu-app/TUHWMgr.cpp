@@ -41,14 +41,15 @@ STATUS TUHWMgr::initialize()
 
     // Get config parameters
     ConfigDataManager &configs = ConfigDataManager::getInstance();
+
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
+
     rc = rc || configs.get("RLTD_PULSE_DURATION", RLTD_PULSE_DURATION);
     rc = rc || configs.get("RLCP_PULSE_DURATION", RLCP_PULSE_DURATION);
     rc = rc || configs.get("RLSC_PULSE_DURATION", RLSC_PULSE_DURATION);
     rc = rc || configs.get("STEERING_WORD_PULSE_DURATION", STEERING_WORD_PULSE_DURATION);
     rc = rc || configs.get("RLTD_PRE_TRIGGER_TIME", RLTD_PRE_TRIGGER_TIME);
-
-    // Verbose parameters
-    rc = rc || configs.get("VERBOSE", _verbose);
 
     // For testing.  To be removed
     rc = rc || configs.get("USE_STATUS_EMULATOR", USE_STATUS_EMULATOR);
@@ -148,6 +149,13 @@ int TUHWMgr::getFWScanLimitCheckStatus()
     return (_tuDev->getSLStatusReg());
 }
 
+void TUHWMgr::setShutdownBit()
+{
+    printf("TUHWMgr::setShutdownBit\n");
+    _brdCtrVal = DeviceUtilities::updateReg(TU_SHUTDOWN_CMD_MASK, _brdCtrVal, 1);
+    _tuDev->setBrdCtrlReg(_brdCtrVal);
+}
+
 void TUHWMgr::toggleRLTDSignal()
 {
     _brdCtrVal = DeviceUtilities::updateReg(TU_SW_TRIGGER_MASK, _brdCtrVal, 1);
@@ -186,6 +194,16 @@ void TUHWMgr::setOLTE(SWC_MODE olte)
     _tuDev->setBrdCtrlReg(_brdCtrVal);
 }
 
+int TUHWMgr::getSWCStatus()
+{
+    return(_tuDev->getSWCStatusReg());
+}
+
+int TUHWMgr::getSWCRStatus()
+{
+    return(_tuDev->getSWCRStatusReg());
+}
+
 int TUHWMgr::getRLTDPeriod()
 {
     return(_tuDev->getRLTDPeriodReg());
@@ -197,14 +215,14 @@ void TUHWMgr::setRLTDPeriod(int val)
     _tuDev->setRLTDPeriodReg(val*100);
 }
 
-int TUHWMgr::getNumTest()
+int TUHWMgr::getNumRLTDPerCycle()
 {
-    return(_tuDev->getNumTestReg());
+    return(_tuDev->getNumRLTDPerCycleReg());
 }
 
-void TUHWMgr::setNumTest(int val)
+void TUHWMgr::setNumRLTDPerCycle(int val)
 {
-    _tuDev->setNumTestReg(val);
+    _tuDev->setNumRLTDPerCycleReg(val);
 }
 
 int TUHWMgr::getNumInc()
@@ -237,16 +255,37 @@ void TUHWMgr::setBetaInc(int val)
     _tuDev->setBetaIncReg(val);
 }
 
+int TUHWMgr::getCycleResetTime()
+{
+    return(_tuDev->getCycleResetTimeReg());
+}
+
+void TUHWMgr::setCycleResetTime(int val)
+{
+    // Converting usec to 100MHz clk count
+    _tuDev->setCycleResetTimeReg(val*100);
+}
+
+int TUHWMgr::getNumCycle()
+{
+    return(_tuDev->getNumCycleReg());
+}
+
+void TUHWMgr::setNumCycle(int val)
+{
+    _tuDev->setNumCycleReg(val);
+}
+
 DUTUStatusType TUHWMgr::readTUStatus()
 {
     _tuDev->setARMInitStatusReg(_armInitReady);
 
     int status = _tuDev->getBrdStatusReg();
 
-    _logger.logDebug("TU %d Status for 0x%x module", MODULE_TYPE, status);
+    _logger.logDebug("TU status 0x%x", status);
     if (_verbose)
     {
-        printf("TU %d Status for 0x%x module\n", MODULE_TYPE, status);
+        printf("TU status 0x%x\n", status);
     }
 
     if (USE_STATUS_EMULATOR == 1)
@@ -261,10 +300,33 @@ DUTUStatusType TUHWMgr::readTUStatus()
     }
 
     DUTUStatusType tuStatus;
-    tuStatus.overallStatus = (HealthState)(DeviceUtilities::readMask(TU_BIT_RESULT_MASK, status));
+    HealthState fwOverallStatus = NO_GO;
+    tuStatus.overallStatus = ROLLED_UP_GREEN;
+
+    fwOverallStatus = (HealthState)(DeviceUtilities::readMask(TU_BIT_RESULT_MASK, status));
+    if (fwOverallStatus == NO_GO)
+    {
+        tuStatus.overallStatus = ROLLED_UP_RED;
+    }
+
     tuStatus.readyStatus = (HealthState)(DeviceUtilities::readMask(TU_READY_STATUS_MASK, status));
+    if ((tuStatus.readyStatus == NO_GO) && (tuStatus.overallStatus == ROLLED_UP_GREEN))
+    {
+        tuStatus.overallStatus = ROLLED_UP_YELLOW;
+    }
+
     tuStatus.highTempAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_HIGH_TEMP_ALARM_MASK, status)) & 0x1);
+    if ((tuStatus.highTempAlarm == NO_GO) && (tuStatus.overallStatus == ROLLED_UP_GREEN))
+    {
+        tuStatus.overallStatus = ROLLED_UP_YELLOW;
+    }
+
     tuStatus.overTempAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_OVER_TEMP_ALARM_MASK, status)) & 0x1);
+    if (tuStatus.overTempAlarm == NO_GO)
+    {
+        tuStatus.overallStatus = ROLLED_UP_RED;
+    }
+
     tuStatus.vccintAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_VCC_INT_ALARM_MASK, status)) & 0x1);
     tuStatus.vccauxAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_VCC_AUX_ALARM_MASK, status)) & 0x1);
     tuStatus.vbramAlarm = (HealthState)(~(DeviceUtilities::readMask(TU_VBRAM_ALARM_MASK, status)) & 0x1);

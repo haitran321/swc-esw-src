@@ -2,6 +2,7 @@
 #define IOMHWMgr_H
 
 #include <queue>
+#include <string>
 #include "Uncopyable.h"
 #include "DUDevice.h"
 #include "Logger.h"
@@ -56,9 +57,17 @@ class IOMHWMgr : public Uncopyable
         /* Private constructor */
         IOMHWMgr();
 
+        STATUS createContext();
+
+        STATUS ensureConnected();
+
         int _verbose;
 
         Logger &_logger;
+
+        std::string _ioModuleIpAddress;
+
+        int _ioModulePort;
 
         modbus_t *_modbusCtx;
 };

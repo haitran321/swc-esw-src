@@ -19,7 +19,7 @@ STATUS SWCDetailedStatusRptMsg::buildMsg()
     // Byte swap from Local to Network
     _data.swcStatus = (HealthState)toNetworkInt(_data.swcStatus);
     // Alpha status
-    _data.alphaDUStatus.overallStatus = (HealthState)toNetworkInt(_data.alphaDUStatus.overallStatus);
+    _data.alphaDUStatus.overallStatus = (RolledUpStatus)toNetworkInt(_data.alphaDUStatus.overallStatus);
     _data.alphaDUStatus.readyStatus = (HealthState)toNetworkInt(_data.alphaDUStatus.readyStatus);
     _data.alphaDUStatus.highTempAlarm = (HealthState)toNetworkInt(_data.alphaDUStatus.highTempAlarm);
     _data.alphaDUStatus.overTempAlarm = (HealthState)toNetworkInt(_data.alphaDUStatus.overTempAlarm);
@@ -29,7 +29,7 @@ STATUS SWCDetailedStatusRptMsg::buildMsg()
     _data.alphaDUStatus.dieTemp = (HealthState)toNetworkInt(_data.alphaDUStatus.dieTemp);
     
     // Beta status
-    _data.betaDUStatus.overallStatus = (HealthState)toNetworkInt(_data.betaDUStatus.overallStatus);
+    _data.betaDUStatus.overallStatus = (RolledUpStatus)toNetworkInt(_data.betaDUStatus.overallStatus);
     _data.betaDUStatus.readyStatus = (HealthState)toNetworkInt(_data.betaDUStatus.readyStatus);
     _data.betaDUStatus.highTempAlarm = (HealthState)toNetworkInt(_data.betaDUStatus.highTempAlarm);
     _data.betaDUStatus.overTempAlarm = (HealthState)toNetworkInt(_data.betaDUStatus.overTempAlarm);
@@ -39,7 +39,7 @@ STATUS SWCDetailedStatusRptMsg::buildMsg()
     _data.betaDUStatus.dieTemp = (HealthState)toNetworkInt(_data.betaDUStatus.dieTemp);
 
     // TU status
-    _data.tuStatus.overallStatus = (HealthState)toNetworkInt(_data.tuStatus.overallStatus);
+    _data.tuStatus.overallStatus = (RolledUpStatus)toNetworkInt(_data.tuStatus.overallStatus);
     _data.tuStatus.readyStatus = (HealthState)toNetworkInt(_data.tuStatus.readyStatus);
     _data.tuStatus.highTempAlarm = (HealthState)toNetworkInt(_data.tuStatus.highTempAlarm);
     _data.tuStatus.overTempAlarm = (HealthState)toNetworkInt(_data.tuStatus.overTempAlarm);

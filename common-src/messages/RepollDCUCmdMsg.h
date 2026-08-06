@@ -1,8 +1,8 @@
 /**
 *
 */
-#ifndef StressTestCmdMsg_H
-#define StressTestCmdMsg_H
+#ifndef RepollDCUCmdMsg_H
+#define RepollDCUCmdMsg_H
 
 #include <string>
 
@@ -11,7 +11,7 @@ using namespace std;
 #include "SWCMsgTypes.h"
 #include "CommandMessage.h"
 
-class StressTestCmdMsg : public CommandMessage
+class RepollDCUCmdMsg : public CommandMessage
 {
 public:
 
@@ -21,13 +21,13 @@ public:
     * @param buffer Raw message buffer
     * @param bufSize Raw message buffer size
     */
-    StressTestCmdMsg(char *buffer, int bufSize);
+    RepollDCUCmdMsg(char *buffer, int bufSize);
 
     /**
     * Destructor
     *
     */
-    virtual ~StressTestCmdMsg() { };
+    virtual ~RepollDCUCmdMsg() { };
 
     /**
     * Method validateData validates data from the data section of 
@@ -37,13 +37,7 @@ public:
     */
     virtual STATUS validateData();
 
-    void byteSwapToLocal();
-
 private:
-
-    /** Stress Test Command data */
-
-    StressTestCmdDataType *_data;
 
 };
 

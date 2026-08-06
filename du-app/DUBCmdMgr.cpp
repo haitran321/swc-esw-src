@@ -40,14 +40,13 @@ STATUS DUBCmdMgr::start()
     int WARM_RESTART_PORT;
     int LOCAL_HW_STATUS_PORT;
     int TO_TEST_SERVER_PORT;
-    int STATUS_TIMER_INTERVAL_SECONDS;
+    int SAP_STATUS_TIMER_INTERVAL_SECONDS;
 
     printf("\nLoading Config file\n");
     if (ConfigDataManager::getInstance().load() != OK)
     {
         printf("Error loading Config file\n");
     }
-
     ConfigDataManager& configs = ConfigDataManager::getInstance();
 
     printf("\nLoading SAP file\n");
@@ -55,6 +54,10 @@ STATUS DUBCmdMgr::start()
     {
         printf("Error loading Config file\n");
     }
+    SAPDataManager& saps = SAPDataManager::getInstance();
+
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
 
     // Get IP addresses
     rc = rc || configs.get("TEST_SERVER_IP_ADDRESS", TEST_SERVER_IP_ADDRESS);
@@ -78,11 +81,10 @@ STATUS DUBCmdMgr::start()
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
 
     // Status parameters
-    rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
     rc = rc || configs.get("REFRESH_DCU_STATUS_ON_GDS_INTERVAL", REFRESH_DCU_STATUS_ON_GDS_INTERVAL);
 
-    // Verbose parameters
-    rc = rc || configs.get("VERBOSE", _verbose);
+    // Status parameters
+    rc = rc || saps.get("SAP_STATUS_TIMER_INTERVAL_SECONDS", SAP_STATUS_TIMER_INTERVAL_SECONDS);
 
     // Setup Logger
     _logger.initialize();
@@ -98,7 +100,7 @@ STATUS DUBCmdMgr::start()
 
     if (initializeCommonCommandDevices(BETA_IP_ADDRESS, TEST_SERVER_IP_ADDRESS,
                                        FROM_TEST_SERVER_PORT, TO_TEST_SERVER_PORT,
-                                       FROM_STATUS_EMULATOR_PORT, STATUS_TIMER_INTERVAL_SECONDS) != OK)
+                                       FROM_STATUS_EMULATOR_PORT, SAP_STATUS_TIMER_INTERVAL_SECONDS) != OK)
     {
         return ERROR;
     }
@@ -168,7 +170,6 @@ void DUBCmdMgr::handlePendingDcuStatusAfterScanLimit()
             status.msgID = BETA_DCU_STATUS;
             status.betaDCUStatus = dcuStatus;
             sendDCUStatusToDUA(status);
-//          usleep(1 * 1000);   // Sleep 1 msecs
         }
     }
 }

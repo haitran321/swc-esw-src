@@ -46,8 +46,12 @@ class DUACmdMgr : public DUCmdMgrBase
         virtual int getProcessedKSineForReport() const;
         virtual void handleStatusEmulatorMessage(int msgId, const int *status, int numData);
 
+
         BetaDCUStatusMsg _localStatus[4];
         int localStatusCounter;
+
+        int _statusTimerExpiredBetweenReceivingStatusFromDUB;
+        int _statusTimerExpiredBetweenReceivingStatusFromTU;
 };
 
 

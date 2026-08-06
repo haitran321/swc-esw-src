@@ -30,8 +30,10 @@ class CmdMgrBase : public EventProcessor
         virtual void handleSteeringCommand(const SteeringCmdDataType& params) = 0;
         virtual void handleStatusRequest(const StatusRequestCmdDataType& params) = 0;
         virtual void handleStressTestCommand(const StressTestCmdDataType& params) = 0;
+        virtual void handleRepollDCUCommand() = 0;
         virtual void handleStatusEmulatorMessage(int msgId, const int *status, int numData) = 0;
         virtual void processStatusTimer();
+        virtual void setShutdownBit() = 0;
 
         int _verbose;
         Logger &_logger;

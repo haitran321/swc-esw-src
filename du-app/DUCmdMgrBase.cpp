@@ -68,6 +68,12 @@ STATUS DUCmdMgrBase::initializeDUCommonDevices()
     return OK;
 }
 
+void DUCmdMgrBase::setShutdownBit()
+{
+    printf("DUCmdMgrBase::setShutdownBit\n");
+    _duHWMgr.setShutdownBit();
+}   
+
 void DUCmdMgrBase::handleSteeringCommand(const SteeringCmdDataType& params)
 {
     _steeringCmdCounter++;
@@ -129,6 +135,11 @@ void DUCmdMgrBase::handleStressTestCommand(const StressTestCmdDataType& params)
     _logger.logError("ERROR: Not processing stress test command");
 }
 
+void DUCmdMgrBase::handleRepollDCUCommand()
+{
+    _duHWMgr.clearDCUData();
+}
+
 void DUCmdMgrBase::processSLInterrupt()
 {
     size_t bytesRead = 0;
@@ -139,7 +150,7 @@ void DUCmdMgrBase::processSLInterrupt()
     {
         printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
     }
-    _logger.logDebug("%d reading scan limit interrupt, number of interrupt = %d", getCommandMgrName(), pending);
+    _logger.logDebug("%s reading scan limit interrupt, number of interrupt = %d", getCommandMgrName(), pending);
     _uioDevSL->clearInterrupt();
 
     int atbAlpha = _duHWMgr.getAtbKSine(ALPHA);
@@ -158,7 +169,7 @@ void DUCmdMgrBase::processSLInterrupt()
     {
         printf("atbAlpha = %d, atbBeta = %d\n", atbAlpha, atbBeta);
     }
-    _logger.logDebug("%d atbAlpha = %d, atbBeta = %d", getCommandMgrName(), atbAlpha, atbBeta);
+    _logger.logDebug("%s atbAlpha = %d, atbBeta = %d", getCommandMgrName(), atbAlpha, atbBeta);
 
     int atbSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
     int fwSLResult = _duHWMgr.getFWScanLimitCheckStatus();
@@ -206,10 +217,10 @@ void DUCmdMgrBase::processConfigInterrupt()
     int pending = 0;
 
     _uioDevConfig->read((char *)&pending, sizeof(int), bytesRead);
-    if (_verbose)
-    {
+//  if (_verbose)
+//  {
         printf("Reading config changed interrupt, number of interrupt = %d\n", pending);
-    }
+//  }
     _logger.logDebug("%s reading config changed interrupt, number of interrupt = %d", getCommandMgrName(), pending);
     _uioDevConfig->clearInterrupt();
 

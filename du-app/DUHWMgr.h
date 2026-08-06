@@ -42,6 +42,7 @@ class DUHWMgr : public Uncopyable
         int getFWScanLimitCheckStatus();
 
         // Board Control Reg
+        void setShutdownBit();
         void toggleSWTrigger();
         void setSysConfig(SWC_CONFIG config);
         void setTestSrcInTestMode(TestSource testSrc);
@@ -98,6 +99,7 @@ class DUHWMgr : public Uncopyable
         SWC_MODE getSWCModeStatus();
         SWC_MODE getOLTEModeStatus();
         int getFPGADieTemp();
+        void clearDCUData();
 
 
         void processSWCREmulatorStatus(SWC_CONFIG sysConfig_,
@@ -107,8 +109,8 @@ class DUHWMgr : public Uncopyable
                            HealthState pwr12VStatus_,
                            HealthState pwr24VStatus_,
                            HealthState atbStatus_,
-                           DCURolledUpStatus alphaDCURolledUpStatus_,
-                           DCURolledUpStatus betaDCURolledUpStatus_);
+                           RolledUpStatus alphaDCURolledUpStatus_,
+                           RolledUpStatus betaDCURolledUpStatus_);
 
         void processDUEmulatorStatus(int statusReg);
 
@@ -135,6 +137,7 @@ class DUHWMgr : public Uncopyable
         IOMHWMgr &_iomHWMgr;
 
         RFCC_CH _rfccType;
+        string cmdMgrName;
         int _brdCtrVal;
         int _diagRegVal;
         int _sysConfigReg;
@@ -147,8 +150,8 @@ class DUHWMgr : public Uncopyable
         DUTUStatusType _alphaDUStatus;
         DUTUStatusType _betaDUStatus;
         DUTUStatusType _tuStatus;
-        DCURolledUpStatus _alphaDCURolledUpStatus;
-        DCURolledUpStatus _betaDCURolledUpStatus;
+        RolledUpStatus _alphaDCURolledUpStatus;
+        RolledUpStatus _betaDCURolledUpStatus;
         HealthState _tempStatus;
         HealthState _pwr12VStatus;
         HealthState _pwr24VStatus;
@@ -184,16 +187,19 @@ class DUHWMgr : public Uncopyable
         void setDCUGroupStatusBit(RFCC_CH val);
         void setDCUHealthStatusBit(HealthState val);
         void setDCUNumberStatusBit(int val);
+        int getMajorityFWStatusFromHistory(int reg, int currentFWStatus);
 
         int USE_STATUS_EMULATOR;
         int emDCUFWStatus[NUM_RFCC_CH][NUM_DCU];
+        int _dcuFWStatusHistory[NUM_RFCC_CH][NUM_DCU][4];
+        int _dcuFWStatusHistoryCount[NUM_RFCC_CH][NUM_DCU];
         int emDUStatusReg;
         HealthState emTempStatus;
         HealthState emPwr12VStatus;
         HealthState emPwr24VStatus;
         HealthState emAtbStatus;
-        DCURolledUpStatus emAlphaDCURolledUpStatus;
-        DCURolledUpStatus emBetaDCURolledUpStatus;
+        RolledUpStatus emAlphaDCURolledUpStatus;
+        RolledUpStatus emBetaDCURolledUpStatus;
 };
 
 

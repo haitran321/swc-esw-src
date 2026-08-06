@@ -24,8 +24,10 @@ STATUS StressTestCmdMsg::validateData()
 
 void StressTestCmdMsg::byteSwapToLocal()
 {
+    _data->numCycle = (int)fromNetworkInt(_data->numCycle);
     _data->numTest = (int)fromNetworkInt(_data->numTest);
     _data->numInc = (int)fromNetworkInt(_data->numInc);
+    _data->cycleResetTime = (int)fromNetworkInt(_data->cycleResetTime);
     _data->spacingUsec = (int)fromNetworkInt(_data->spacingUsec);
     _data->alpha = (int)fromNetworkInt(_data->alpha);
     _data->alphaInc = (int)fromNetworkInt(_data->alphaInc);

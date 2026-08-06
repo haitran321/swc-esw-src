@@ -23,7 +23,7 @@ STATUS StatusRequestCmdMsg::validateData()
 
    // Validate data content.
 
-   if (_data->requestType < SWCOverallStatus || _data->requestType > StopSendingProcessedSteeringWord)
+   if (_data->requestType < SWCOverallStatus || _data->requestType > SystemStatusSentToTWGS)
    {
       printf("ERROR::InvalidCommandData, Request Type = %d)",
                 _data->requestType);

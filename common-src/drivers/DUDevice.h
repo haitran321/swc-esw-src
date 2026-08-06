@@ -96,10 +96,10 @@ typedef enum
 
 typedef enum
 {
-    STATUS_DATA_TYPE_ERROR      = 0,
-    DATA_TYPE_CONFIG_STATUS     = 1,
-    DATA_TYPE_CUSTOM_STATUS     = 2,
-    DATA_TYPE_FUTURE_USE        = 3
+    DATA_TYPE_DU_STATUS             = 0,
+    DATA_TYPE_CONFIG_STATUS         = 1,
+    DATA_TYPE_DCU_ROLLED_UP_STATUS  = 2,
+    STATUS_DATA_TYPE_ERROR          = 3
 }SWC_STATUS_DATA_TYPE;
 
 typedef enum
@@ -163,11 +163,12 @@ typedef enum
     DU_DATA_TYPE_MASK                   = 0x000000C0,    /* Bit 6..7 */
     // Overall Status
     DU_OVERALL_STATUS_MASK              = 0x00000100,    /* Bit 8 */
-    // Data Type = Custom Status
+    // Data Type = DU Status
+    DU_BETA_OVERALL_STATUS_MASK         = 0x00000600,    /* Bit 9..10 */
+    DU_ALPHA_OVERALL_STATUS_MASK        = 0x00001800,    /* Bit 11..12 */
+    // Data Type = DCU Rolled Up Status
     DU_BETA_DCU_ROLLED_UP_STATUS_MASK   = 0x00018000,    /* Bit 15..16 */
     DU_ALPHA_DCU_ROLLED_UP_STATUS_MASK  = 0x00060000,    /* Bit 17..18 */
-    DU_BETA_OVERALL_STATUS_MASK         = 0x00080000,    /* Bit 19 */
-    DU_ALPHA_OVERALL_STATUS_MASK        = 0x00100000,    /* Bit 20 */
     // DCU Status
     DU_DCU_GROUP_STATUS_MASK            = 0x00200000,    /* Bit 21 */
     DU_DCU_HEALTH_STATUS_MASK           = 0x00400000,    /* Bit 22 */

@@ -6,6 +6,7 @@
 #include "ConfigDataManager.h"
 #include "SAPDataManager.h"
 #include "ScanLimitCheck.h"
+#include "StatusSentToTWGSRptMsg.h"
 
 /**
  * Constructor
@@ -55,14 +56,13 @@ STATUS TUCmdMgr::start()
     int LOCAL_HW_STATUS_PORT;
     int LOCAL_HW_COMMAND_PORT;
     int TO_TEST_SERVER_PORT;
-    int STATUS_TIMER_INTERVAL_SECONDS;
+    int SAP_STATUS_TIMER_INTERVAL_SECONDS;
 
     printf("\nLoading Config file\n");
     if (ConfigDataManager::getInstance().load() != OK)
     {
         printf("Error loading Config file\n");
     }
-
     ConfigDataManager& configs = ConfigDataManager::getInstance();
 
     printf("\nLoading SAP file\n");
@@ -70,6 +70,10 @@ STATUS TUCmdMgr::start()
     {
         printf("Error loading Config file\n");
     }
+    SAPDataManager& saps = SAPDataManager::getInstance();
+
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
 
     // Get IP addresses
     rc = rc || configs.get("TEST_SERVER_IP_ADDRESS", TEST_SERVER_IP_ADDRESS);
@@ -94,10 +98,7 @@ STATUS TUCmdMgr::start()
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
 
     // Status parameters
-    rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
-
-    // Verbose parameters
-    rc = rc || configs.get("VERBOSE", _verbose);
+    rc = rc || saps.get("SAP_STATUS_TIMER_INTERVAL_SECONDS", SAP_STATUS_TIMER_INTERVAL_SECONDS);
 
     // Setup Logger
     _logger.initialize();
@@ -113,7 +114,7 @@ STATUS TUCmdMgr::start()
 
     if (initializeCommonCommandDevices(TEST_UNIT_IP_ADDRESS, TEST_SERVER_IP_ADDRESS,
                                        FROM_TEST_SERVER_PORT, TO_TEST_SERVER_PORT,
-                                       FROM_STATUS_EMULATOR_PORT, STATUS_TIMER_INTERVAL_SECONDS) != OK)
+                                       FROM_STATUS_EMULATOR_PORT, SAP_STATUS_TIMER_INTERVAL_SECONDS) != OK)
     {
         return ERROR;
     }
@@ -217,6 +218,12 @@ STATUS TUCmdMgr::start()
     return OK;
 }
 
+void TUCmdMgr::setShutdownBit()
+{
+    printf("TUCmdMgr::setShutdownBit\n");
+    _tuHWMgr.setShutdownBit();
+}   
+
 void TUCmdMgr::processSLInterrupt()
 {
     size_t bytesRead = 0;
@@ -256,10 +263,11 @@ void TUCmdMgr::processWLSPInterrupt()
     int pending = 0;
 
     _uioDevWLSP->read((char *)&pending, sizeof(int), bytesRead);
-    if (_verbose){
+    if (_verbose)
+    {
         printf("Reading WLSP interrupt, number of interrupt = %d\n", pending);
     
-    _logger.logDebug("%s reading WLSP changed interrupt, number of interrupt = %d", getCommandMgrName(), pending);
+        _logger.logDebug("%s reading WLSP changed interrupt, number of interrupt = %d", getCommandMgrName(), pending);
     }
     _uioDevWLSP->clearInterrupt();
 }
@@ -301,8 +309,10 @@ void TUCmdMgr::handleSteeringCommand(const SteeringCmdDataType& params)
         _tuHWMgr.setArmKSine(BETA, params.beta);
 
         // Setup TU for 1 action
-        _tuHWMgr.setNumTest(1);
+        _tuHWMgr.setNumCycle(1);
+        _tuHWMgr.setNumRLTDPerCycle(1);
         _tuHWMgr.setNumInc(0);
+        _tuHWMgr.setCycleResetTime(0);
         _tuHWMgr.setRLTDPeriod(0);
         _tuHWMgr.setAlphaInc(0);
         _tuHWMgr.setBetaInc(0);
@@ -327,8 +337,26 @@ void TUCmdMgr::handleSteeringCommand(const SteeringCmdDataType& params)
 
 void TUCmdMgr::handleStatusRequest(const StatusRequestCmdDataType& params)
 {
-    printf("ERROR: Invalid status request of %d\n", params.requestType);
-    _logger.logError("ERROR: Invalid status request of %d", params.requestType);
+    if (params.requestType == SystemStatusSentToTWGS)
+    {
+        int swcStatus = _tuHWMgr.getSWCStatus();
+        int swcrStatus = _tuHWMgr.getSWCRStatus();
+
+        _logger.logDebug("SWC Status 0x%x, SWCR Status 0x%x", swcStatus, swcrStatus);
+        if (_verbose)
+        {
+            printf("SWC Status 0x%x, SWCR Status 0x%x\n", swcStatus, swcrStatus);
+        }
+
+        StatusSentToTWGSRptMsg rptMsg;
+        rptMsg.setSWCStatus(swcStatus);
+        rptMsg.setSWCRStatus(swcrStatus);
+        rptMsg.buildMsg();
+        int msgSize = rptMsg.getBufSize();
+        rptMsg.headerByteSwapToNetwork();
+
+        _toTestServer->write(rptMsg.getBuf(), msgSize);
+    }
 }
 
 void TUCmdMgr::handleStressTestCommand(const StressTestCmdDataType& params)
@@ -337,26 +365,34 @@ void TUCmdMgr::handleStressTestCommand(const StressTestCmdDataType& params)
     StressTestCmdCounter++;
 
     _logger.logInfo("===> STRESS_TEST_CMD_MSG_ID: StressTestCmdCounter = %d", StressTestCmdCounter);
-    _logger.logDebug("Stress Test: numTest = %d, numInc = %d, spacing = %d, alpha = %d, alpha inc = %d, beta = %d, beta inc = %d",
-           params.numTest, params.numInc, params.spacingUsec, params.alpha, params.alphaInc, params.beta, params.betaInc);
+    _logger.logDebug("Stress Test: num cycle = %d, numTest = %d, numInc = %d, reset time = %d, spacing = %d, alpha = %d, alpha inc = %d, beta = %d, beta inc = %d",
+           params.numCycle, params.numTest, params.numInc, params.cycleResetTime, params.spacingUsec, params.alpha, params.alphaInc, params.beta, params.betaInc);
     if (_verbose)
     {
-        printf("Stress Test: numTest = %d, numInc = %d, spacing = %d, alpha = %d, alpha inc = %d, beta = %d, beta inc = %d\n",
-               params.numTest, params.numInc, params.spacingUsec, params.alpha, params.alphaInc, params.beta, params.betaInc);
+        printf("Stress Test: num cycle = %d, numTest = %d, numInc = %d, reset time = %d, spacing = %d, alpha = %d, alpha inc = %d, beta = %d, beta inc = %d\n",
+           params.numCycle, params.numTest, params.numInc, params.cycleResetTime, params.spacingUsec, params.alpha, params.alphaInc, params.beta, params.betaInc);
     }
 
     _tuHWMgr.setArmKSine(ALPHA, params.alpha);
     _tuHWMgr.setArmKSine(BETA, params.beta);
 
     // Setup TU for 1 action
-    _tuHWMgr.setNumTest(params.numTest);
+    _tuHWMgr.setNumCycle(params.numCycle);
+    _tuHWMgr.setNumRLTDPerCycle(params.numTest);
     _tuHWMgr.setNumInc(params.numInc);
+    _tuHWMgr.setCycleResetTime(params.cycleResetTime);
     _tuHWMgr.setRLTDPeriod(params.spacingUsec);
     _tuHWMgr.setAlphaInc(params.alphaInc);
     _tuHWMgr.setBetaInc(params.betaInc);
 
     // Toggle RLTD signal to start steering words processing
     _tuHWMgr.toggleRLTDSignal();
+}
+
+void TUCmdMgr::handleRepollDCUCommand()
+{
+    printf("ERROR: Not processing repoll dcu command\n");
+    _logger.logError("ERROR: Not processing repoll dcu command");
 }
 
 void TUCmdMgr::sendTUStatusToDUA(DUTUStatusMsg status)

@@ -16,7 +16,9 @@ DUACmdMgr::DUACmdMgr() :
     DUCmdMgrBase(DU_ALPHA),
     _localHWStatus(NULL),
     _localHWCommand(NULL),
-    localStatusCounter(0)
+    localStatusCounter(0),
+    _statusTimerExpiredBetweenReceivingStatusFromDUB(0),
+    _statusTimerExpiredBetweenReceivingStatusFromTU(0)
 {
 }
 
@@ -49,14 +51,13 @@ STATUS DUACmdMgr::start()
     int LOCAL_HW_STATUS_PORT;
     int LOCAL_HW_COMMAND_PORT;
     int TO_TEST_SERVER_PORT;
-    int STATUS_TIMER_INTERVAL_SECONDS;
+    int SAP_STATUS_TIMER_INTERVAL_SECONDS;
 
     printf("\nLoading Config file\n");
     if (ConfigDataManager::getInstance().load() != OK)
     {
         printf("Error loading Config file\n");
     }
-
     ConfigDataManager& configs = ConfigDataManager::getInstance();
 
     printf("\nLoading SAP file\n");
@@ -64,6 +65,10 @@ STATUS DUACmdMgr::start()
     {
         printf("Error loading Config file\n");
     }
+    SAPDataManager& saps = SAPDataManager::getInstance();
+
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
 
     // Get IP addresses
     rc = rc || configs.get("TEST_SERVER_IP_ADDRESS", TEST_SERVER_IP_ADDRESS);
@@ -88,11 +93,10 @@ STATUS DUACmdMgr::start()
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
 
     // Status parameters
-    rc = rc || configs.get("STATUS_TIMER_INTERVAL_SECONDS", STATUS_TIMER_INTERVAL_SECONDS);
     rc = rc || configs.get("REFRESH_DCU_STATUS_ON_GDS_INTERVAL", REFRESH_DCU_STATUS_ON_GDS_INTERVAL);
 
-    // Verbose parameters
-    rc = rc || configs.get("VERBOSE", _verbose);
+    // Status parameters
+    rc = rc || saps.get("SAP_STATUS_TIMER_INTERVAL_SECONDS", SAP_STATUS_TIMER_INTERVAL_SECONDS);
 
     // Setup Logger
     _logger.initialize();
@@ -108,7 +112,7 @@ STATUS DUACmdMgr::start()
 
     if (initializeCommonCommandDevices(ALPHA_IP_ADDRESS, TEST_SERVER_IP_ADDRESS,
                                        FROM_TEST_SERVER_PORT, TO_TEST_SERVER_PORT,
-                                       FROM_STATUS_EMULATOR_PORT, STATUS_TIMER_INTERVAL_SECONDS) != OK)
+                                       FROM_STATUS_EMULATOR_PORT, SAP_STATUS_TIMER_INTERVAL_SECONDS) != OK)
     {
         return ERROR;
     }
@@ -204,15 +208,6 @@ void DUACmdMgr::handlePreDcuStatusTimer()
     static int statusCounter = 0;
     if (statusCounter == 0)
     {
-        _duHWMgr.readSWCStatus(DATA_TYPE_CUSTOM_STATUS);
-        _logger.logDebug("DATA_TYPE_CUSTOM_STATUS, calcStatus bits: 0x%x", _duHWMgr.getSwcStatusToTwgs());
-        if (_verbose)
-        {
-            printf("DATA_TYPE_CUSTOM_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
-        }
-    }
-    else
-    {
         _duHWMgr.readSWCStatus(DATA_TYPE_CONFIG_STATUS);
         _logger.logDebug("DATA_TYPE_CONFIG_STATUS, calcStatus bits: 0x%x", _duHWMgr.getSwcStatusToTwgs());
         if (_verbose)
@@ -220,14 +215,70 @@ void DUACmdMgr::handlePreDcuStatusTimer()
             printf("DATA_TYPE_CONFIG_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
         }
     }
+    else if (statusCounter == 1)
+    {
+        _duHWMgr.readSWCStatus(DATA_TYPE_DCU_ROLLED_UP_STATUS);
+        _logger.logDebug("DATA_TYPE_DCU_ROLLED_UP_STATUS, calcStatus bits: 0x%x", _duHWMgr.getSwcStatusToTwgs());
+        if (_verbose)
+        {
+            printf("DATA_TYPE_DCU_ROLLED_UP_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+        }
+    }
+    else
+    {
+        _duHWMgr.readSWCStatus(DATA_TYPE_DU_STATUS);
+        _logger.logDebug("DATA_TYPE_DU_STATUS, calcStatus bits: 0x%x", _duHWMgr.getSwcStatusToTwgs());
+        if (_verbose)
+        {
+            printf("DATA_TYPE_DU_STATUS, calcStatus bits: 0x%x\n", _duHWMgr.getSwcStatusToTwgs());
+        }
+    }
     statusCounter++;
-    if (statusCounter >= 2)
+    if (statusCounter >= 3)
     {
         statusCounter = 0;
     }
 
     // Read Alpha DU status
     _duHWMgr.processDUAStatus(_duHWMgr.readDUStatus());
+
+    // Increase counter between DUB status message
+    _statusTimerExpiredBetweenReceivingStatusFromDUB++;
+    if (_statusTimerExpiredBetweenReceivingStatusFromDUB > 5)
+    {
+        // Haven't received status report from DUB in a while
+        // set DUB status to Red
+        DUTUStatusType betaDUStatus;
+        betaDUStatus.overallStatus = ROLLED_UP_ERROR;
+        betaDUStatus.readyStatus = NO_GO;
+        betaDUStatus.highTempAlarm = NO_GO;
+        betaDUStatus.overTempAlarm = NO_GO;
+        betaDUStatus.vccintAlarm = NO_GO;
+        betaDUStatus.vccauxAlarm = NO_GO;
+        betaDUStatus.vbramAlarm = NO_GO;
+        _duHWMgr.processDUBStatus(betaDUStatus);
+
+        _statusTimerExpiredBetweenReceivingStatusFromDUB = 0;
+    }
+
+    // Increase counter between TU status message
+    _statusTimerExpiredBetweenReceivingStatusFromTU++;
+    if (_statusTimerExpiredBetweenReceivingStatusFromTU > 5)
+    {
+        // Haven't received status report from TU in a while
+        // set TU status to Red
+        DUTUStatusType tuStatus;
+        tuStatus.overallStatus = ROLLED_UP_ERROR;
+        tuStatus.readyStatus = NO_GO;
+        tuStatus.highTempAlarm = NO_GO;
+        tuStatus.overTempAlarm = NO_GO;
+        tuStatus.vccintAlarm = NO_GO;
+        tuStatus.vccauxAlarm = NO_GO;
+        tuStatus.vbramAlarm = NO_GO;
+        _duHWMgr.processTUStatus(tuStatus);
+
+        _statusTimerExpiredBetweenReceivingStatusFromTU = 0;
+    }
 }
 
 const char *DUACmdMgr::getCommandMgrName() const
@@ -396,6 +447,8 @@ void DUACmdMgr::processLocalHWStatusMsg()
     }
     else if (localStatus->msgID == BETA_DU_STATUS)
     {
+        _statusTimerExpiredBetweenReceivingStatusFromDUB = 0;
+
         DUTUStatusMsg betaStatus;
         memcpy(&betaStatus, localStatus, sizeof(DUTUStatusMsg));
         if (_verbose)
@@ -410,6 +463,8 @@ void DUACmdMgr::processLocalHWStatusMsg()
     }
     else if (localStatus->msgID == TU_STATUS)
     {
+        _statusTimerExpiredBetweenReceivingStatusFromTU = 0;
+
         DUTUStatusMsg tuStatus;
         memcpy(&tuStatus, localStatus, sizeof(DUTUStatusMsg));
         if (_verbose)
@@ -461,8 +516,8 @@ void DUACmdMgr::handleStatusEmulatorMessage(int msg_id, const int *status, int n
                                            HealthState(status[5]),
                                            HealthState(status[6]),
                                            HealthState(status[7]),
-                                           DCURolledUpStatus(status[8]),
-                                           DCURolledUpStatus(status[9]));
+                                           RolledUpStatus(status[8]),
+                                           RolledUpStatus(status[9]));
     }
     else if (msg_id == EMU_MSG_ID_DUA_STATUS)
     {

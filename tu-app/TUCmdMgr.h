@@ -57,7 +57,9 @@ class TUCmdMgr : public CmdMgrBase
         virtual void handleSteeringCommand(const SteeringCmdDataType& params);
         virtual void handleStatusRequest(const StatusRequestCmdDataType& params);
         virtual void handleStressTestCommand(const StressTestCmdDataType& params);
+        virtual void handleRepollDCUCommand();
         virtual void handleStatusEmulatorMessage(int msgId, const int *status, int numData);
+        virtual void setShutdownBit();
 
         ConfigModeCmdMsg _configModeCmdMsg[4];
         int configModeCmdCounter;
