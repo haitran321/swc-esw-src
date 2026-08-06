@@ -1,30 +1,25 @@
-/**
-* $Id: Device.cpp 6634 2011-03-10 23:02:13Z ste38548 $
-*/
 #include <stdio.h>
-//#include <usrLib.h>
-//#include <ioLib.h>
-#include <errno.h>
+#include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include "Device.h"
 
 Device::Device() :
-_fd(NO_FD),
-_name("")
+    _fd(NO_FD),
+    _name("")
 {
 }
 
 Device::Device(const char *name) :
-_fd(NO_FD),
-_name(name)
+    _fd(NO_FD),
+    _name(name)
 {
 }
 
 Device::Device(const string &name) :
-_fd(NO_FD),
-_name(name)
+    _fd(NO_FD),
+    _name(name)
 {
 }
 
@@ -34,7 +29,7 @@ int Device::open()
 
    if ((_fd = ::open(_name.c_str(), O_RDWR, 0)) == ERROR)
    {
-      printf("Device::open: open failed for %s\n", _name.c_str());
+      std::cout << "Device::open: open failed for " << _name.c_str() << std::endl;
       return(ERROR);
    }
 
@@ -115,7 +110,7 @@ int Device::control(int function, int params)
 
 int Device::getStatus(int function, void *results)
 {
-   return(::ioctl(_fd, function, reinterpret_cast<int*>(results)));
+   return(::ioctl(_fd, function, reinterpret_cast<int *>(results)));
 }
 
 int Device::control(int function)
@@ -125,7 +120,7 @@ int Device::control(int function)
 
 int Device::close()
 {
-	int status = OK;
+   int status = OK;
 
    // Close device.
 
@@ -141,7 +136,7 @@ Device::~Device()
 {
    try
    {
-      int status = close();
+      close();
    }
    catch(...)
    {
@@ -159,7 +154,6 @@ int Device::getStatus(int &deviceStatus)
    }
    else
    {
-      //errnoSet(EBADF);
       return(ERROR);
    }
 }

@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <cstdint>
 
 #include "TimerDevice.h"
 
@@ -15,7 +16,7 @@ TimerDevice::TimerDevice(timespec initTimeoutVal, timespec timeoutVal) :
 
 STATUS TimerDevice::open()
 {
-    // Create a socket.
+    // Create the timer file descriptor and arm it with the configured interval.
 
     if ((_fd = timerfd_create(CLOCK_REALTIME, 0)) == ERROR)
     {
@@ -23,13 +24,19 @@ STATUS TimerDevice::open()
         return ERROR;
     }
 
-    char dummyBuf[8];
     struct itimerspec spec =
     {
         _initTimeoutVal,
         _timeoutVal
     };
-    timerfd_settime(_fd, 0, &spec, NULL);
+
+    if (timerfd_settime(_fd, 0, &spec, NULL) == ERROR)
+    {
+        printf("Error setting timer");
+        close();
+        return ERROR;
+    }
+
     return OK;
 }
 
@@ -39,5 +46,24 @@ void TimerDevice::read()
     ::read(_fd, &timeout, sizeof(uint64_t));
 }
 
+STATUS TimerDevice::setTime(timespec initTimeoutVal, timespec timeoutVal)
+{
+    _initTimeoutVal = initTimeoutVal;
+    _timeoutVal = timeoutVal;
+
+    struct itimerspec spec =
+    {
+        _initTimeoutVal,
+        _timeoutVal
+    };
+
+    if (timerfd_settime(_fd, 0, &spec, NULL) == ERROR)
+    {
+        printf("Error setting timer");
+        return ERROR;
+    }
+
+    return OK;
+}
 
 

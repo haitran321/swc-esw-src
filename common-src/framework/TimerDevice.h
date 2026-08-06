@@ -13,6 +13,8 @@ class TimerDevice : public Device
 
         virtual void read();
 
+        STATUS setTime(timespec initTimeoutVal, timespec timeoutVal);
+
     private:
 
         timespec _initTimeoutVal;

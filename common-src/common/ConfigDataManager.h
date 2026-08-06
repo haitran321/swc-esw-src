@@ -1,17 +1,8 @@
-/** 
- *  $Id: ConfigDataManager.h 5102 2009-12-04 20:57:39Z nei18232 $
- *  
- *  ConfigDataManager exists to obtain Configuration
- *  (non-SAP) data values from the FTP Server.  This class
- *  simply extends the Properties class and only
- *  implements its own Singleton and load() to set the filename.
- *  
- */
-
 #ifndef ConfigDataManager_H
 #define ConfigDataManager_H
 
 #include <string>
+#include <iostream>
 #include "Uncopyable.h"
 #include "Properties.h"
 
@@ -34,7 +25,7 @@ public:
      *
      * @return Status of operation
      */
-    STATUS load(const char* fileName = "/mnt/sd-mmcblk0p1/conf/config.txt");
+    STATUS load(const char* fileName = "/mnt/sd-mmcblk0p1/run/conf/config.txt");
     
     /**
      * Retrieves the SAP named <code>name</code>, placing its contents
@@ -58,8 +49,7 @@ template <class T> STATUS ConfigDataManager::get(const std::string &name, T &val
     STATUS status = Properties::get(name, value);
     if (status != OK)
     {
-        printf("ERROR:  Failed to resolve Config [%s] from %s\n",
-                    name.c_str(), loadedFrom.c_str());
+        std::cout << "ERROR:  Failed to resolve Config " << name.c_str() << " from " << loadedFrom.c_str() << std::endl;
     }
 
     return status;

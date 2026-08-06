@@ -12,7 +12,7 @@ SRC_URI = "file://myapp-init \
 
 S = "${WORKDIR}"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 inherit update-rc.d
 

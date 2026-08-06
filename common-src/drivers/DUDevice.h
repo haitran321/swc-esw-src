@@ -1,184 +1,186 @@
-#ifndef DUice_H
-#define DUice_H
+#ifndef DUDevice_H
+#define DUDevice_H
 
 #include "Device.h"
 
 typedef struct
 {
-    int amplitude;
-    int freq;
-    int spare1;
-    int spare2;
-}DUCWSignalType;
-
-typedef struct
-{
-    DU_CHANNEL channelId;
-    DUCWSignalType signal;
-}DUCWCmdType;
-
-typedef struct
-{
-    int amplitude;
-    unsigned int phaseOffset;
-    unsigned int freqHz;
-    unsigned int freqMHz;
-    unsigned int lfmRamp;
-    int phaseCode;
-    int reserved;
-}DUSignalType;
-
-typedef struct
-{
-    unsigned int startTime;
-    unsigned int stopTime;
-    DUSignalType signal;
-}DUActionType;
-
-// TO DO: Use the DUSignalType after matching FW interface
-typedef struct
-{
-    int amplitude;
-    unsigned int phaseOffset;
-    unsigned int freq;
-    unsigned int lfmRamp;
-    int phaseCode;
-    int reserved;
-}DUFWSignalType;
-
-// TO DO: Use the DUActionType after matching FW interface
-typedef struct
-{
-    unsigned int startTime;
-    unsigned int stopTime;
-    DUFWSignalType signal;
-}DUFWActionType;
-
-typedef struct
-{
-    int recvId;
-    DU_CHANNEL channelId;
-    int sid;
-    DUActionType action;
-}DUCmdType;
-
-typedef struct
-{
-    int firmwareVersion;
-    int boardStatus;
-    int boardControl;
-    DUCWSignalType cwSignals[NUM_DU_CHANNELS];
-    // For TX FW
-    // int spare1[29];
-    // End For TX FW
-    // For WG1 FW
-    int spare1[9];
-    int controlMux;
+    int fwVer;
+    int brdStatus;
+    int brdCtrl;
+    int armKSine[NUM_RFCC_CH];
+    int atbKSine[NUM_RFCC_CH];
+    int slResult;
+    int sysConfigStatus;
+    int swcStatusToTwgs;
+    int cableDelayComp;
+    int armInitStatus;
+    int dcuEnable;
+    int dcuSPIDelay1;
+    int dcuSPIDelay2;
+    int dcuSPIDelay3;
+    int dcuSPIDelay4;
+    int spare1[10];
     int fpgaDieTemp;
-    int ddsStatus;
-    int lmkReadWrite;
-    // End For WG1 FW
-//  int gatedCWEmOnDur;
-    int spare2;
-    int gatedCWEmPeriod;
-    int triggerTimeout;
+    int vccIntVoltage;
+    int vccAuxVoltage;
+    int vbramVoltage;
     int diagInfo;
-    int ch0NumActions;
-    int ch1NumActions;
-    int ch2NumActions;
-    int ch3NumActions;
+    int dcuStatus[NUM_DCU-1];
+    int dcuSCLKDelay[NUM_DCU-1];
 }DURegType;
-
-#define DU_CH0_STARTING_ADDR_OFFSET 0x0100
-#define DU_CH1_STARTING_ADDR_OFFSET 0x0740
-#define DU_CH2_STARTING_ADDR_OFFSET 0x0D80
-#define DU_CH3_STARTING_ADDR_OFFSET 0x13C0
-#define DU_CH4_STARTING_ADDR_OFFSET 0x1A00
-#define DU_CH5_STARTING_ADDR_OFFSET 0x2040
-#define DU_CH6_STARTING_ADDR_OFFSET 0x2680
-#define DU_CH7_STARTING_ADDR_OFFSET 0x2CC0
-#define DU_CH8_STARTING_ADDR_OFFSET 0x3300
-#define DU_CH9_STARTING_ADDR_OFFSET 0x3940
 
 typedef enum
 {
-    DU_BOARD_CONTROL_MASK                = 0xC7FFFFFF,    /* Bits 0..26, and 30..31 */
-    DU_DAC0_ENABLE_MASK                  = 0x00000001,    /* Bit 0 */
-    DU_DAC1_ENABLE_MASK                  = 0x00000002,    /* Bit 1 */
-    DU_DAC2_ENABLE_MASK                  = 0x00000004,    /* Bit 2 */
-    DU_DAC3_ENABLE_MASK                  = 0x00000008,    /* Bit 3 */
-    DU_DAC0_PBP_MODE_MASK                = 0x00000010,    /* Bit 4 */
-    DU_DAC1_PBP_MODE_MASK                = 0x00000020,    /* Bit 5 */
-    DU_DAC2_PBP_MODE_MASK                = 0x00000040,    /* Bit 6 */
-    DU_DAC3_PBP_MODE_MASK                = 0x00000080,    /* Bit 7 */
-    DU_DAC0_BPSK_MODE_MASK               = 0x00000100,    /* Bit 8 */
-    DU_DAC1_BPSK_MODE_MASK               = 0x00000200,    /* Bit 9 */
-    DU_DAC2_BPSK_MODE_MASK               = 0x00000400,    /* Bit 10 */
-    DU_DAC3_BPSK_MODE_MASK               = 0x00000800,    /* Bit 11 */
-    DU_DAC0_LFM_RAMP_MASK                = 0x00001000,    /* Bit 12 */
-    DU_DAC1_LFM_RAMP_MASK                = 0x00002000,    /* Bit 13 */
-    DU_DAC2_LFM_RAMP_MASK                = 0x00004000,    /* Bit 14 */
-    DU_DAC3_LFM_RAMP_MASK                = 0x00008000,    /* Bit 15 */
-    DU_DAC0_TRIGGER_TIMEOUT_MASK         = 0x00010000,    /* Bit 16 */
-    DU_DAC1_TRIGGER_TIMEOUT_MASK         = 0x00020000,    /* Bit 17 */
-    DU_DAC2_TRIGGER_TIMEOUT_MASK         = 0x00040000,    /* Bit 18 */
-    DU_DAC3_TRIGGER_TIMEOUT_MASK         = 0x00080000,    /* Bit 19 */
-    DU_USE_INIT_REGS_IN_PBP_MODE_MASK    = 0x00100000,    /* Bit 20 */
-    DU_TRIGGER_MODE_MASK                 = 0x00600000,    /* Bit 21..22 */
-    DU_FORCE_TRIGGER_MASK                = 0x00800000,    /* Bit 23 */
-    DU_LOAD_ACTION_CMD_MASK              = 0x01000000,    /* Bit 24 */
-    DU_COMBINER_ENABLE_MASK              = 0x02000000,    /* Bit 25 */
-    DU_60MHZ_INPUT_MASK                  = 0x04000000,    /* Bit 26 */
+    DU_HW_OVERALL_STATUS_MASK   = 0x8000003F,    /* Bits 0..5, and 31 */
+    DU_READY_STATUS_MASK        = 0x00000001,    /* Bit 0 */
+    DU_HIGH_TEMP_ALARM_MASK     = 0x00000002,    /* Bit 1 */
+    DU_VCC_INT_ALARM_MASK       = 0x00000004,    /* Bit 2 */
+    DU_VCC_AUX_ALARM_MASK       = 0x00000008,    /* Bit 3 */
+    DU_VBRAM_ALARM_MASK         = 0x00000010,    /* Bit 4 */
+    DU_OVER_TEMP_ALARM_MASK     = 0x00000020,    /* Bit 5 */
+    DU_BIT_RESULT_MASK          = 0x80000000,    /* Bit 31 */
+}DU_OVERALL_STATUS_ENUM;
+
+typedef enum
+{
+    DU_BRD_CTRL_MASK                        = 0x8003177F,    /* Bits 0..6, 8..10, 12, 16..17 and 31 */
+    DU_UNIT_TYPE_MASK                       = 0x00000001,    /* Bit 0 */
+    DU_TEST_MODE_STEERING_WORD_SRC_MASK     = 0x00000002,    /* Bit 1 */
+    DU_TEST_MODE_SW_TRIGGER_MASK            = 0x00000004,    /* Bit 2 */
+    DU_FORCE_TEST_MODE_MASK                 = 0x00000008,    /* Bit 3 */
+    DU_TEST_MODE_STEERING_WORD_VALID_MASK   = 0x00000010,    /* Bit 4 */
+    DU_TEST_MODE_SYSTEM_CONFIG_MASK         = 0x00000060,    /* Bits 5..6 */
+    DU_TEST_MODE_DCU_CMD_MASK               = 0x00000700,    /* Bits 8..10 */
+    DU_SHUTDOWN_CMD_MASK                    = 0x00001000,    /* Bit 12 */
+    DU_TEST_MODE_SWC_MODE_CMD_MASK          = 0x00002000,    /* Bit 13 */
+    DU_TEST_MODE_OLTE_MODE_CMD_MASK         = 0x00004000,    /* Bit 14 */
+    DU_SCAN_LIMIT_CENTER_FREQ_MASK          = 0x00030000,    /* Bits 16..17 */
+    DU_SOFT_RESET_MASK                      = 0x80000000,    /* Bit 31 */
 }DU_BOARD_CONTROL_ENUM;
 
 typedef enum
 {
-    DU_DISABLE                 = 0,
-    DU_ENABLE                  = 1
-}DU_ENABLE_ENUM;
+    NORMAL  = 0,
+    TEST    = 1
+}DU_MODE_ENUM;
 
 typedef enum
 {
-    DU_CW_MODE            = 0,
-    DU_PBP_MODE           = 1
-}DU_PBP_MODE_ENUM;
+    STEERING_WORD_INVALID  = 0,
+    STEERING_WORD_VALID  = 1,
+}DU_STEERING_WORD_VALID_FLAG_ENUM;
 
 typedef enum
 {
-    DU_NON_BPSK_MODE       = 0,
-    DU_BPSK_MODE           = 1
-}DU_PBSK_MODE_ENUM;
+    DCU_CMD_NONE                    = 0,
+    DCU_CMD_BORESIGHT               = 1,
+    DCU_CMD_CALIBRATION             = 2,
+    DCU_CMD_CRC_RESET               = 3,
+    DCU_CMD_DCU_RESET               = 3,
+    DCU_TEST_PATTERN_READ_BACK      = 5
+}DCU_CMD_ENUM;
 
 typedef enum
 {
-    DU_LFM_DOWN_CHIRP  = 0,
-    DU_LFM_UP_CHIRP    = 1
-}DU_LFM_RAMP_ENUM;
+    DCU_SL_CF_442_MHZ   = 0,
+    DCU_SL_CF_444_MHZ   = 1,
+    DCU_SL_CF_445_MHZ   = 2,
+    DCU_SL_CF_446_MHZ   = 3,
+}DCU_SL_CENTER_FREQ_ENUM;
 
 typedef enum
 {
-    DU_NO_TIMEOUT      = 0,
-    DU_USE_TIMEOUT     = 1
-}DU_TRIGGER_TIMEOUT_ENUM;
+    DU_KSINE_MASK               = 0x000003FF,    /* Bits 0..9 */
+}DU_KSINE_ENUM;
 
 typedef enum
 {
-    DU_TRIGGER_EXTERNAL             = 0,
-    DU_TRIGGER_INTERNAL_GATED_CW    = 1,
-    DU_TRIGGER_INTERNAL             = 2
-}DU_TRIGGER_ENUM;
+    DATA_TYPE_DU_STATUS             = 0,
+    DATA_TYPE_CONFIG_STATUS         = 1,
+    DATA_TYPE_DCU_ROLLED_UP_STATUS  = 2,
+    STATUS_DATA_TYPE_ERROR          = 3
+}SWC_STATUS_DATA_TYPE;
 
 typedef enum
 {
-    DU_COMBINER_DISABLE            = 0,
-    DU_COMBINER_ENABLE             = 1
-}DU_COMBINER_ENABLE_ENUM;
+    DU_SL_CHECK_RESULTS_MASK    = 0x0000001F,    /* Bits 0..4 */
+    DU_SL_OVERALL_STATUS_MASK   = 0x00000001,    /* Bit 0 */
+    DU_SL_U_STATUS_MASK         = 0x00000002,    /* Bit 1 */
+    DU_SL_V_STATUS_MASK         = 0x00000004,    /* Bit 2 */
+    DU_SL_W_STATUS_MASK         = 0x00000008,    /* Bit 3 */
+    DU_SL_EL_STATUS_MASK        = 0x00000010,    /* Bit 4 */
+}DU_SL_CHECK_RESULTS_ENUM;
 
 typedef enum
 {
-    DU_60MHZ_SIL            = 0,
-    DU_60MHZ_BSL            = 1
-}DU_60MHZ_INPUT_ENUM;
+    DU_SYSTEM_STATUS_MASK            = 0x80000F3F,    /* Bits 0..5, 8..11 */
+    DU_SYSTEM_CONFIG_MASK            = 0x00000003,    /* Bit 0..1 */
+    DU_ATB_MODE_MASK                 = 0x00000004,    /* Bit 2 */
+    DU_OLTE_MODE_MASK                = 0x00000008,    /* Bit 3 */
+    DU_BORESIGHT_LAST_CMD_MASK       = 0x00000010,    /* Bit 4 */
+    DU_CAL_LAST_CMD_MASK             = 0x00000020,    /* Bit 5 */
+    DU_SPI_HEALTH_LAST_CMD_MASK      = 0x00000100,    /* Bit 8 */
+    DU_COMPARE_RESULT_LAST_CMD_MASK  = 0x00000200,    /* Bit 9 */
+    DU_DCU_READ_BACK_MASK            = 0x00000400,    /* Bit 10 */
+    DU_DCU_BIT_MASK                  = 0x00000800,    /* Bit 11 */
+}DU_SYSTEM_STATUS_ENUM;
+
+typedef enum
+{
+    DCU_STATUS_MASK                 = 0x00FFFFFF,    /* Bits 0..23 */
+    DCU_CRC_STATUS_MASK             = 0x00000001,    /* Bit 0 */
+    DCU_TYPE_STATUS_MASK            = 0x00000002,    /* Bit 1 */
+    DCU_FW_MINOR_REV_MASK           = 0x0000003C,    /* Bit 2..5 */
+    DCU_FW_MAJOR_REV_MASK           = 0x000000C0,    /* Bit 6..7 */
+    DCU_LOCATION_STATUS_MASK        = 0x0000FF00,    /* Bit 8..15 */
+    DCU_BIT_TBD_STATUS_MASK         = 0x00010000,    /* Bit 16 */
+    DCU_BIT_COMPARE_STATUS_MASK     = 0x00020000,    /* Bit 17 */
+    DCU_BIT_SPI_STATUS_MASK         = 0x00040000,    /* Bit 18 */
+    DCU_BIT_LOC_VALID_STATUS_MASK   = 0x00080000,    /* Bit 19 */
+    DCU_BIT_CLK_STATUS_MASK         = 0x00100000,    /* Bit 20 */
+    DCU_BIT_OVERALL_STATUS_MASK     = 0x00200000,    /* Bit 21 */
+    DCU_MODE_STATUS_MASK            = 0x00400000,    /* Bit 22 */
+    DCU_BYPASS_STATUS_MASK          = 0x00800000,    /* Bit 23 */
+}DCU_STATUS_ENUM;
+
+typedef enum
+{
+    WITH_CRC_ERROR      = 0,
+    WITHOUT_CRC_ERROR   = 1
+}LAST_ACTION_CRC_STATUS;
+
+typedef enum
+{
+    DU_STATUS_TO_TWGS_MASK              = 0x7FFFFFFF,    /* Bits 0..30 */
+    // Data Type = Config Status
+    DU_ATB_STATUS_MASK                  = 0x00000001,    /* Bit 0 */
+    DU_24V_PWR_STATUS_MASK              = 0x00000002,    /* Bit 1 */
+    DU_12V_PWR_STATUS_MASK              = 0x00000004,    /* Bit 2 */
+    DU_TEMP_STATUS_MASK                 = 0x00000008,    /* Bit 3 */
+    DU_CONFIG_STATUS_MASK               = 0x00000030,    /* Bit 4..5 */
+    // Define Data Type
+    DU_DATA_TYPE_MASK                   = 0x000000C0,    /* Bit 6..7 */
+    // Overall Status
+    DU_OVERALL_STATUS_MASK              = 0x00000100,    /* Bit 8 */
+    // Data Type = DU Status
+    DU_BETA_OVERALL_STATUS_MASK         = 0x00000600,    /* Bit 9..10 */
+    DU_ALPHA_OVERALL_STATUS_MASK        = 0x00001800,    /* Bit 11..12 */
+    // Data Type = DCU Rolled Up Status
+    DU_BETA_DCU_ROLLED_UP_STATUS_MASK   = 0x00018000,    /* Bit 15..16 */
+    DU_ALPHA_DCU_ROLLED_UP_STATUS_MASK  = 0x00060000,    /* Bit 17..18 */
+    // DCU Status
+    DU_DCU_GROUP_STATUS_MASK            = 0x00200000,    /* Bit 21 */
+    DU_DCU_HEALTH_STATUS_MASK           = 0x00400000,    /* Bit 22 */
+    DU_DCU_NUMBER_STATUS_MASK           = 0x7F800000,    /* Bit 11..18 */  /* Bit 23..30 */
+}SWC_STATUS_TO_TWGS_ENUM;
+
+typedef enum
+{
+    DU_ARM_INIT_STATUS_MASK         = 0x80000003,    /* Bits 0..1 */
+    DU_OS_INIT_STATUS_MASK          = 0x00000001,    /* Bit 0 */
+    DU_APP_INIT_STATUS_MASK         = 0x00000002,    /* Bit 1 */
+}DU_ARM_INIT_STATUS_ENUM;
 
 class DUDevice : public Device
 {
@@ -187,38 +189,54 @@ public:
 
     STATUS mmap();
 
-    DUFWActionType* getCh0StartingAddress();
-    DUFWActionType* getCh1StartingAddress();
-    DUFWActionType* getCh2StartingAddress();
-    DUFWActionType* getCh3StartingAddress();
-    DUFWActionType* getCh4StartingAddress();
-    DUFWActionType* getCh5StartingAddress();
-    DUFWActionType* getCh6StartingAddress();
-    DUFWActionType* getCh7StartingAddress();
-    DUFWActionType* getCh8StartingAddress();
-    DUFWActionType* getCh9StartingAddress();
-
     int readReg(int offset);
 
     void writeReg(int offset, int data);
 
-    int getFirmwareVersionReg();
+    int getFWVerReg();
 
-    int getBoardStatusReg();
+    int getBrdStatusReg();
 
-    STATUS setBoardControlReg(int val);
+    void setBrdCtrlReg(int val);
+    int getBrdCtrlReg();
 
-    int getBoardControlReg();
+    int getArmKSineReg(RFCC_CH ch);
+    void setArmKSineReg(RFCC_CH ch, int val);
 
-    STATUS setCWRegs(DU_CHANNEL channel, DUCWSignalType signal);
+    int getAtbKSineReg(RFCC_CH ch);
+    void setAtbKSineReg(RFCC_CH ch, int val);
 
-    DUCWSignalType getCWRegs(DU_CHANNEL channel);
+    int getSLStatusReg();
 
-    STATUS setNumActionsReg(DU_CHANNEL channel, int val);
+    int getSysConfigStatusReg();
+
+    int getSwcStatusToTwgsReg();
+    void setSwcStatusToTwgsReg(int val);
+
+    int getARMInitStatusReg();
+    void setARMInitStatusReg(int val);
+
+    int getDCUSPIDelay1Reg();
+    void setDCUSPIDelay1Reg(int val);
+
+    int getDCUSPIDelay2Reg();
+    void setDCUSPIDelay2Reg(int val);
+
+    int getDCUSPIDelay3Reg();
+    void setDCUSPIDelay3Reg(int val);
+
+    int getDCUSPIDelay4Reg();
+    void setDCUSPIDelay4Reg(int val);
+
+    int getFPGADieTempReg();
+
+    void setDiagInfoReg(int val);
+    int getDiagInfoReg();
+
+    int getDCUStatusReg(int regNum);
+    void setDCUSCLKReg(int dcuNum, int val);
 
     void getRegs(int startReg, int endReg);
-
-    void setGatedCWEmulatorRegs(int period);
 
 private:
 
@@ -229,4 +247,4 @@ private:
 };
 
 
-#endif // DUice_H
+#endif // DUDevice_H

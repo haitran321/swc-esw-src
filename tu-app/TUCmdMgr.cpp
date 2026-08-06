@@ -1,35 +1,23 @@
-/**
-* $Id: TUCmdMgr.cpp 6638 2011-03-10 23:07:51Z ste38548 $ 
-*/
 #include <stdio.h>
 #include <sstream>
 #include <unistd.h>
-#include <sys/reboot.h>
+
 #include "TUCmdMgr.h"
-#include "WriteRegCmdMsg.h"
-#include "ShutdownCmdMsg.h"
 #include "ConfigDataManager.h"
-#include "DeviceFactory.h"
-#include "EndianUtils.h"
-#include "DeviceUtilities.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#define PRINT_DEBUG
+#include "SAPDataManager.h"
+#include "ScanLimitCheck.h"
+#include "StatusSentToTWGSRptMsg.h"
 
 /**
  * Constructor
  */
 TUCmdMgr::TUCmdMgr() :
-    _logger(Logger::getInstance()),
-    _udpFromRIMS(NULL),
-    _udpWarmRestart(NULL),
-    _udpFromTWGS(NULL),
+    CmdMgrBase(TU),
+    _localHWStatus(NULL),
+    _localHWCommand(NULL),
     _tuHWMgr(TUHWMgr::getInstance()),
-    _uio1Dev(NULL),
-    _statusRptToTWGS(NULL)
+    _uioDevSL(NULL),
+    _uioDevWLSP(NULL)
 {
 }
 
@@ -38,18 +26,17 @@ TUCmdMgr::TUCmdMgr() :
  */
 TUCmdMgr::~TUCmdMgr()
 {
-    // Delete all devices
-    delete _udpFromRIMS;
-    _udpFromRIMS = NULL;
+    delete _localHWStatus;
+    _localHWStatus = NULL;
 
-    delete _udpFromTWGS;
-    _udpFromTWGS = NULL;
+    delete _localHWCommand;
+    _localHWCommand = NULL;
 
-    delete _udpWarmRestart;
-    _udpWarmRestart = NULL;
+    delete _uioDevSL;
+    _uioDevSL = NULL;
 
-    delete _statusRptToTWGS;
-    _statusRptToTWGS = NULL;
+    delete _uioDevWLSP;
+    _uioDevWLSP = NULL;
 }
 
 /** 
@@ -60,118 +47,58 @@ STATUS TUCmdMgr::start()
 {
     STATUS rc = OK;
 
-    string SOC_IP_ADDRESS;
-    int FROM_RIMS_PORT;
-    int FROM_TWGS_PORT;
+    string TEST_SERVER_IP_ADDRESS;
+    string ALPHA_IP_ADDRESS;
+    string BETA_IP_ADDRESS;
+    string TEST_UNIT_IP_ADDRESS;
+    int FROM_TEST_SERVER_PORT;
     int WARM_RESTART_PORT;
-    string DEV_PC_IP_ADDRESS;
-    int DEV_INCOMING_PORT;
-    string TWGS_STATUS_IP_ADDRESS;
-    int STATUS_TO_TWGS_PORT;
+    int LOCAL_HW_STATUS_PORT;
+    int LOCAL_HW_COMMAND_PORT;
+    int TO_TEST_SERVER_PORT;
+    int SAP_STATUS_TIMER_INTERVAL_SECONDS;
 
     printf("\nLoading Config file\n");
     if (ConfigDataManager::getInstance().load() != OK)
     {
         printf("Error loading Config file\n");
     }
-
     ConfigDataManager& configs = ConfigDataManager::getInstance();
 
-    rc = rc || configs.get("SOC_IP_ADDRESS", SOC_IP_ADDRESS);
-    rc = rc || configs.get("FROM_RIMS_PORT", FROM_RIMS_PORT);
-    rc = rc || configs.get("FROM_TWGS_PORT", FROM_TWGS_PORT);
+    printf("\nLoading SAP file\n");
+    if (SAPDataManager::getInstance().load() != OK)
+    {
+        printf("Error loading Config file\n");
+    }
+    SAPDataManager& saps = SAPDataManager::getInstance();
+
+    // Verbose parameters
+    rc = rc || configs.get("VERBOSE", _verbose);
+
+    // Get IP addresses
+    rc = rc || configs.get("TEST_SERVER_IP_ADDRESS", TEST_SERVER_IP_ADDRESS);
+    rc = rc || configs.get("ALPHA_IP_ADDRESS", ALPHA_IP_ADDRESS);
+    rc = rc || configs.get("BETA_IP_ADDRESS", BETA_IP_ADDRESS);
+    rc = rc || configs.get("TEST_UNIT_IP_ADDRESS", TEST_UNIT_IP_ADDRESS);
+
+    // Get port number to/from Test Server
+    rc = rc || configs.get("FROM_TEST_SERVER_PORT", FROM_TEST_SERVER_PORT);
+    rc = rc || configs.get("TO_TEST_SERVER_PORT", TO_TEST_SERVER_PORT);
     rc = rc || configs.get("WARM_RESTART_PORT", WARM_RESTART_PORT);
-    rc = rc || configs.get("DEV_PC_IP_ADDRESS", DEV_PC_IP_ADDRESS);
-    rc = rc || configs.get("DEV_INCOMING_PORT", DEV_INCOMING_PORT);
-    rc = rc || configs.get("TWGS_STATUS_IP_ADDRESS", TWGS_STATUS_IP_ADDRESS);
-    rc = rc || configs.get("STATUS_TO_TWGS_PORT", STATUS_TO_TWGS_PORT);
-    rc = rc || configs.get("MODULE_TYPE", MODULE_TYPE);
 
-    rc = rc || configs.get("TEST_STATUS", TEST_STATUS);
+    // Get port number to/from Local HW devices
+    rc = rc || configs.get("LOCAL_HW_STATUS_PORT", LOCAL_HW_STATUS_PORT);
+    rc = rc || configs.get("LOCAL_HW_COMMAND_PORT", LOCAL_HW_COMMAND_PORT);
 
-    if (MODULE_TYPE == TX)
-    {
-        // Tx Module configs
-        rc = rc || configs.get("TX_SW_TRIGGER", RFG_SW_TRIGGER);
-        rc = rc || configs.get("TX_INIT_TESTING", RFG_INIT_TESTING);
-        rc = rc || configs.get("TX_MIN_START_TIME", RFG_MIN_START_TIME);
+    // For Status Emulator
+    int FROM_STATUS_EMULATOR_PORT;
+    rc = rc || configs.get("FROM_STATUS_EMULATOR_PORT", FROM_STATUS_EMULATOR_PORT);
 
-        for (int ch = 0; ch < NUM_TU_CHANNELS; ch++)
-        {
-            lastRFGActionStopTime[ch] = RFG_MIN_START_TIME;
-        }
+    // Configuration parameters
+    rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
 
-        // Tx HW Setup data
-        rc = rc || configs.get("TX_INTERNAL_TRIGGER", INTERNAL_TRIGGER);
-        rc = rc || configs.get("TX_HW_SETUP_ENABLE", RFG_HW_SETUP_ENABLE);
-        rc = rc || configs.get("TX_HW_SETUP_CH", RFG_HW_SETUP_CH);
-        rc = rc || configs.get("TX_HW_SETUP_START", RFG_HW_SETUP_START);
-        rc = rc || configs.get("TX_HW_SETUP_STOP", RFG_HW_SETUP_STOP);
-        rc = rc || configs.get("TX_HW_SETUP_FREQUENCY", RFG_HW_SETUP_FREQUENCY);
-        rc = rc || configs.get("TX_HW_SETUP_AMPLITUDE", RFG_HW_SETUP_AMPLITUDE);
-        rc = rc || configs.get("TX_HW_SETUP_LFM", RFG_HW_SETUP_LFM);
-        rc = rc || configs.get("TX_HW_SETUP_PHASE", RFG_HW_SETUP_PHASE);
-        rc = rc || configs.get("TX_HW_SETUP_PC", RFG_HW_SETUP_PC);
-        rc = rc || configs.get("TX_DDS_FREQ_MHZ", RFG_DDS_FREQ_MHZ);
-
-        // Compute freq and ramp conversion
-        TR_FTW_Conversion_usec = 4294967296.0 / float(RFG_DDS_FREQ_MHZ);
-        TR_FTW_Conversion_sec = TR_FTW_Conversion_usec / 1000000.0;
-        TR_RTW_Conversion = TR_FTW_Conversion_sec / 200.0;
-
-        printf("RFG_DDS_FREQ_MHZ = %d, TR_FTW_Conversion_usec = %f, TR_RTW_Conversion = %f\n",
-               RFG_DDS_FREQ_MHZ, TR_FTW_Conversion_usec, TR_RTW_Conversion);
-
-    }
-    else if (MODULE_TYPE == WG1)
-    {
-        // Tx Module configs
-        rc = rc || configs.get("WG1_SW_TRIGGER", RFG_SW_TRIGGER);
-        rc = rc || configs.get("WG1_INIT_TESTING", RFG_INIT_TESTING);
-        rc = rc || configs.get("WG1_MIN_START_TIME", RFG_MIN_START_TIME);
-
-        for (int ch = 0; ch < NUM_TU_CHANNELS; ch++)
-        {
-            lastRFGActionStopTime[ch] = RFG_MIN_START_TIME;
-        }
-
-        // Tx HW Setup data
-        rc = rc || configs.get("WG1_HW_SETUP_ENABLE", RFG_HW_SETUP_ENABLE);
-        rc = rc || configs.get("WG1_HW_SETUP_CH", RFG_HW_SETUP_CH);
-        rc = rc || configs.get("WG1_HW_SETUP_START", RFG_HW_SETUP_START);
-        rc = rc || configs.get("WG1_HW_SETUP_STOP", RFG_HW_SETUP_STOP);
-        rc = rc || configs.get("WG1_HW_SETUP_FREQUENCY", RFG_HW_SETUP_FREQUENCY);
-        rc = rc || configs.get("WG1_HW_SETUP_AMPLITUDE", RFG_HW_SETUP_AMPLITUDE);
-        rc = rc || configs.get("WG1_HW_SETUP_LFM", RFG_HW_SETUP_LFM);
-        rc = rc || configs.get("WG1_HW_SETUP_PHASE", RFG_HW_SETUP_PHASE);
-        rc = rc || configs.get("WG1_HW_SETUP_PC", RFG_HW_SETUP_PC);
-    }
-    else if (MODULE_TYPE == WG2)
-    {
-        // Tx Module configs
-        rc = rc || configs.get("WG2_SW_TRIGGER", RFG_SW_TRIGGER);
-        rc = rc || configs.get("WG2_INIT_TESTING", RFG_INIT_TESTING);
-        rc = rc || configs.get("WG2_MIN_START_TIME", RFG_MIN_START_TIME);
-
-        for (int ch = 0; ch < NUM_TU_CHANNELS; ch++)
-        {
-            lastRFGActionStopTime[ch] = RFG_MIN_START_TIME;
-        }
-
-        // Tx HW Setup data
-        rc = rc || configs.get("WG2_HW_SETUP_ENABLE", RFG_HW_SETUP_ENABLE);
-        rc = rc || configs.get("WG2_HW_SETUP_CH", RFG_HW_SETUP_CH);
-        rc = rc || configs.get("WG2_HW_SETUP_START", RFG_HW_SETUP_START);
-        rc = rc || configs.get("WG2_HW_SETUP_STOP", RFG_HW_SETUP_STOP);
-        rc = rc || configs.get("WG2_HW_SETUP_FREQUENCY", RFG_HW_SETUP_FREQUENCY);
-        rc = rc || configs.get("WG2_HW_SETUP_AMPLITUDE", RFG_HW_SETUP_AMPLITUDE);
-        rc = rc || configs.get("WG2_HW_SETUP_LFM", RFG_HW_SETUP_LFM);
-        rc = rc || configs.get("WG2_HW_SETUP_PHASE", RFG_HW_SETUP_PHASE);
-        rc = rc || configs.get("WG2_HW_SETUP_PC", RFG_HW_SETUP_PC);
-    }
-
-    printf("INTERNAL_TRIGGER = %d, RFG_HW_SETUP_ENABLE = %d, RFG_HW_SETUP_CH = %d\n",
-            INTERNAL_TRIGGER, RFG_HW_SETUP_ENABLE, RFG_HW_SETUP_CH);
+    // Status parameters
+    rc = rc || saps.get("SAP_STATUS_TIMER_INTERVAL_SECONDS", SAP_STATUS_TIMER_INTERVAL_SECONDS);
 
     // Setup Logger
     _logger.initialize();
@@ -183,319 +110,349 @@ STATUS TUCmdMgr::start()
         return (ERROR);
     }
 
-    _logger.logInfo("MODULE_TYPE = %d", MODULE_TYPE);
+    _logger.logInfo("MODULE_TYPE = %d", _moduleType);
 
-    // From RIMS device for commands
+    if (initializeCommonCommandDevices(TEST_UNIT_IP_ADDRESS, TEST_SERVER_IP_ADDRESS,
+                                       FROM_TEST_SERVER_PORT, TO_TEST_SERVER_PORT,
+                                       FROM_STATUS_EMULATOR_PORT, SAP_STATUS_TIMER_INTERVAL_SECONDS) != OK)
+    {
+        return ERROR;
+    }
+
+    // From HW devices - Outbound for TU
     stringstream devName;
+    devName.clear();
+    devName << "UDP Client ";
+    devName << ALPHA_IP_ADDRESS << ":" << LOCAL_HW_STATUS_PORT;
+    _localHWStatus = new UDPNetworkDevice(NetworkClient, ALPHA_IP_ADDRESS, LOCAL_HW_STATUS_PORT, false);
+    _localHWStatus->setName(devName.str());
+
+    if (_localHWStatus->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _localHWStatus->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _localHWStatus device");
+    printf("Successfully created _localHWStatus device\n");
+
+    // From HW devices - Inbound for TU
+    devName.str("");
+    devName.clear();
     devName << "UDP Server ";
-    devName << SOC_IP_ADDRESS << ":" << FROM_RIMS_PORT;
+    devName << TEST_UNIT_IP_ADDRESS << ":" << LOCAL_HW_COMMAND_PORT;
 
-    _udpFromRIMS = new UDPNetworkDevice(NetworkServer, SOC_IP_ADDRESS, FROM_RIMS_PORT, false);
-    _udpFromRIMS->setName(devName.str());
+    _localHWCommand = new UDPNetworkDevice(NetworkServer, TEST_UNIT_IP_ADDRESS, LOCAL_HW_COMMAND_PORT, false);
+    _localHWCommand->setName(devName.str());
 
-    if (_udpFromRIMS->open() != OK)
+    if (_localHWCommand->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _udpFromRIMS->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _localHWCommand->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_udpFromRIMS, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processIncomingMsg)) != OK)
+    if (addEvent(*_localHWCommand, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processLocalHWCommandMsg)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _udpFromRIMS->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _localHWCommand->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _udpFromRIMS device");
-    printf("Successfully created _udpFromRIMS device\n");
+    _logger.logInfo("Successfully created _localHWCommand device");
+    printf("Successfully created _localHWCommand device\n");
 
-    // Warm Restart device
-    stringstream warmRestartDevName;
-    warmRestartDevName << "UDP Server For Warm Restart";
-    warmRestartDevName << SOC_IP_ADDRESS << ":" << WARM_RESTART_PORT;
-    _udpWarmRestart = new UDPNetworkDevice(NetworkServer, SOC_IP_ADDRESS, WARM_RESTART_PORT, false);
-    _udpWarmRestart->setName(warmRestartDevName.str());
-
-    if (_udpWarmRestart->open() != OK)
-    {
-        _logger.logInfo("ERROR openning dev %s", _udpWarmRestart->getName().c_str());
-        return ERROR;
-    }
-    if (addEvent(*_udpWarmRestart, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processWarmRestartMsg)) != OK)
-    {
-        _logger.logInfo("ERROR adding event to dev %s", _udpWarmRestart->getName().c_str());
-        return ERROR;
-    }
-    _logger.logInfo("Successfully created _udpWarmRestart device");
-    printf("Successfully created _udpWarmRestart device\n");
-
-    // UDP device to send status report to TWGS
-    // Only use for WGs
-    if ((MODULE_TYPE == WG1) || (MODULE_TYPE == WG2))
-    {
-        stringstream statusRptToTWGSDevName;
-        _statusRptToTWGS = new UDPNetworkDevice(NetworkClient, TWGS_STATUS_IP_ADDRESS, STATUS_TO_TWGS_PORT, false);
-        statusRptToTWGSDevName << "UDP Status Rpt Device ";
-        statusRptToTWGSDevName << TWGS_STATUS_IP_ADDRESS << ":" << STATUS_TO_TWGS_PORT;
-        _statusRptToTWGS->setName(statusRptToTWGSDevName.str());
-
-        if (_statusRptToTWGS->open() != OK)
-        {
-            printf("Error openning dev %s", _statusRptToTWGS->getName().c_str());
-            rc = rc || ERROR;
-        }
-        else
-        {
-            printf("Successfully open Status Rpt To TWGS UDP device\n");
-        }
-    }
-
-    // Initialize rf generator
+    // Initialize HW Manager
     _tuHWMgr.initialize();
 
-    // Open UIO device
-    _uio1Dev = new UIODevice(AXI_INT_OFFSET, 0);
+    // Read TU status and send to Alpha DU
+    DUTUStatusMsg tuStatus;
+    tuStatus.msgID = TU_STATUS;
+    tuStatus.dutuStatus = _tuHWMgr.readTUStatus();
+    sendTUStatusToDUA(tuStatus);
+    usleep(1 * 1000);   // Sleep 1 msecs
 
-    if (_uio1Dev->open() != OK)
+    // Request config/mode
+    ConfigModeRequestMsg request;
+    request.msgID = CONFIG_MODE_REQUEST;
+    _localHWStatus->write(&request, sizeof(ConfigModeRequestMsg));
+    usleep(1 * 1000);   // Sleep 1 msecs
+
+    // Open UIO device for Scan Limit HW Interrupt
+    _uioDevSL = new UIODevice(AXI_INT_121_OFFSET, 0);
+
+    if (_uioDevSL->open() != OK)
     {
-        _logger.logInfo("ERROR openning dev %s", _uio1Dev->getName().c_str());
+        _logger.logInfo("ERROR openning dev %s", _uioDevSL->getName().c_str());
         return ERROR;
     }
-    if (addEvent(*_uio1Dev, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processInterrupt)) != OK)
+    if (addEvent(*_uioDevSL, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processSLInterrupt)) != OK)
     {
-        _logger.logInfo("ERROR adding event to dev %s", _uio1Dev->getName().c_str());
+        _logger.logInfo("ERROR adding event to dev %s", _uioDevSL->getName().c_str());
         return ERROR;
     }
-    _logger.logInfo("Successfully created _uio1Dev device");
+    _logger.logInfo("Successfully created _uioDevSL device");
+    printf("Successfully created _uioDevSL device\n");
 
     // Map UIO address
-    _uio1Dev->mmap();
+    _uioDevSL->mmap();
+    _uioDevSL->clearInterrupt();
 
-    // printEventList();
+    // Open UIO device for HW Config Changed Interrupt
+    _uioDevWLSP = new UIODevice(AXI_INT_122_OFFSET, 1);
+
+    if (_uioDevWLSP->open() != OK)
+    {
+        _logger.logInfo("ERROR openning dev %s", _uioDevWLSP->getName().c_str());
+        return ERROR;
+    }
+    if (addEvent(*_uioDevWLSP, READ_EVENT, 1, static_cast<EventFunc>(&TUCmdMgr::processWLSPInterrupt)) != OK)
+    {
+        _logger.logInfo("ERROR adding event to dev %s", _uioDevWLSP->getName().c_str());
+        return ERROR;
+    }
+    _logger.logInfo("Successfully created _uioDevWLSP device");
+    printf("Successfully created _uioDevWLSP device\n");
+
+    // Map UIO address
+    _uioDevWLSP->mmap();
+    _uioDevWLSP->clearInterrupt();
 
     EventProcessor::start();
 
     return OK;
 }
 
-void TUCmdMgr::processInterrupt()
+void TUCmdMgr::setShutdownBit()
 {
-    eInterruptProcessing.start();
+    printf("TUCmdMgr::setShutdownBit\n");
+    _tuHWMgr.setShutdownBit();
+}   
 
-#ifdef PRINT_DEBUG
-    printf("In processInterrupt()\n");
-#endif
-
+void TUCmdMgr::processSLInterrupt()
+{
     size_t bytesRead = 0;
     int pending = 0;
 
-    _uio1Dev->read((char *)&pending, sizeof(int), bytesRead);
-    printf("Reading interrupt, number of interrupt = %d\n", pending);
-    _uio1Dev->clearInterrupt();
+    _uioDevSL->read((char *)&pending, sizeof(int), bytesRead);
+    if (_verbose)
+    {
+        printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
+    }
+    _logger.logDebug("%s reading scan limit interrupt, number of interrupt = %d", getCommandMgrName(), pending);
+    _uioDevSL->clearInterrupt();
 
-    eInterruptProcessing.stop();
+    // Get FW SL check status
+    int alpha = _tuHWMgr.getArmKSine(ALPHA);
+    int beta = _tuHWMgr.getArmKSine(BETA);
+
+    if (_verbose)
+    {
+        printf("alpha = %d, beta = %d\n", alpha, beta);
+    }
+    _logger.logDebug("alpha = %d, beta = %d", alpha, beta);
+
+    int swSLResult = runSWScanLimitCheck(float(alpha), float(beta));
+    int fwSLResult = _tuHWMgr.getFWScanLimitCheckStatus();
+
+    if (_verbose)
+    {
+        printf("fwSLResult = 0x%x(%d), swSLResult = %d\n", fwSLResult, fwSLResult & 0x1, swSLResult);
+    }
+    _logger.logDebug("%s fwSLResult = 0x%x(%d), swSLResult = %d", getCommandMgrName(), fwSLResult, fwSLResult & 0x1, swSLResult);
 }
 
-void TUCmdMgr::processIncomingMsg()
+void TUCmdMgr::processWLSPInterrupt()
 {
-    // printf("In processIncomingMsg()\n");
     size_t bytesRead = 0;
+    int pending = 0;
 
-    RIMSCommandMessage *msg = new RIMSCommandMessage();
-
-    // Read UDP data
-    if (_udpFromRIMS->read(msg->getBuf(), MAX_RIMS_MSG_SIZE, bytesRead) != OK)
+    _uioDevWLSP->read((char *)&pending, sizeof(int), bytesRead);
+    if (_verbose)
     {
-        printf("error reading from _udpFromRIMS\n");
-        return;
+        printf("Reading WLSP interrupt, number of interrupt = %d\n", pending);
+    
+        _logger.logDebug("%s reading WLSP changed interrupt, number of interrupt = %d", getCommandMgrName(), pending);
     }
-    else
+    _uioDevWLSP->clearInterrupt();
+}
+
+void TUCmdMgr::processStatusTimer()
+{
+    CmdMgrBase::processStatusTimer();
+
+    // Read TU status and send to Alpha DU
+    DUTUStatusMsg tuStatus;
+    tuStatus.msgID = TU_STATUS;
+    tuStatus.dutuStatus = _tuHWMgr.readTUStatus();
+    sendTUStatusToDUA(tuStatus);
+    usleep(1 * 1000);   // Sleep 1 msecs
+
+    _timerDevStatus->read();
+}
+
+const char *TUCmdMgr::getCommandMgrName() const
+{
+    return "TU";
+}
+
+void TUCmdMgr::handleSteeringCommand(const SteeringCmdDataType& params)
+{
+    static int SteeringCmdCounter = 0;
+    SteeringCmdCounter++;
+
+    _logger.logInfo("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d", SteeringCmdCounter);
+    
+    // Set KSine Regs
+    if (params.testSource == Analog)
     {
-        printf("Successfully read %d bytes\n", (int)bytesRead);
-    }
-
-    msg->setTotalMsgSize(bytesRead);
-    msg->byteSwapHeaderToLocal();
-
-    _logger.logInfo("Processing incoming RIMS messages: msgId = %d", msg->getMsgId());
-    printf("Processing incoming RIMS messages: msgId = %d\n", msg->getMsgId());
-
-    switch (msg->getMsgId())
-    {
-    case SHUTDOWN_CMD_MSG_ID:
+        if (_verbose)
         {
-            _logger.logInfo("In SHUTDOWN_CMD_MSG_ID case");
-            ShutdownCmdMsg *cloneShutdownMsg = new ShutdownCmdMsg(msg->getBuf(), msg->getBufSize());
-            cloneShutdownMsg->byteSwapToLocal();
-            printf("msg id = %d, option = %d\n", cloneShutdownMsg->getMsgId(), cloneShutdownMsg->getType());
-
-            if (cloneShutdownMsg->getType() == PowerOff)
-            {
-                printf("****Calling System Shutdown****\n");
-                _logger.logInfo("****Calling System Shutdown****");
-                sleep(3);
-                reboot(RB_POWER_OFF);
-            }
-            else
-            {
-                printf("****Calling System Reboot****\n");
-                _logger.logInfo("****Calling System Reboot****");
-                sleep(3);
-                reboot(RB_AUTOBOOT);
-            }
-            break;
+            printf("===> STEERING_CMD_MSG_ID: SteeringCmdCounter = %d\n", SteeringCmdCounter);
         }
-//    case RFG_CMD_MSG_ID:
-//        {
-//            if ((MODULE_TYPE == TX) || (MODULE_TYPE == WG1) || (MODULE_TYPE == WG2))
-//            {
-//                GenRFSignalCmdMsg *cloneGenRFSignalMsg = new GenRFSignalCmdMsg(msg->getBuf(), msg->getBufSize());
-//                cloneGenRFSignalMsg->byteSwapToLocal();
-//                int numActions = cloneGenRFSignalMsg->getDataSize() / sizeof(RFGenCmdType);
-//
-//                static int TxCmdCounter = 0;
-//                TxCmdCounter++;
-//                if ((TxCmdCounter % 100) == 0)
-//                {
-//                    printf("RFG_CMD_MSG_ID: pbpId = %d, TxCmdCounter = %d\n", cloneGenRFSignalMsg->getPBPId(), TxCmdCounter);
-//                }
-//
-//                _logger.logInfo("In RFG_CMD_MSG_ID pbpId = %d", cloneGenRFSignalMsg->getPBPId());
-//
-//                RFGenCmdType *params = reinterpret_cast<RFGenCmdType *>(cloneGenRFSignalMsg->getDataBufPos());
-//
-//                for (int i = 0; i < numActions; i++)
-//                {
-//                    TU_CHANNEL chId = params[i].channelId;
-//
-//                    long freq = (params[i].action.signal.freqMHz * 1000000) + params[i].action.signal.freqHz;
-//                    unsigned int ftw = int(float(freq) * TR_FTW_Conversion_sec);
-//
-////                  int pwUsec = (int)((params[i].action.stopTime - params[i].action.startTime) / 200.0);
-//                    unsigned int startUsec = params[i].action.startTime / 1000;
-//                    unsigned int stopUsec = params[i].action.stopTime / 1000;
-//                    unsigned int pwUsec = (unsigned int)(stopUsec - startUsec);
-//
-//                    unsigned int rtw = (unsigned int)(float(params[i].action.signal.lfmRamp) / pwUsec * TR_RTW_Conversion);
-//
-//                    _logger.logDebug("++++++++++++++++++++++++");
-//                    _logger.logDebug("TX Action number %d: PBP ID = %d, Receive ID = %d, channelId = %d", i, cloneGenRFSignalMsg->getPBPId(), params[i].recvId, chId);
-//                    _logger.logDebug("TX startTime = %d (%d usec), stopTime = %d (%d usec), pw = %d usec",
-//                                     params[i].action.startTime, startUsec,
-//                                     params[i].action.stopTime, stopUsec,
-//                                     pwUsec);
-//                    _logger.logDebug("TX amplitude = %d, phaseOffset = %u, freq_Hz = %d (Hz), freq_MHz = %d (MHz), freq = %ld (Hz), ftw = %d, lfmRamp = %d (Hz), rtw = %d, phaseCode = %d",
-//                                     params[i].action.signal.amplitude, params[i].action.signal.phaseOffset,
-//                                     params[i].action.signal.freqHz, params[i].action.signal.freqMHz, freq, ftw,
-//                                     params[i].action.signal.lfmRamp, rtw,
-//                                     params[i].action.signal.phaseCode);
-//
-//                    printf("++++++++++++++++++++++++\n");
-//                    printf("TX Action number %d: PBP ID = %d, Receive ID = %d, channelId = %d\n", i, cloneGenRFSignalMsg->getPBPId(), params[i].recvId, chId);
-//                    printf("TX startTime = %d (%d usec), stopTime = %d (%d usec), pw = %d usec\n",
-//                                     params[i].action.startTime, startUsec,
-//                                     params[i].action.stopTime, stopUsec,
-//                                     pwUsec);
-//                    printf("TX amplitude = %d, phaseOffset = %u, freq = %d (Hz), freq_MHz = %d (MHz),  freq = %ld (Hz), ftw = %d, lfmRamp = %d (Hz), rtw = %d, phaseCode = %d\n",
-//                                     params[i].action.signal.amplitude, params[i].action.signal.phaseOffset,
-//                                     params[i].action.signal.freqHz, params[i].action.signal.freqMHz, freq, ftw,
-//                                     params[i].action.signal.lfmRamp, rtw,
-//                                     params[i].action.signal.phaseCode);
-//
-//                    // Generate hw instructions
-//                    if (RFG_INIT_TESTING == 1)
-//                    {
-////                      _rfGenHWMgr.addInitAction(chId, params[i].action.signal);
-//                    }
-//                    else
-//                    {
-//                        // Check action before adding
-//                        // Verify no overlapping
-//                        bool overlapped = false;
-//
-//                        if (params[i].action.startTime < lastRFGActionStopTime[chId])
-//                        {
-//                            overlapped = true;
-//                            _logger.logInfo("ERROR: startTime (%d) < lastTXActionStopTime (%d)", params[i].action.startTime, lastRFGActionStopTime[chId]);
-//                        }
-//
-//                        if (params[i].action.stopTime < params[i].action.startTime)
-//                        {
-//                            overlapped = true;
-//                            _logger.logInfo("ERROR: stopTime (%d) < startTime (%d)", params[i].action.stopTime, params[i].action.startTime);
-//                        }
-//
-//                        if (!overlapped)
-//                        {
-//                            lastRFGActionStopTime[params[i].channelId] = params[i].action.stopTime;
-//                            params[i].action.signal.lfmRamp = rtw;
-//                            _tuHWMgr.addAction(chId, params[i].action, ftw);
-//                        }
-//                    }
-//
-//                }
-//
-//                // Init setup
-//                if (RFG_INIT_TESTING == 1)
-//                {
-////                  _tuHWMgr.initTest();
-//                }
-//                else
-//                {
-//                    // Program actions to FW
-//                    _tuHWMgr.programActions();
-//
-//                    // For WG1 and WG2, expecting 1 message with all actions for the PBP.
-//                    // TWGS will be sending the message at DeltaP, so need to do everything
-//                    // normally do at DeltaP here and do nothing at DeltaP
-//                    if ((MODULE_TYPE == WG1) || (MODULE_TYPE == WG2) || (INTERNAL_TRIGGER == 1))
-//                    {
-//                        toggleLoadCmdFlag();
-//                    }
-//                }
-//            }
-//
-//            break;
-//        }
-        // printf("Successfully write from readUdpData\n");
+        _tuHWMgr.setArmKSine(ALPHA, params.alpha);
+        _tuHWMgr.setArmKSine(BETA, params.beta);
+
+        // Setup TU for 1 action
+        _tuHWMgr.setNumCycle(1);
+        _tuHWMgr.setNumRLTDPerCycle(1);
+        _tuHWMgr.setNumInc(0);
+        _tuHWMgr.setCycleResetTime(0);
+        _tuHWMgr.setRLTDPeriod(0);
+        _tuHWMgr.setAlphaInc(0);
+        _tuHWMgr.setBetaInc(0);
+
+        if (params.RLCP == On)
+        {
+            _tuHWMgr.setRLCPSignal(On);
+        }
+        if (params.RLSC == On)
+        {
+            _tuHWMgr.setRLSCSignal(On);
+        }
+
+        // Toggle RLTD signal to start steering words processing
+        _tuHWMgr.toggleRLTDSignal();
+
+        // Reset RLCP and RLSC back to off
+        _tuHWMgr.setRLCPSignal(Off);
+        _tuHWMgr.setRLSCSignal(Off);
     }
 }
 
-void TUCmdMgr::processWarmRestartMsg()
+void TUCmdMgr::handleStatusRequest(const StatusRequestCmdDataType& params)
+{
+    if (params.requestType == SystemStatusSentToTWGS)
+    {
+        int swcStatus = _tuHWMgr.getSWCStatus();
+        int swcrStatus = _tuHWMgr.getSWCRStatus();
+
+        _logger.logDebug("SWC Status 0x%x, SWCR Status 0x%x", swcStatus, swcrStatus);
+        if (_verbose)
+        {
+            printf("SWC Status 0x%x, SWCR Status 0x%x\n", swcStatus, swcrStatus);
+        }
+
+        StatusSentToTWGSRptMsg rptMsg;
+        rptMsg.setSWCStatus(swcStatus);
+        rptMsg.setSWCRStatus(swcrStatus);
+        rptMsg.buildMsg();
+        int msgSize = rptMsg.getBufSize();
+        rptMsg.headerByteSwapToNetwork();
+
+        _toTestServer->write(rptMsg.getBuf(), msgSize);
+    }
+}
+
+void TUCmdMgr::handleStressTestCommand(const StressTestCmdDataType& params)
+{
+    static int StressTestCmdCounter = 0;
+    StressTestCmdCounter++;
+
+    _logger.logInfo("===> STRESS_TEST_CMD_MSG_ID: StressTestCmdCounter = %d", StressTestCmdCounter);
+    _logger.logDebug("Stress Test: num cycle = %d, numTest = %d, numInc = %d, reset time = %d, spacing = %d, alpha = %d, alpha inc = %d, beta = %d, beta inc = %d",
+           params.numCycle, params.numTest, params.numInc, params.cycleResetTime, params.spacingUsec, params.alpha, params.alphaInc, params.beta, params.betaInc);
+    if (_verbose)
+    {
+        printf("Stress Test: num cycle = %d, numTest = %d, numInc = %d, reset time = %d, spacing = %d, alpha = %d, alpha inc = %d, beta = %d, beta inc = %d\n",
+           params.numCycle, params.numTest, params.numInc, params.cycleResetTime, params.spacingUsec, params.alpha, params.alphaInc, params.beta, params.betaInc);
+    }
+
+    _tuHWMgr.setArmKSine(ALPHA, params.alpha);
+    _tuHWMgr.setArmKSine(BETA, params.beta);
+
+    // Setup TU for 1 action
+    _tuHWMgr.setNumCycle(params.numCycle);
+    _tuHWMgr.setNumRLTDPerCycle(params.numTest);
+    _tuHWMgr.setNumInc(params.numInc);
+    _tuHWMgr.setCycleResetTime(params.cycleResetTime);
+    _tuHWMgr.setRLTDPeriod(params.spacingUsec);
+    _tuHWMgr.setAlphaInc(params.alphaInc);
+    _tuHWMgr.setBetaInc(params.betaInc);
+
+    // Toggle RLTD signal to start steering words processing
+    _tuHWMgr.toggleRLTDSignal();
+}
+
+void TUCmdMgr::handleRepollDCUCommand()
+{
+    printf("ERROR: Not processing repoll dcu command\n");
+    _logger.logError("ERROR: Not processing repoll dcu command");
+}
+
+void TUCmdMgr::sendTUStatusToDUA(DUTUStatusMsg status)
+{
+    _localHWStatus->write(&status, sizeof(DUTUStatusMsg));
+}
+
+void TUCmdMgr::processLocalHWCommandMsg()
 {
     size_t bytesRead = 0;
+    const int localCommandBufferCount = sizeof(_configModeCmdMsg) / sizeof(_configModeCmdMsg[0]);
+    ConfigModeCmdMsg *configModeCmdMsg = &_configModeCmdMsg[configModeCmdCounter];
+    configModeCmdCounter++;
 
-    RIMSHeaderType *rimsHeaderPtr;
-    rimsHeaderPtr = &_rimsHeaderBuf[warmRestartBufCounter];
-    warmRestartBufCounter++;
-
-    if (warmRestartBufCounter >= 4)
+    if (configModeCmdCounter >= localCommandBufferCount)
     {
-        warmRestartBufCounter = 0;
+        configModeCmdCounter = 0;
     }
 
     // Read UDP data
-    if (_udpWarmRestart->read((char *)rimsHeaderPtr, sizeof(RIMSHeaderType), bytesRead) != OK)
+    if (_localHWCommand->read((char *)configModeCmdMsg, sizeof(ConfigModeCmdMsg), bytesRead) != OK)
     {
-        printf("error reading from _udpWarmRestart\n");
+        printf("Error reading from _localHWCommand\n");
+        _logger.logDebug("Error reading from _localHWCommand");
         return;
     }
-    else
+
+    // Get message id
+    if (configModeCmdMsg->msgID == CONFIG_MODE_CMD)
     {
-        // printf("Successfully read %d bytes\n", (int)bytesRead);
-    }
-
-    // Convert to Little Endian
-    rimsHeaderPtr->msgId = (RIMSMessageId)fromNetworkInt(rimsHeaderPtr->msgId);
-
-    _logger.logInfo("Processing incoming Warm Restart messages");
-
-    if (rimsHeaderPtr->msgId == 2003)
-    {
-        printf("****Calling System Reboot****\n");
-        _logger.logInfo("****Calling System Reboot****");
-        sleep(3);
-        reboot(RB_AUTOBOOT);
+        if (_verbose)
+        {
+            printf("Received configModeCmdMsg: config %d mode %d oltd = %d\n", configModeCmdMsg->configMode.swcConfig,
+                   configModeCmdMsg->configMode.swcMode, configModeCmdMsg->configMode.olteMode);
+        }
+        _logger.logDebug("Received configModeCmdMsg: config %d mode %d oltd = %d", configModeCmdMsg->configMode.swcConfig,
+                         configModeCmdMsg->configMode.swcMode, configModeCmdMsg->configMode.olteMode);
+        _tuHWMgr.setConfig(configModeCmdMsg->configMode.swcConfig);
+        _tuHWMgr.setMode(configModeCmdMsg->configMode.swcMode);
+        _tuHWMgr.setOLTE(configModeCmdMsg->configMode.olteMode);
     }
 }
 
+#define EMU_MSG_ID_SWCR_STATUS 1
+#define EMU_MSG_ID_DUA_STATUS 2
+#define EMU_MSG_ID_DUB_STATUS 3
+#define EMU_MSG_ID_TU_STATUS 4
+#define EMU_MSG_ID_DCU_STATUS 5
 
+void TUCmdMgr::handleStatusEmulatorMessage(int msg_id, const int *status, int numData)
+{
+    (void)numData;
 
-
+    if (msg_id == EMU_MSG_ID_TU_STATUS)
+    {
+        _tuHWMgr.processTUEmulatorStatus(status[1]);
+    }
+    else
+    {
+        printf("Error: this SWCR Status Emulator is not being processed by this component\n");
+        _logger.logDebug("Error: this SWCR Status Emulator is not being processed by this component");
+    }
+}

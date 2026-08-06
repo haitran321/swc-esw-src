@@ -25,56 +25,6 @@ STATUS DUDevice::mmap()
     return OK;
 }
 
-DUFWActionType * DUDevice::getCh0StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH0_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh1StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH1_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh2StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH2_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh3StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH3_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh4StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH4_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh5StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH5_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh6StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH6_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh7StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH7_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh8StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH8_STARTING_ADDR_OFFSET);
-}
-
-DUFWActionType * DUDevice::getCh9StartingAddress()
-{
-    return (DUFWActionType *)(_apbBusAddr + DU_CH9_STARTING_ADDR_OFFSET);
-}
-
 int DUDevice::readReg(int offset)
 {
    return (*((unsigned *)(_apbBusAddr + offset)));
@@ -85,106 +35,140 @@ void DUDevice::writeReg(int offset, int data)
     *((unsigned *)(_apbBusAddr + offset)) = data;
 }
 
-int DUDevice::getFirmwareVersionReg()
+int DUDevice::getFWVerReg()
 {
-    return (regs->firmwareVersion);
+    return (regs->fwVer);
 }
 
-int DUDevice::getBoardStatusReg()
+int DUDevice::getBrdStatusReg()
 {
-    return (regs->boardStatus);
+    return (regs->brdStatus);
 }
 
-STATUS DUDevice::setBoardControlReg(int val)
+void DUDevice::setBrdCtrlReg(int val)
 {
-    STATUS rc = OK;
-
-    regs->boardControl = val;
-
-    return rc;
+    regs->brdCtrl = val;
 }
 
-STATUS DUDevice::getBoardControlReg()
+int DUDevice::getBrdCtrlReg()
 {
-    return (regs->boardControl);
+    return (regs->brdCtrl);
 }
 
-STATUS DUDevice::setCWRegs(DU_CHANNEL channel, DUCWSignalType signal)
+void DUDevice::setDiagInfoReg(int val)
 {
-    STATUS rc = OK;
-
-    regs->cwSignals[channel].amplitude = signal.amplitude;
-    regs->cwSignals[channel].freq = signal.freq;
-
-    return rc;    
+    regs->diagInfo = val;
 }
 
-DUCWSignalType DUDevice::getCWRegs(DU_CHANNEL channel)
+int DUDevice::getArmKSineReg(RFCC_CH ch)
 {
-    DUCWSignalType action;
-
-    action.amplitude = regs->cwSignals[channel].amplitude;
-    action.freq = regs->cwSignals[channel].freq;
-    
-    return action;    
+    return (regs->armKSine[ch]);
 }
 
-// STATUS DUDevice::setDMAControllerReg(int val)
-// {
-//     STATUS rc = OK;
-
-//     regs->dmaControlleReg = val;
-
-//     return rc;
-// }
-
-// void DUDevice::readFeedbackRegs(int numRegs)
-// {
-//     for (int i = 0; i < numRegs; i++)
-//     {
-//         printf("spare[%d] = 0x%x\n", i, regs->spare3[i]);
-//     }
-// }
-
-// void DUDevice::readDMAReg()
-// {
-//     writeReg(0x9C, 0x8);
-//     sleep(0.1);
-//     writeReg(0x9C, 0x0);
-//     printf("Write control reg = 0x%x\n", readReg(0x90));
-//     printf("Write status reg = 0x%x\n", readReg(0x24));
-//     printf("Read control reg = 0x%x\n", readReg(0x4C));
-//     printf("Read status reg = 0x%x\n", readReg(0x28));
-// }
-
-STATUS DUDevice::setNumActionsReg(DU_CHANNEL ch, int val)
+void DUDevice::setArmKSineReg(RFCC_CH ch, int val)
 {
-    STATUS rc = OK;
+    regs->armKSine[ch] = val;
+}
 
-    if (ch == DU_CHANNEL_0)
-    {
-        regs->ch0NumActions = val;
-    }
-    else if (ch == DU_CHANNEL_1)
-    {
-        regs->ch1NumActions = val;
-    }
-    else if (ch == DU_CHANNEL_2)
-    {
-        regs->ch2NumActions = val;
-    }
-    else if (ch == DU_CHANNEL_3)
-    {
-        regs->ch3NumActions = val;
-    }
-    else
-    {
-        printf("ERROR:  invalid DU channel number = %d\n", ch);
-        rc = ERROR;
-    }
-    
-    return rc;
-}    
+int DUDevice::getAtbKSineReg(RFCC_CH ch)
+{
+    return (regs->atbKSine[ch]);
+}
+
+void DUDevice::setAtbKSineReg(RFCC_CH ch, int val)
+{
+    regs->atbKSine[ch] = val;
+}
+
+int DUDevice::getSLStatusReg()
+{
+    return (regs->slResult);
+}
+
+int DUDevice::getSysConfigStatusReg()
+{
+    return (regs->sysConfigStatus);
+}
+
+int DUDevice::getSwcStatusToTwgsReg()
+{
+    return (regs->swcStatusToTwgs);
+}
+
+void DUDevice::setSwcStatusToTwgsReg(int val)
+{
+    regs->swcStatusToTwgs = val;
+}
+
+int DUDevice::getARMInitStatusReg()
+{
+    return (regs->armInitStatus);
+}
+
+void DUDevice::setARMInitStatusReg(int val)
+{
+    regs->armInitStatus = val;
+}
+
+int DUDevice::getDCUSPIDelay1Reg()
+{
+    return (regs->dcuSPIDelay1);
+}
+
+void DUDevice::setDCUSPIDelay1Reg(int val)
+{
+    regs->dcuSPIDelay1 = val;
+}
+
+int DUDevice::getDCUSPIDelay2Reg()
+{
+    return (regs->dcuSPIDelay2);
+}
+
+void DUDevice::setDCUSPIDelay2Reg(int val)
+{
+    regs->dcuSPIDelay2 = val;
+}
+
+int DUDevice::getDCUSPIDelay3Reg()
+{
+    return (regs->dcuSPIDelay3);
+}
+
+void DUDevice::setDCUSPIDelay3Reg(int val)
+{
+    regs->dcuSPIDelay3 = val;
+}
+
+int DUDevice::getDCUSPIDelay4Reg()
+{
+    return (regs->dcuSPIDelay4);
+}
+
+void DUDevice::setDCUSPIDelay4Reg(int val)
+{
+    regs->dcuSPIDelay4 = val;
+}
+
+int DUDevice::getFPGADieTempReg()
+{
+    return (regs->fpgaDieTemp);
+}
+
+int DUDevice::getDiagInfoReg()
+{
+    return (regs->diagInfo);
+}
+
+int DUDevice::getDCUStatusReg(int regNum)
+{
+    return (regs->dcuStatus[regNum]);
+}
+
+void DUDevice::setDCUSCLKReg(int dcuNum, int val)
+{
+    regs->dcuSCLKDelay[dcuNum] = val;
+}
 
 void DUDevice::getRegs(int startReg, int endReg)
 {
@@ -194,10 +178,4 @@ void DUDevice::getRegs(int startReg, int endReg)
     {
         printf("0x%x: 0x%x\n", startReg + (i*4), readReg(startReg + (i*4)));
     }
-}
-
-void DUDevice::setGatedCWEmulatorRegs(int period)
-{
-//  regs->gatedCWEmOnDur = duration;
-    regs->gatedCWEmPeriod = period; 
 }

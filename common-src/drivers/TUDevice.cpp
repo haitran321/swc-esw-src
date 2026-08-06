@@ -25,56 +25,6 @@ STATUS TUDevice::mmap()
     return OK;
 }
 
-TUFWActionType * TUDevice::getCh0StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH0_STARTING_ADDR_OFFSET);
-}
-
-TUFWActionType * TUDevice::getCh1StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH1_STARTING_ADDR_OFFSET);
-}
-
-TUFWActionType * TUDevice::getCh2StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH2_STARTING_ADDR_OFFSET);
-}
-
-TUFWActionType * TUDevice::getCh3StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH3_STARTING_ADDR_OFFSET);
-}
-
-TUFWActionType * TUDevice::getCh4StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH4_STARTING_ADDR_OFFSET);
-}
-
-TUFWActionType * TUDevice::getCh5StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH5_STARTING_ADDR_OFFSET);
-}
-
-TUFWActionType * TUDevice::getCh6StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH6_STARTING_ADDR_OFFSET);
-}
-
-TUFWActionType * TUDevice::getCh7StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH7_STARTING_ADDR_OFFSET);
-}
-
-TUFWActionType * TUDevice::getCh8StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH8_STARTING_ADDR_OFFSET);
-}
-
-TUFWActionType * TUDevice::getCh9StartingAddress()
-{
-    return (TUFWActionType *)(_apbBusAddr + TU_CH9_STARTING_ADDR_OFFSET);
-}
-
 int TUDevice::readReg(int offset)
 {
    return (*((unsigned *)(_apbBusAddr + offset)));
@@ -85,106 +35,200 @@ void TUDevice::writeReg(int offset, int data)
     *((unsigned *)(_apbBusAddr + offset)) = data;
 }
 
-int TUDevice::getFirmwareVersionReg()
+int TUDevice::getFWVerReg()
 {
-    return (regs->firmwareVersion);
+    return (regs->fwVer);
 }
 
-int TUDevice::getBoardStatusReg()
+int TUDevice::getBrdStatusReg()
 {
-    return (regs->boardStatus);
+    return (regs->brdStatus);
 }
 
-STATUS TUDevice::setBoardControlReg(int val)
+void TUDevice::setBrdCtrlReg(int val)
 {
-    STATUS rc = OK;
-
-    regs->boardControl = val;
-
-    return rc;
+    regs->brdCtrl = val;
 }
 
-STATUS TUDevice::getBoardControlReg()
+int TUDevice::getBrdCtrlReg()
 {
-    return (regs->boardControl);
+    return (regs->brdCtrl);
 }
 
-STATUS TUDevice::setCWRegs(TU_CHANNEL channel, TUCWSignalType signal)
+void TUDevice::setArmKSineReg(RFCC_CH ch, int val)
 {
-    STATUS rc = OK;
-
-    regs->cwSignals[channel].amplitude = signal.amplitude;
-    regs->cwSignals[channel].freq = signal.freq;
-
-    return rc;    
+    regs->armKSine[ch] = val;
 }
 
-TUCWSignalType TUDevice::getCWRegs(TU_CHANNEL channel)
+int TUDevice::getArmKSineReg(RFCC_CH ch)
 {
-    TUCWSignalType action;
-
-    action.amplitude = regs->cwSignals[channel].amplitude;
-    action.freq = regs->cwSignals[channel].freq;
-    
-    return action;    
+    return (regs->armKSine[ch]);
 }
 
-// STATUS TUDevice::setDMAControllerReg(int val)
-// {
-//     STATUS rc = OK;
-
-//     regs->dmaControlleReg = val;
-
-//     return rc;
-// }
-
-// void TUDevice::readFeedbackRegs(int numRegs)
-// {
-//     for (int i = 0; i < numRegs; i++)
-//     {
-//         printf("spare[%d] = 0x%x\n", i, regs->spare3[i]);
-//     }
-// }
-
-// void TUDevice::readDMAReg()
-// {
-//     writeReg(0x9C, 0x8);
-//     sleep(0.1);
-//     writeReg(0x9C, 0x0);
-//     printf("Write control reg = 0x%x\n", readReg(0x90));
-//     printf("Write status reg = 0x%x\n", readReg(0x24));
-//     printf("Read control reg = 0x%x\n", readReg(0x4C));
-//     printf("Read status reg = 0x%x\n", readReg(0x28));
-// }
-
-STATUS TUDevice::setNumActionsReg(TU_CHANNEL ch, int val)
+int TUDevice::getSLStatusReg()
 {
-    STATUS rc = OK;
+    return (regs->slResult);
+}
 
-    if (ch == TU_CHANNEL_0)
-    {
-        regs->ch0NumActions = val;
-    }
-    else if (ch == TU_CHANNEL_1)
-    {
-        regs->ch1NumActions = val;
-    }
-    else if (ch == TU_CHANNEL_2)
-    {
-        regs->ch2NumActions = val;
-    }
-    else if (ch == TU_CHANNEL_3)
-    {
-        regs->ch3NumActions = val;
-    }
-    else
-    {
-        printf("ERROR:  invalid TU channel number = %d\n", ch);
-        rc = ERROR;
-    }
-    
-    return rc;
-}    
+int TUDevice::getSysConfigStatusReg()
+{
+    return (regs->sysConfigStatus);
+}
+
+void TUDevice::setARMInitStatusReg(int val)
+{
+    regs->armInitStatus = val;
+}
+
+int TUDevice::getARMInitStatusReg()
+{
+    return (regs->armInitStatus);
+}
+
+int TUDevice::getSWCStatusReg()
+{
+    return (regs->swcStatus);
+}
+
+int TUDevice::getSWCRStatusReg()
+{
+    return (regs->swcrStatus);
+}
+
+void TUDevice::setRLTDPulseDurReg(int val)
+{
+    regs->rltdPulseDur = val;
+}
+
+int TUDevice::getRLTDPulseDurReg()
+{
+    return (regs->rltdPulseDur);
+}
+
+void TUDevice::setRLCPPulseDurReg(int val)
+{
+    regs->rlcpPulseDur = val;
+}
+
+int TUDevice::getRLCPPulseDurReg()
+{
+    return (regs->rlcpPulseDur);
+}
+
+void TUDevice::setRLSCPulseDurReg(int val)
+{
+    regs->rlscPulseDur = val;
+}
+
+int TUDevice::getRLSCPulseDurReg()
+{
+    return (regs->rlscPulseDur);
+}
+
+void TUDevice::setSteeringWordPulseDurReg(int val)
+{
+    regs->steeringWordPulseDur = val;
+}
+
+int TUDevice::getSteeringWordPulseDurReg()
+{
+    return (regs->steeringWordPulseDur);
+}
+
+void TUDevice::setRLTDPeriodReg(int val)
+{
+    regs->rltdPeriod = val;
+}
+
+int TUDevice::getRLTDPeriodReg()
+{
+    return (regs->rltdPeriod);
+}
+
+void TUDevice::setNumRLTDPerCycleReg(int val)
+{
+    regs->numRLTDPerCycle = val;
+}
+
+int TUDevice::getNumRLTDPerCycleReg()
+{
+    return (regs->numRLTDPerCycle);
+}
+
+void TUDevice::setRLTDPreTimeReg(int val)
+{
+    regs->rltdPreTime = val;
+}
+
+int TUDevice::getRLTDPreTimeReg()
+{
+    return (regs->rltdPreTime);
+}
+
+void TUDevice::setNumIncReg(int val)
+{
+    regs->numInc = val;
+}
+
+int TUDevice::getNumIncReg()
+{
+    return (regs->numInc);
+}
+
+void TUDevice::setAlphaIncReg(int val)
+{
+    regs->alphaInc = val;
+}
+
+int TUDevice::getAlphaIncReg()
+{
+    return (regs->alphaInc);
+}
+
+void TUDevice::setBetaIncReg(int val)
+{
+    regs->betaInc = val;
+}
+
+int TUDevice::getBetaIncReg()
+{
+    return (regs->betaInc);
+}
+
+void TUDevice::setCycleResetTimeReg(int val)
+{
+    regs->cycleResetTime = val;
+}
+
+int TUDevice::getCycleResetTimeReg()
+{
+    return (regs->cycleResetTime);
+}
+
+void TUDevice::setNumCycleReg(int val)
+{
+    regs->numCycle = val;
+}
+
+int TUDevice::getNumCycleReg()
+{
+    return (regs->numCycle);
+}
+
+int TUDevice::getFPGADieTempReg()
+{
+    return (regs->fpgaDieTemp);
+}
+
+void TUDevice::setDiagInfoReg(int val)
+{
+    regs->diagInfo = val;
+}
+
+int TUDevice::getDiagInfoReg()
+{
+    return (regs->diagInfo);
+}
 
 void TUDevice::getRegs(int startReg, int endReg)
 {
@@ -194,10 +238,4 @@ void TUDevice::getRegs(int startReg, int endReg)
     {
         printf("0x%x: 0x%x\n", startReg + (i*4), readReg(startReg + (i*4)));
     }
-}
-
-void TUDevice::setGatedCWEmulatorRegs(int period)
-{
-//  regs->gatedCWEmOnDur = duration;
-    regs->gatedCWEmPeriod = period; 
 }

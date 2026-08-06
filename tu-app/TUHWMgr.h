@@ -8,6 +8,7 @@
 #include "Uncopyable.h"
 #include "TUDevice.h"
 #include "Logger.h"
+#include "SWCMsgTypes.h"
 
 class TUHWMgr : public Uncopyable
 {
@@ -25,30 +26,55 @@ class TUHWMgr : public Uncopyable
         void close();
 
         void getRegs(int startReg, int endReg);
-
         void setReg(int offset, int data);
 
-        int getBoardControl();
+        int getBrdStatus();
+        int getBrdCtrl();
 
-        STATUS setBoardControl(int val);
+        int getArmKSine(RFCC_CH ch);
+        void setArmKSine(RFCC_CH ch, int val);
 
-        int getBoardStatus();
+        int getFWScanLimitCheckStatus();
 
-        void clearAllActions();
+        void setShutdownBit();
 
-        STATUS addAction(TU_CHANNEL chId, TUActionType action, unsigned int ftw);
+        void toggleRLTDSignal();
+        void setRLCPSignal(CmdOnOff flag);
+        void setRLSCSignal(CmdOnOff flag);
 
-        void setCWRegs(TU_CHANNEL channel, TUCWSignalType signal);
+        void setConfig(SWC_CONFIG config);
+        void setMode(SWC_MODE mode);
+        void setOLTE(SWC_MODE olte);
 
-        void programActions();
+        int getSWCStatus();
+        int getSWCRStatus();
 
-        int getNumActions(TU_CHANNEL ch);
+        int getRLTDPeriod();
+        void setRLTDPeriod(int val);
 
-        void toggleLoadCmdFlag();
+        int getNumRLTDPerCycle();
+        void setNumRLTDPerCycle(int val);
 
-        void toggleSWInternalTriggerFlag();
+        int getNumInc();
+        void setNumInc(int val);
 
-        void setTriggerMode(TU_TRIGGER_ENUM mode);
+        int getAlphaInc();
+        void setAlphaInc(int val);
+
+        int getBetaInc();
+        void setBetaInc(int val);
+
+        int getCycleResetTime();
+        void setCycleResetTime(int val);
+
+        int getNumCycle();
+        void setNumCycle(int val);
+
+        DUTUStatusType readTUStatus();
+
+        int getFPGADieTemp();
+
+        void processTUEmulatorStatus(int statusReg);
 
     protected:
         /**
@@ -61,28 +87,20 @@ class TUHWMgr : public Uncopyable
         /* Private constructor */
         TUHWMgr();
 
+        int _verbose;
+
         Logger &_logger;
 
         TUDevice* _tuDev;
 
-        int boardControlValue;
-
-        int _numActions[NUM_TU_CHANNELS];
-
-        TUFWActionType *_actions[NUM_TU_CHANNELS];
-
-        /* Common config parameters */
         int MODULE_TYPE;
-        int SW_TRIGGER;
-        int INIT_TESTING;
-        int PBP_MODE_USING_INIT_REGS;
-        int INTERNAL_TRIGGER;
-        int CHIRP_DIR;
 
-        // WG specific config parameters
-        int WG1_COMBINER_ENABLE;
-        int WG1_60MHZ_INPUT;
+        int _brdCtrVal;
+        int _diagRegVal;
+        int _armInitReady;
 
+        int USE_STATUS_EMULATOR;
+        int emTUStatusReg;
 };
 
 

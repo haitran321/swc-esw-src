@@ -1,5 +1,5 @@
 /**
-* $Id: Device.h 5100 2009-12-04 20:54:54Z nei18232 $
+* $Id: Device.h
 *
 * Class Device is the base class providing common functionality 
 * to all classes accessing VxWorks I/O devices. It provides an 
