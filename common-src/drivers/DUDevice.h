@@ -96,10 +96,10 @@ typedef enum
 
 typedef enum
 {
-    DATA_TYPE_DU_STATUS             = 0,
+    STATUS_DATA_TYPE_ERROR           = 0,
     DATA_TYPE_CONFIG_STATUS         = 1,
     DATA_TYPE_DCU_ROLLED_UP_STATUS  = 2,
-    STATUS_DATA_TYPE_ERROR          = 3
+    DATA_TYPE_DU_STATUS              = 3
 }SWC_STATUS_DATA_TYPE;
 
 typedef enum

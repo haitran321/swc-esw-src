@@ -49,10 +49,10 @@ typedef enum
 
 typedef enum
 {
-    SWCR        = 0,
+    CONFIG_ERR  = 0,
     SWC         = 1,
     JOINT       = 2,
-    CONFIG_ERR  = 3
+    SWCR        = 3
 } SWC_CONFIG;
 
 typedef enum
@@ -83,10 +83,10 @@ typedef enum
 
 typedef enum
 {
-    ROLLED_UP_GREEN    = 0,
+    ROLLED_UP_ERROR    = 0,
     ROLLED_UP_RED      = 1,
     ROLLED_UP_YELLOW   = 2,
-    ROLLED_UP_ERROR    = 3
+    ROLLED_UP_GREEN    = 3
 } RolledUpStatus;
 
 typedef enum
