@@ -158,7 +158,7 @@ STATUS TUCmdMgr::start()
     printf("Successfully created _localHWCommand device\n");
 
     // Initialize HW Manager
-    _tuHWMgr.initialize();
+    _tuHWMgr.initialize(getCommandMgrName());
 
     // Read TU status and send to Alpha DU
     DUTUStatusMsg tuStatus;

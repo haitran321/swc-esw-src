@@ -26,7 +26,7 @@ void TUHWMgr::close()
     _tuDev->close();
 }
 
-STATUS TUHWMgr::initialize()
+STATUS TUHWMgr::initialize(const char *cmdMgrName_)
 {
     STATUS rc = OK;
 
@@ -38,6 +38,8 @@ STATUS TUHWMgr::initialize()
     int RLTD_PRE_TRIGGER_TIME;
 
     _logger.logInfo("TUHWMgr Initializing");
+
+    cmdMgrName = cmdMgrName_;
 
     // Get config parameters
     ConfigDataManager &configs = ConfigDataManager::getInstance();

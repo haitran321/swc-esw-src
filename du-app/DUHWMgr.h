@@ -26,7 +26,7 @@ class DUHWMgr : public Uncopyable
 
         static DUHWMgr &getInstance();
 
-        STATUS initialize(int MODULE_TYPE_);
+        STATUS initialize(int MODULE_TYPE_, const char *cmdMgrName_);
 
         void close();
 
@@ -137,7 +137,7 @@ class DUHWMgr : public Uncopyable
         IOMHWMgr &_iomHWMgr;
 
         RFCC_CH _rfccType;
-        string cmdMgrName;
+        const char *cmdMgrName;
         int _brdCtrVal;
         int _diagRegVal;
         int _sysConfigReg;

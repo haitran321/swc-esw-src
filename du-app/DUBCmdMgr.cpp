@@ -122,7 +122,7 @@ STATUS DUBCmdMgr::start()
     printf("Successfully created _localHWStatus device\n");
 
     // Initialize HW Manager
-    _duHWMgr.initialize(_moduleType);
+    _duHWMgr.initialize(_moduleType, getCommandMgrName());
 
     // Read Beta DU status and send to Alpha DU
     DUTUStatusMsg bduStatus;

@@ -40,7 +40,7 @@ void DUHWMgr::close()
     _duDev->close();
 }
 
-STATUS DUHWMgr::initialize(int MODULE_TYPE_)
+STATUS DUHWMgr::initialize(int MODULE_TYPE_, const char *cmdMgrName_)
 {
     STATUS rc = OK;
 
@@ -67,6 +67,8 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
     int DCU_NUM_TO_REFRESH_GDS = 199;
 
     _logger.logInfo("DUHWMgr Initializing");
+
+    cmdMgrName = cmdMgrName_;
 
     // Get config parameters
     ConfigDataManager &configs = ConfigDataManager::getInstance();
@@ -136,11 +138,9 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_)
 
     // Set RFCC Type
     _rfccType = ALPHA;
-    cmdMgrName = 'DUA';
     if (MODULE_TYPE == BETA)
     {
         _rfccType = BETA;
-        cmdMgrName = 'DUB';
     }
 
     // Set Unit Type in FW
@@ -834,7 +834,7 @@ DCUStatus DUHWMgr::readDCUFWStatus(int reg)
         // Set DCU overall status to NO_GO
         status.overallStatus = (DCUHealthState)(0x2);
 //      printf("ERROR: invalid loc %d for reg %d with fw value 0x%x\n", status.loc, reg, fwStatus);
-        _logger.logDebug("ERROR: invalid loc %d for reg %d with fw value 0x%x", status.loc, reg, fwStatus);
+//      _logger.logDebug("ERROR: invalid loc %d for reg %d with fw value 0x%x", status.loc, reg, fwStatus);
     }
 
     return status;
@@ -844,41 +844,46 @@ STATUS DUHWMgr::validateDCUFWStatus(DCUStatus status)
 {
     STATUS rc = OK;
 
-//  printf("validateDCUFWStatus: FW status reg = 0x%x\n", status.fwStatusReg);
-    _logger.logDebug("validateDCUFWStatus: FW status reg = 0x%x", status.fwStatusReg);
-
-    // Check location valid bit
-    if (status.locStatus == NO_GO)
+    if (status.fwStatusReg == 0xffffff)
     {
-//      printf("Failed validateDCUFWStatus: DCU location valid bit is set to %d\n", status.locStatus);
-        _logger.logDebug("Failed validateDCUFWStatus: DCU location valid bit is set to %d", status.locStatus);
         rc = ERROR;
     }
-
-    // Check location number
-    if ((status.loc < 0) || (status.loc > 153))
+    else
     {
-//      printf("Failed validateDCUFWStatus: DCU location number is %d\n", status.loc);
-        _logger.logDebug("Failed validateDCUFWStatus: DCU location number is %d", status.loc);
-        rc = ERROR;
-    }
 
-    // Check correct RFCC group
-    if (status.group != _rfccType)
-    {
-//      printf("Incorrect rfcc group: expected %d, received %d\n", _rfccType, status.group);
-        _logger.logDebug("Incorrect rfcc group: expected %d, received %d", _rfccType, status.group);
-        rc = ERROR;
-    }
-
-    // Check FW version
-    if (DCU_CHECK_VERSION_FLAG == 1)
-    {
-        if ((status.dcuFWMajorRev != DCU_MAJOR_VERSION) || (status.dcuFWMinorRev != DCU_MINOR_VERSION))
+        // Check location valid bit
+        if (status.locStatus == NO_GO)
         {
-//          printf("Failed validateDCUFWStatus: DCU version major = %d, minor = %d\n", status.dcuFWMajorRev, status.dcuFWMinorRev);
-            _logger.logDebug("Failed validateDCUFWStatus: DCU version major = %d, minor = %d", status.dcuFWMajorRev, status.dcuFWMinorRev);
+    //      printf("Failed validateDCUFWStatus: DCU location valid bit is set to %d\n", status.locStatus);
+            _logger.logDebug("Failed validateDCUFWStatus: DCU location valid bit is set to %d", status.locStatus);
             rc = ERROR;
+        }
+
+        // Check location number
+        if ((status.loc < 0) || (status.loc > 153))
+        {
+    //      printf("Failed validateDCUFWStatus: DCU location number is %d\n", status.loc);
+            _logger.logDebug("Failed validateDCUFWStatus: DCU location number is %d", status.loc);
+            rc = ERROR;
+        }
+
+        // Check correct RFCC group
+        if (status.group != _rfccType)
+        {
+    //      printf("Incorrect rfcc group: expected %d, received %d\n", _rfccType, status.group);
+            _logger.logDebug("Incorrect rfcc group: expected %d, received %d", _rfccType, status.group);
+            rc = ERROR;
+        }
+
+        // Check FW version
+        if (DCU_CHECK_VERSION_FLAG == 1)
+        {
+            if ((status.dcuFWMajorRev != DCU_MAJOR_VERSION) || (status.dcuFWMinorRev != DCU_MINOR_VERSION))
+            {
+    //          printf("Failed validateDCUFWStatus: DCU version major = %d, minor = %d\n", status.dcuFWMajorRev, status.dcuFWMinorRev);
+                _logger.logDebug("Failed validateDCUFWStatus: DCU version major = %d, minor = %d", status.dcuFWMajorRev, status.dcuFWMinorRev);
+                rc = ERROR;
+            }
         }
     }
 
@@ -898,9 +903,9 @@ void DUHWMgr::processDCUStatus(DCUStatus status)
 
     if (_verbose)
     {
-        printf("In processDCUStatus loc = %d, fwStatusReg = 0x%x\n", loc, status.fwStatusReg);
+        printf("Processing DCU loc = %d, fwStatusReg = 0x%x\n", loc, status.fwStatusReg);
     }
-    _logger.logDebug("In processDCUStatus loc = %d, fwStatusReg = 0x%x", loc, status.fwStatusReg);
+    _logger.logDebug("Processing loc = %d, fwStatusReg = 0x%x", loc, status.fwStatusReg);
 
     // Add DCU to DCU Send Queue
     if ((loc > 0) && (loc < 153))

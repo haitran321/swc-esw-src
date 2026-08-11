@@ -156,7 +156,7 @@ STATUS DUACmdMgr::start()
     printf("Successfully created _localHWCommand device\n");
 
     // Initialize HW Manager
-    _duHWMgr.initialize(_moduleType);
+    _duHWMgr.initialize(_moduleType, getCommandMgrName());
 
     // Read Alpha DU status
     _duHWMgr.processDUAStatus(_duHWMgr.readDUStatus());

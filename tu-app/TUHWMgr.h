@@ -21,7 +21,7 @@ class TUHWMgr : public Uncopyable
 
         static TUHWMgr &getInstance();
 
-        STATUS initialize();
+        STATUS initialize(const char *cmdMgrName_);
 
         void close();
 
@@ -86,6 +86,8 @@ class TUHWMgr : public Uncopyable
 
         /* Private constructor */
         TUHWMgr();
+
+        const char *cmdMgrName;
 
         int _verbose;
 
