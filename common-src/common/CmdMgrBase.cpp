@@ -152,7 +152,7 @@ void CmdMgrBase::processTestServerMsg()
 
     if (bytesRead < sizeof(MsgHeaderType))
     {
-        _logger.logError("%s received undersized command packet: %d", getCommandMgrName(), static_cast<int>(bytesRead));
+        _logger.logError("Received undersized command packet: %d", static_cast<int>(bytesRead));
         if (_verbose)
         {
             printf("%s received undersized command packet: %d\n", getCommandMgrName(), static_cast<int>(bytesRead));
@@ -165,13 +165,12 @@ void CmdMgrBase::processTestServerMsg()
 
     if (!msg.isHeaderValid())
     {
-        _logger.logError("%s received invalid command header", getCommandMgrName());
+        _logger.logError("Received invalid command header");
         printf("%s received invalid command header\n", getCommandMgrName());
         return;
     }
 
-    _logger.logInfo("%s ProcessTestServerMsg: Processing incoming messages: msgId = %d",
-                    getCommandMgrName(), msg.getMsgId());
+    _logger.logInfo("ProcessTestServerMsg: Processing incoming messages: msgId = %d", msg.getMsgId());
     if (_verbose)
     {
         printf("%s ProcessTestServerMsg: Processing incoming messages: msgId = %d\n",
@@ -186,7 +185,7 @@ void CmdMgrBase::processTestServerMsg()
             shutdownMsg.byteSwapToLocal();
             if (shutdownMsg.validateData() != OK)
             {
-                _logger.logError("%s received invalid shutdown command", getCommandMgrName());
+                _logger.logError("Received invalid shutdown command");
                 return;
             }
 
@@ -201,7 +200,7 @@ void CmdMgrBase::processTestServerMsg()
             steeringCmdMsg.byteSwapToLocal();
             if (steeringCmdMsg.validateData() != OK)
             {
-                _logger.logError("%s received invalid steering command", getCommandMgrName());
+                _logger.logError("Received invalid steering command");
                 return;
             }
 
@@ -223,7 +222,7 @@ void CmdMgrBase::processTestServerMsg()
             statusRequestCmdMsg.byteSwapToLocal();
             if (statusRequestCmdMsg.validateData() != OK)
             {
-                _logger.logError("%s received invalid status request command", getCommandMgrName());
+                _logger.logError("Received invalid status request command");
                 return;
             }
 
@@ -244,7 +243,7 @@ void CmdMgrBase::processTestServerMsg()
             stressTestCmdMsg.byteSwapToLocal();
             if (stressTestCmdMsg.validateData() != OK)
             {
-                _logger.logError("%s received invalid stess test command", getCommandMgrName());
+                _logger.logError("Received invalid stess test command");
                 return;
             }
 
@@ -269,7 +268,7 @@ void CmdMgrBase::processTestServerMsg()
             RepollDCUCmdMsg repollDCUCmdMsg(msg.getBuf(), msg.getBufSize());
             if (repollDCUCmdMsg.validateData() != OK)
             {
-                _logger.logError("%s received invalid repoll DCU command", getCommandMgrName());
+                _logger.logError("Received invalid repoll DCU command");
                 return;
             }
 
@@ -339,12 +338,12 @@ void CmdMgrBase::handleShutdownCommand(ShutdownOption shutdownType)
 void CmdMgrBase::processStatusTimer()
 {
     _statusTimerCounter++;
-    _logger.logDebug("%s In processStatusTimer: timerCounter = %d", getCommandMgrName(), _statusTimerCounter);
+    _logger.logDebug("In processStatusTimer: timerCounter = %d", _statusTimerCounter);
 
     if (_statusTimerCounter == 1)
     {
         printf("%s sending InitCompleteAck Test Server\n", getCommandMgrName());
-        _logger.logInfo("%s sending InitCompleteAck Test Server", getCommandMgrName());
+        _logger.logInfo("sending InitCompleteAck Test Server");
         sendAckToTestServer(InitCompleteAck);
     }
 }

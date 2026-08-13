@@ -150,7 +150,7 @@ void DUCmdMgrBase::processSLInterrupt()
     {
         printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
     }
-    _logger.logDebug("%s reading scan limit interrupt, number of interrupt = %d", getCommandMgrName(), pending);
+    _logger.logDebug("reading scan limit interrupt, number of interrupt = %d", pending);
     _uioDevSL->clearInterrupt();
 
     int atbAlpha = _duHWMgr.getAtbKSine(ALPHA);
@@ -169,7 +169,7 @@ void DUCmdMgrBase::processSLInterrupt()
     {
         printf("atbAlpha = %d, atbBeta = %d\n", atbAlpha, atbBeta);
     }
-    _logger.logDebug("%s atbAlpha = %d, atbBeta = %d", getCommandMgrName(), atbAlpha, atbBeta);
+    _logger.logDebug("atbAlpha = %d, atbBeta = %d", atbAlpha, atbBeta);
 
     int atbSWSLResult = runSWScanLimitCheck(float(atbAlpha), float(atbBeta));
     int fwSLResult = _duHWMgr.getFWScanLimitCheckStatus();
@@ -180,8 +180,8 @@ void DUCmdMgrBase::processSLInterrupt()
                fwSLResult, fwSLResult & 0x1, atbSWSLResult);
     }
 
-    _logger.logDebug("%s fwSLResult = 0x%x(%d), atbSWSLResult = %d",
-                     getCommandMgrName(), fwSLResult, fwSLResult & 0x1, atbSWSLResult);
+    _logger.logDebug("fwSLResult = 0x%x(%d), atbSWSLResult = %d",
+                     fwSLResult, fwSLResult & 0x1, atbSWSLResult);
 
     lastProcessedAlpha = atbAlpha;
     lastProcessedBeta = atbBeta;
@@ -221,7 +221,7 @@ void DUCmdMgrBase::processConfigInterrupt()
 //  {
         printf("Reading config changed interrupt, number of interrupt = %d\n", pending);
 //  }
-    _logger.logDebug("%s reading config changed interrupt, number of interrupt = %d", getCommandMgrName(), pending);
+    _logger.logDebug("reading config changed interrupt, number of interrupt = %d", pending);
     _uioDevConfig->clearInterrupt();
 
     handleConfigInterruptRefresh();

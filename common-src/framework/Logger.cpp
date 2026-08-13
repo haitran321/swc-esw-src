@@ -9,7 +9,8 @@
 #include "DefineUtils.h"
 
 Logger::Logger() :
-    _udpDev(NULL)
+    _udpDev(NULL),
+    _sourcePrefix("")
 {
 }
 
@@ -25,7 +26,7 @@ Logger& Logger::getInstance()
     return (object);
 }
 
-STATUS Logger::initialize()
+STATUS Logger::initialize(const char *sourcePrefix)
 {
     STATUS rc = OK;
     ConfigDataManager& configs = ConfigDataManager::getInstance();
@@ -37,6 +38,15 @@ STATUS Logger::initialize()
     rc = rc || configs.get("LOGGER_IP_ADDRESS", LOGGER_IP_ADDRESS);
     rc = rc || configs.get("LOGGER_PORT", LOGGER_PORT);
     rc = rc || configs.get("LOG_LEVEL", LOG_LEVEL);
+
+    if (sourcePrefix != NULL)
+    {
+        _sourcePrefix = sourcePrefix;
+    }
+    else
+    {
+        _sourcePrefix.clear();
+    }
 
     // Open logger device
     _udpDev = new UDPNetworkDevice(NetworkClient, LOGGER_IP_ADDRESS, LOGGER_PORT, false);
@@ -96,6 +106,11 @@ void Logger::log(LogLevel level, char *msg, va_list *args)
                     timeInfo->tm_sec,
                     toString(level));
 
+    if (!_sourcePrefix.empty())
+    {
+        size += snprintf(text + size, sizeof text - size, "%s: ", _sourcePrefix.c_str());
+    }
+
     // Add user msg
     size += vsnprintf(text + size, sizeof text - size, msg,*args);
 
@@ -150,5 +165,4 @@ void Logger::logError(char *msg, ...)
         va_end(args);
     }
 }
-
 

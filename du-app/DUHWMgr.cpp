@@ -654,30 +654,11 @@ void DUHWMgr::readDCUStatus(bool sendCurrentDCUList)
         // Read DCU status registers
         status = readDCUFWStatus(reg);
 
-//      printf("****Reg = %d: last read = %d, now = %d\n", reg, _dcuStatus[_rfccType][reg].loc, status.loc);
-//      _logger.logDebug("%s - Read DCU status: reg = %d: last loc read = %d, now = %d", cmdMgrName, reg, _dcuStatus[_rfccType][status.loc].loc, status.loc);
-
+        // Check DCU location
         if ((status.loc > 0) && (status.loc < 153) && (status.locStatus == GO))
         {
             processDCUStatus(status);
         }
-        else    // Bad DCU location
-        {
-//          printf("****BAD Reg = %d: last read = %d, now = %d\n", reg, _dcuStatus[_rfccType][reg].loc, status.loc);
-
-            // Check to see if there was a good location for this DCU from the last read
-//          if (_dcuStatus[_rfccType][reg].loc > 0)
-//          {
-//              _dcuStatus[_rfccType][reg].overallStatus = NO_GO;
-//
-//              // Add to DCU send queue
-//              addDCUStatusToDeque(_dcuStatus[_rfccType][reg]);
-
-                // Now set location number for this DCU to 0 to be prepared for when it is good again
-//              _dcuStatus[_rfccType][reg].loc = 0;
-//          }
-        }
-//      printf("Reg = %d, loc = %d, fw = 0x%x\n", reg, _dcuStatus[_rfccType][status.loc].loc, _dcuStatus[_rfccType][status.loc].fwStatusReg);
     }
 
     // Compare to two DCU lists to find out what is missing from the master list
@@ -687,16 +668,17 @@ void DUHWMgr::readDCUStatus(bool sendCurrentDCUList)
 
     if (_verbose)
     {
-        printf("sendCurrentDCUList = %d, size = %d\n", sendCurrentDCUList, _currentDCUList.size());
+        printf("%s: sendCurrentDCUList = %d, size = %d\n", cmdMgrName, sendCurrentDCUList, _currentDCUList.size());
     }
-    _logger.logDebug("sendCurrentDCUList = %d, size = %d\n", sendCurrentDCUList, _currentDCUList.size());
+    _logger.logDebug("sendCurrentDCUList = %d, size = %d", sendCurrentDCUList, _currentDCUList.size());
     if (sendCurrentDCUList)
     {
         // Add DCU_NUM_TO_REFRESH_GDS first to reset the GDS
         if (_verbose)
         {
-            printf("Adding DCU_NUM_TO_REFRESH_GDS = %d, status = %d\n",  resetDCU.loc, DCU_NO_GO);
+            printf("%s: Adding DCU_NUM_TO_REFRESH_GDS = %d, status = %d\n",  cmdMgrName, resetDCU.loc, DCU_NO_GO);
         }
+        _logger.logDebug("Adding DCU_NUM_TO_REFRESH_GDS = %d, status = %d", resetDCU.loc, DCU_NO_GO);
         addDCUStatusToDeque(resetDCU);
 
         for (auto it = _currentDCUList.begin(); it != _currentDCUList.end(); ++it) 
@@ -704,8 +686,9 @@ void DUHWMgr::readDCUStatus(bool sendCurrentDCUList)
             // Add to DCU send queue
             if (_verbose)
             {
-                printf("DCU # = %d, status = %d\n", *it, _dcuStatus[_rfccType][*it].overallStatus);
+                printf("%s: DCU # = %d, status = %d\n", cmdMgrName, *it, _dcuStatus[_rfccType][*it].overallStatus);
             }
+            _logger.logDebug("DCU # = %d, status = %d", *it, _dcuStatus[_rfccType][*it].overallStatus);
             addDCUStatusToDeque(_dcuStatus[_rfccType][*it]);
         }
         // Compare to two DCU lists to find out what is missing from the master list
@@ -809,7 +792,7 @@ DCUStatus DUHWMgr::readDCUFWStatus(int reg)
     status.dcuFWMajorRev = DeviceUtilities::readMask(DCU_FW_MAJOR_REV_MASK, fwStatus);
     status.dcuFWMinorRev = DeviceUtilities::readMask(DCU_FW_MINOR_REV_MASK, fwStatus);
 
-    _logger.logDebug("%s - Data from FW for reg %d: 0x%x", cmdMgrName, reg, fwStatus, status.loc);
+    _logger.logDebug("Data from FW for reg %d: 0x%x, loc = %d", reg, fwStatus, status.loc);
 
     // Validate FW status before using it
     if (validateDCUFWStatus(status) == OK)
@@ -854,7 +837,6 @@ STATUS DUHWMgr::validateDCUFWStatus(DCUStatus status)
         // Check location valid bit
         if (status.locStatus == NO_GO)
         {
-    //      printf("Failed validateDCUFWStatus: DCU location valid bit is set to %d\n", status.locStatus);
             _logger.logDebug("Failed validateDCUFWStatus: DCU location valid bit is set to %d", status.locStatus);
             rc = ERROR;
         }
@@ -862,7 +844,6 @@ STATUS DUHWMgr::validateDCUFWStatus(DCUStatus status)
         // Check location number
         if ((status.loc < 0) || (status.loc > 153))
         {
-    //      printf("Failed validateDCUFWStatus: DCU location number is %d\n", status.loc);
             _logger.logDebug("Failed validateDCUFWStatus: DCU location number is %d", status.loc);
             rc = ERROR;
         }
@@ -870,7 +851,6 @@ STATUS DUHWMgr::validateDCUFWStatus(DCUStatus status)
         // Check correct RFCC group
         if (status.group != _rfccType)
         {
-    //      printf("Incorrect rfcc group: expected %d, received %d\n", _rfccType, status.group);
             _logger.logDebug("Incorrect rfcc group: expected %d, received %d", _rfccType, status.group);
             rc = ERROR;
         }
@@ -880,7 +860,6 @@ STATUS DUHWMgr::validateDCUFWStatus(DCUStatus status)
         {
             if ((status.dcuFWMajorRev != DCU_MAJOR_VERSION) || (status.dcuFWMinorRev != DCU_MINOR_VERSION))
             {
-    //          printf("Failed validateDCUFWStatus: DCU version major = %d, minor = %d\n", status.dcuFWMajorRev, status.dcuFWMinorRev);
                 _logger.logDebug("Failed validateDCUFWStatus: DCU version major = %d, minor = %d", status.dcuFWMajorRev, status.dcuFWMinorRev);
                 rc = ERROR;
             }
@@ -1042,10 +1021,10 @@ void DUHWMgr::addDCUStatusToDeque(DCUStatus status)
 
     if (_verbose)
     {
-        printf("Adding DCU to send queue group = %d, loc = %d, status = %d, locStatus = %d\n", 
-               status.group, status.loc, status.overallStatus, status.locStatus);
+        printf("%s: Adding DCU to send queue: group = %d, loc = %d, status = %d, locStatus = %d\n", 
+               cmdMgrName, status.group, status.loc, status.overallStatus, status.locStatus);
     }
-    _logger.logDebug("Adding DCU to send queue group = %d, loc = %d, status = %d, locStatus = %d", 
+    _logger.logDebug("Adding DCU to send queue: group = %d, loc = %d, status = %d, locStatus = %d", 
                      status.group, status.loc, status.overallStatus, status.locStatus);
 }
 
@@ -1175,8 +1154,10 @@ void DUHWMgr::getIOModuleStatus()
     // ATB Status = NO_GO if both config bits are zeros 
     _atbStatus = (HealthState)(iomStatus.configBit0 | iomStatus.configBit1);
 
-    _pwr12VStatus = (HealthState)iomStatus.ps12;
-    _pwr24VStatus = (HealthState)iomStatus.ps24;
+    // Need to invert the power supply since they are wired to send 1 for No Go and 0 for Go
+    _pwr12VStatus = (HealthState)!iomStatus.ps12;
+    _pwr24VStatus = (HealthState)!iomStatus.ps24;
+
     _tempStatus = (HealthState)iomStatus.temp;
 
     if (USE_STATUS_EMULATOR == 1)
@@ -1304,7 +1285,7 @@ int DUHWMgr::getFPGADieTemp()
 
 void DUHWMgr::clearDCUData()
 {
-    _logger.logDebug("%s: clearing DCU data", cmdMgrName);
+    _logger.logDebug("clearing DCU data");
     if (_verbose)
     {
         printf("%s: clearing DCU data", cmdMgrName);

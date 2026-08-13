@@ -99,7 +99,7 @@ STATUS DUACmdMgr::start()
     rc = rc || saps.get("SAP_STATUS_TIMER_INTERVAL_SECONDS", SAP_STATUS_TIMER_INTERVAL_SECONDS);
 
     // Setup Logger
-    _logger.initialize();
+    _logger.initialize(getCommandMgrName());
     _logger.logInfo("DUACmdMgr Initializing");
 
     if (rc == ERROR)
@@ -167,7 +167,7 @@ STATUS DUACmdMgr::start()
     }
 
     // Notify Test Server
-    _logger.logInfo("%s sending InitCompleteAck Test Server msg 1", getCommandMgrName());
+    _logger.logInfo("sending InitCompleteAck Test Server msg 1");
     sendAckToTestServer(InitCompleteAck);
 
     // Send config/mode to TU
@@ -309,11 +309,13 @@ void DUACmdMgr::handleDUStatusRequest(const StatusRequestCmdDataType& params)
         for (int dcu = 0; dcu < NUM_DCU; dcu++)
         {
             swcOverallStatusRptMsg.setAlphaDCUStatus(dcu, swcStatus.alphaDCU[dcu]);
+            _logger.logInfo("A: %d, %d", dcu, swcStatus.alphaDCU[dcu]);
         }
 
         for (int dcu = 0; dcu < NUM_DCU; dcu++)
         {
             swcOverallStatusRptMsg.setBetaDCUStatus(dcu, swcStatus.betaDCU[dcu]);
+            _logger.logInfo("B: %d, %d", dcu, swcStatus.alphaDCU[dcu]);
         }
         swcOverallStatusRptMsg.setLastProcessedAlpha(lastProcessedAlpha);
         swcOverallStatusRptMsg.setLastProcessedBeta(lastProcessedBeta);
@@ -533,4 +535,3 @@ void DUACmdMgr::handleStatusEmulatorMessage(int msg_id, const int *status, int n
         _logger.logDebug("Error: this SWCR Status Emulator is not being processed by this component");
     }
 }
-

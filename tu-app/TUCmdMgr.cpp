@@ -101,7 +101,7 @@ STATUS TUCmdMgr::start()
     rc = rc || saps.get("SAP_STATUS_TIMER_INTERVAL_SECONDS", SAP_STATUS_TIMER_INTERVAL_SECONDS);
 
     // Setup Logger
-    _logger.initialize();
+    _logger.initialize(getCommandMgrName());
     _logger.logInfo("TUCmdMgr Initializing");
 
     if (rc == ERROR)
@@ -234,7 +234,7 @@ void TUCmdMgr::processSLInterrupt()
     {
         printf("Reading scan limit interrupt, number of interrupt = %d\n", pending);
     }
-    _logger.logDebug("%s reading scan limit interrupt, number of interrupt = %d", getCommandMgrName(), pending);
+    _logger.logDebug("reading scan limit interrupt, number of interrupt = %d", pending);
     _uioDevSL->clearInterrupt();
 
     // Get FW SL check status
@@ -254,7 +254,7 @@ void TUCmdMgr::processSLInterrupt()
     {
         printf("fwSLResult = 0x%x(%d), swSLResult = %d\n", fwSLResult, fwSLResult & 0x1, swSLResult);
     }
-    _logger.logDebug("%s fwSLResult = 0x%x(%d), swSLResult = %d", getCommandMgrName(), fwSLResult, fwSLResult & 0x1, swSLResult);
+    _logger.logDebug("fwSLResult = 0x%x(%d), swSLResult = %d", fwSLResult, fwSLResult & 0x1, swSLResult);
 }
 
 void TUCmdMgr::processWLSPInterrupt()
@@ -267,7 +267,7 @@ void TUCmdMgr::processWLSPInterrupt()
     {
         printf("Reading WLSP interrupt, number of interrupt = %d\n", pending);
     
-        _logger.logDebug("%s reading WLSP changed interrupt, number of interrupt = %d", getCommandMgrName(), pending);
+        _logger.logDebug("reading WLSP changed interrupt, number of interrupt = %d", pending);
     }
     _uioDevWLSP->clearInterrupt();
 }

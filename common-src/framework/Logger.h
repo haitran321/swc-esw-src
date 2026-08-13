@@ -1,6 +1,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <string>
 #include "Uncopyable.h"
 #include "UDPNetworkDevice.h"
 
@@ -22,7 +23,7 @@ public:
 
     static Logger& getInstance();
 
-    STATUS initialize();
+    STATUS initialize(const char *sourcePrefix = NULL);
 
     void logInfo(char *msg, ...);
 
@@ -44,6 +45,8 @@ private:
     UDPNetworkDevice *_udpDev;
 
     int LOG_LEVEL;
+
+    std::string _sourcePrefix;
 
 };
 

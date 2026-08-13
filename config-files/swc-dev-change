@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Script to change dev name in the /etc/init.d/myapp-init startup file
+
+# Prompt user for new device name
+read -p "Enter new device name [dua|dub|tu]: " NEW_DEVICE
+
+# Validate input
+if [[ $NEW_DEVICE != "dua" && $NEW_DEVICE != "dub" && $NEW_DEVICE != "tu" ]]; then
+    echo "Device name need to be [dua|dub|tu]"
+    exit 2
+fi
+
+# Change dev name
+SEARCH="name=\""
+REPLACE="name=\"$NEW_DEVICE\""
+#sed -i "/$SEARCH/c$REPLACE" /etc/init.d/myapp-init
+sed -i "/$SEARCH/c$REPLACE" myapp-init/myapp-init
+
+echo "Success: Changed device '$REPLACE' in /etc/init.d/myapp-init."
+
+

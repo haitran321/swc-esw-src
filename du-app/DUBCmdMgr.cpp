@@ -87,7 +87,7 @@ STATUS DUBCmdMgr::start()
     rc = rc || saps.get("SAP_STATUS_TIMER_INTERVAL_SECONDS", SAP_STATUS_TIMER_INTERVAL_SECONDS);
 
     // Setup Logger
-    _logger.initialize();
+    _logger.initialize(getCommandMgrName());
     _logger.logInfo("DUBCmdMgr Initializing");
 
     if (rc == ERROR)

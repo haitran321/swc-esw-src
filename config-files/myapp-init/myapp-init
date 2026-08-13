@@ -5,7 +5,7 @@
 # dub:172.16.50.12
 # tu:172.16.50.13
 
-name="dua"
+name="tu"
 
 hostname $name
 
@@ -20,6 +20,7 @@ echo "alias stopswc='killall swc-esw-app.elf'" >> /etc/profile.d/aliases.sh
 echo "alias startswc='/mnt/sd-mmcblk0p1/run/swc-app-launcher $name &'" >> /etc/profile.d/aliases.sh
 echo "alias checkswc='ps | grep swc'" >> /etc/profile.d/aliases.sh
 echo "alias editswc='vi /mnt/sd-mmcblk0p1/run/conf/config.txt'" >> /etc/profile.d/aliases.sh
+echo "alias changeswc='vi /mnt/sd-mmcblk0p1/run/swc-dev-change'" >> /etc/profile.d/aliases.sh
 
 if [[ "$name" == "dua" ]]; then
     ifconfig eth0 172.16.50.11 netmask 255.255.255.0
