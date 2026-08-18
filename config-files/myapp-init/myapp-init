@@ -34,6 +34,9 @@ if [[ "$name" == "tu" ]]; then
     ifconfig eth0 172.16.50.13 netmask 255.255.255.0
 fi
 
+# ping the I/O Module to establish connection
+ping -c 1 172.16.80.14
+
 /mnt/sd-mmcblk0p1/run/swc-app-launcher $name &
 
 /mnt/sd-mmcblk0p1/run/swc-app-monitor $name &

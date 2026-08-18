@@ -258,7 +258,6 @@ void CmdMgrBase::processTestServerMsg()
                        params->alpha, params->alphaInc,
                        params->beta, params->betaInc);
             }
-//          _logger.logDebug("requestType = %d, dcuNum = %d", params->requestType, params->dcuNum);
             handleStressTestCommand(*params);
             break;
         }
@@ -276,7 +275,7 @@ void CmdMgrBase::processTestServerMsg()
             {
                 printf("Received Repoll DCU Cmd Msg\n");
             }
-            _logger.logDebug("Received Repoll DCU Cmd Msg\n");
+            _logger.logDebug("Received Repoll DCU Cmd Msg");
             handleRepollDCUCommand();
             break;
         }

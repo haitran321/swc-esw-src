@@ -103,6 +103,8 @@ void DUCmdMgrBase::handleSteeringCommand(const SteeringCmdDataType& params)
 
             _duHWMgr.toggleSWTrigger();
 
+            usleep(1 * 1000);   // Sleep 1 msecs
+
             _duHWMgr.sendSteeringWordValidFlagInTestMode(STEERING_WORD_VALID);
             _duHWMgr.setTestSrcInTestMode(Analog);
         }

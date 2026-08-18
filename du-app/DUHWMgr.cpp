@@ -537,11 +537,9 @@ void DUHWMgr::setDCUStatusToTwgs(RFCC_CH group, DCUHealthState health, int dcuNu
     if (_verbose)
     {
         printf("****Set DCU status to TWGS: dcu %d, health = %d\n", dcuNum, health);
-
-        _logger.logDebug("****Set DCU status to TWGS: dcu %d, health = %d", dcuNum, health);
     }
 
-//  printf("****Set DCU status to TWGS: dcu %d, health = %d\n", dcuNum, health);
+    _logger.logDebug("****Set DCU status to TWGS: dcu %d, health = %d", dcuNum, health);
 
     setDCUGroupStatusBit(group);
 
@@ -1285,10 +1283,10 @@ int DUHWMgr::getFPGADieTemp()
 
 void DUHWMgr::clearDCUData()
 {
-    _logger.logDebug("clearing DCU data");
+    _logger.logDebug("Clearing DCU data");
     if (_verbose)
     {
-        printf("%s: clearing DCU data", cmdMgrName);
+        printf("%s: Clearing DCU data", cmdMgrName);
     }
 
     _dcuSendDeque.clear();
@@ -1314,7 +1312,6 @@ void DUHWMgr::clearDCUData()
         {
             _dcuFWStatusHistory[BETA][dcu][historyIdx] = 0;
         }
-
 
         _dcuLocOccupied[dcu] = true;
     }

@@ -33,7 +33,7 @@ STATUS TUHWMgr::initialize(const char *cmdMgrName_)
     /* Config parameters */
     int RLTD_PULSE_DURATION;
     int RLCP_PULSE_DURATION;
-    int RLSC_PULSE_DURATION;
+    int RLSC_PULSE_DURATION; 
     int STEERING_WORD_PULSE_DURATION;
     int RLTD_PRE_TRIGGER_TIME;
 
