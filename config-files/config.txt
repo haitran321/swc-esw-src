@@ -40,6 +40,10 @@ FROM_STATUS_EMULATOR_PORT = 3040
 REFRESH_DCU_STATUS_ON_GDS_INTERVAL = 3
 DCU_NUM_TO_REFRESH_GDS = 199
 
+# Number of bits that must be set to zero in the DCU FW status 
+# for the status to be valid
+DCU_STATUS_ZERO_BIT_COUNT_ALLOW = 3
+
 # FORCE_TEST_MODE
 # 0 = Normal
 # 1 = Force test, no RLTD but needs SW trigger

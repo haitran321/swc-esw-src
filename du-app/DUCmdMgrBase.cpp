@@ -192,20 +192,25 @@ void DUCmdMgrBase::processSLInterrupt()
     {
         if (_verbose)
         {
-            printf("Last SPI transfer status has no failures.\n");
+            printf("Last SPI transfer status has failures.\n");
         }
-        _logger.logDebug("Last SPI transfer status has no failures.");
+        _logger.logDebug("Last SPI transfer status has failures.");
     }
     else
     {
         if (_verbose)
         {
-            printf("Last SPI transfer status has failures.\n");
+            printf("Last SPI transfer status has no failures.\n");
         }
-        _logger.logDebug("Last SPI transfer status has failures.");
+        _logger.logDebug("Last SPI transfer status has no failures.");
     }
 
-    handlePendingDcuStatusAfterScanLimit();
+    // Check if the last action was a Cal
+    // if Cal, no WLSP
+    if (!_duHWMgr.isLastRLTDForCalCmd())
+    {
+        handlePendingDcuStatusAfterScanLimit();
+    }
 
     if (sendProcessedSW)
     {

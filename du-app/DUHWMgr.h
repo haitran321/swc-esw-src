@@ -87,6 +87,7 @@ class DUHWMgr : public Uncopyable
         void computeDCURolledUpStatus();
 
         int getOverallSPIStatus();
+        int isLastRLTDForCalCmd();
 
         DUTUStatusType getDUAStatus();
         DUTUStatusType getDUBStatus();
@@ -190,6 +191,7 @@ class DUHWMgr : public Uncopyable
         int getMajorityFWStatusFromHistory(int reg, int currentFWStatus);
 
         int USE_STATUS_EMULATOR;
+        int DCU_STATUS_ZERO_BIT_COUNT_ALLOW;
         int emDCUFWStatus[NUM_RFCC_CH][NUM_DCU];
         int _dcuFWStatusHistory[NUM_RFCC_CH][NUM_DCU][4];
         int _dcuFWStatusHistoryCount[NUM_RFCC_CH][NUM_DCU];

@@ -15,7 +15,8 @@ DCU_CHECK_VERSION_FLAG(0),
 DCU_MAJOR_VERSION(0),
 DCU_MINOR_VERSION(0),
 SAP_RED_OP_THRESHOLD(90),
-SAP_YELLOW_OP_THRESHOLD(1)
+SAP_YELLOW_OP_THRESHOLD(1),
+DCU_STATUS_ZERO_BIT_COUNT_ALLOW(2)
 {
     emTempStatus = GO;
     emPwr12VStatus = GO;
@@ -96,6 +97,7 @@ STATUS DUHWMgr::initialize(int MODULE_TYPE_, const char *cmdMgrName_)
     rc = rc || configs.get("FORCE_TEST_MODE", FORCE_TEST_MODE);
     rc = rc || configs.get("SCAN_LIMIT_CENTER_FREQ_SEL", SCAN_LIMIT_CENTER_FREQ_SEL);
     rc = rc || configs.get("DCU_NUM_TO_REFRESH_GDS", DCU_NUM_TO_REFRESH_GDS);
+    rc = rc || configs.get("DCU_STATUS_ZERO_BIT_COUNT_ALLOW", DCU_STATUS_ZERO_BIT_COUNT_ALLOW);
 
     // DCU version
     rc = rc || configs.get("DCU_CHECK_VERSION_FLAG", DCU_CHECK_VERSION_FLAG);
@@ -821,15 +823,33 @@ DCUStatus DUHWMgr::readDCUFWStatus(int reg)
     return status;
 }
 
+// Need to update the bit count if the FW DCU status changed
 STATUS DUHWMgr::validateDCUFWStatus(DCUStatus status)
 {
     STATUS rc = OK;
+    const unsigned int fwStatusReg = static_cast<unsigned int>(status.fwStatusReg) & 0xFFFFFFU;
+    const int fwStatusBitCount = 24;
+    int zeroBitCount = 0;
 
-    if (status.fwStatusReg == 0xffffff)
+    for (int bit = 0; bit < fwStatusBitCount; bit++)
     {
+        if ((fwStatusReg & (1U << bit)) == 0U)
+        {
+            zeroBitCount++;
+        }
+    }
+
+    if (zeroBitCount < DCU_STATUS_ZERO_BIT_COUNT_ALLOW)
+    {
+        if (zeroBitCount != 0)  // not logging all F's
+        {
+            _logger.logDebug("Failed validateDCUFWStatus: DCU FW status 0x%x has %d zero bits",
+                             status.fwStatusReg, zeroBitCount);
+        }
         rc = ERROR;
     }
-    else
+
+    if (rc != ERROR)
     {
 
         // Check location valid bit
@@ -1222,6 +1242,11 @@ void DUHWMgr::computeDCURolledUpStatus()
 int DUHWMgr::getOverallSPIStatus()
 {
     return(DeviceUtilities::readMask(DU_SPI_HEALTH_LAST_CMD_MASK, getSysConfigStatus()));
+}
+
+int DUHWMgr::isLastRLTDForCalCmd()
+{
+    return(DeviceUtilities::readMask(DU_CAL_LAST_CMD_MASK, getSysConfigStatus()));
 }
 
 DUTUStatusType DUHWMgr::getDUAStatus()
