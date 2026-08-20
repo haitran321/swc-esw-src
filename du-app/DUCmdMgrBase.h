@@ -1,6 +1,8 @@
 #ifndef DUCmdMgrBase_H
 #define DUCmdMgrBase_H
 
+#include <stdint.h>
+
 #include "CmdMgrBase.h"
 #include "DUHWMgr.h"
 #include "SWCProcessedSteeringWordRptMsg.h"
@@ -29,6 +31,7 @@ class DUCmdMgrBase : public CmdMgrBase
         int lastProcessedAlpha;
         int lastProcessedBeta;
         int REFRESH_DCU_STATUS_ON_GDS_INTERVAL;
+        uint64_t _lastPendingDcuStatusAfterScanLimitUsec;
 
         virtual void handleDUStatusRequest(const StatusRequestCmdDataType& params) = 0;
         virtual void handlePendingDcuStatusAfterScanLimit() = 0;

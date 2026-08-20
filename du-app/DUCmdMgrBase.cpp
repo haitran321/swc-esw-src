@@ -1,8 +1,24 @@
 #include <stdio.h>
+#include <stdint.h>
+#include <time.h>
 
 #include "DUCmdMgrBase.h"
 #include "DeviceUtilities.h"
 #include "ScanLimitCheck.h"
+
+namespace
+{
+    const uint64_t PENDING_DCU_STATUS_MIN_INTERVAL_USEC = 1000;
+
+    uint64_t getMonotonicUsec()
+    {
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+
+        return (static_cast<uint64_t>(now.tv_sec) * 1000000ULL) +
+               (static_cast<uint64_t>(now.tv_nsec) / 1000ULL);
+    }
+}
 
 DUCmdMgrBase::DUCmdMgrBase(MODULE_TYPE moduleType) :
     CmdMgrBase(moduleType),
@@ -13,6 +29,7 @@ DUCmdMgrBase::DUCmdMgrBase(MODULE_TYPE moduleType) :
     lastProcessedAlpha(0),
     lastProcessedBeta(0),
     REFRESH_DCU_STATUS_ON_GDS_INTERVAL(6),
+    _lastPendingDcuStatusAfterScanLimitUsec(0),
     _steeringCmdCounter(0),
     _statusRequestCmdCounter(0)
 {
@@ -209,7 +226,14 @@ void DUCmdMgrBase::processSLInterrupt()
     // if Cal, no WLSP
     if (!_duHWMgr.isLastRLTDForCalCmd())
     {
-        handlePendingDcuStatusAfterScanLimit();
+        uint64_t currentUsec = getMonotonicUsec();
+
+        if ((_lastPendingDcuStatusAfterScanLimitUsec == 0) ||
+            ((currentUsec - _lastPendingDcuStatusAfterScanLimitUsec) >= PENDING_DCU_STATUS_MIN_INTERVAL_USEC))
+        {
+            handlePendingDcuStatusAfterScanLimit();
+            _lastPendingDcuStatusAfterScanLimitUsec = currentUsec;
+        }
     }
 
     if (sendProcessedSW)

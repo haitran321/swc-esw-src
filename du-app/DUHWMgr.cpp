@@ -1228,8 +1228,8 @@ void DUHWMgr::computeDCURolledUpStatus()
         _betaDCURolledUpStatus = ROLLED_UP_RED;
     }
 
-    _logger.logDebug("Alpha DCUs rolled up status: failed DCUs count = %d, rolled up status = %d\n", alphaDCUFailedCnt, _alphaDCURolledUpStatus);
-    _logger.logDebug("Beta DCUs rolled up status: failed DCUs count = %d, rolled up status = %d\n", betaDCUFailedCnt, _betaDCURolledUpStatus);
+    _logger.logDebug("Alpha DCUs rolled up status: failed DCUs count = %d, rolled up status = %d", alphaDCUFailedCnt, _alphaDCURolledUpStatus);
+    _logger.logDebug("Beta DCUs rolled up status: failed DCUs count = %d, rolled up status = %d", betaDCUFailedCnt, _betaDCURolledUpStatus);
     
 
 //  if (USE_STATUS_EMULATOR == 1)
