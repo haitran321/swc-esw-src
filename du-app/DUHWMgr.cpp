@@ -824,7 +824,7 @@ DCUStatus DUHWMgr::readDCUFWStatus(int reg)
 }
 
 // Need to update the bit count if the FW DCU status changed
-STATUS DUHWMgr::validateDCUFWStatus(DCUStatus status)
+STATUS DUHWMgr::validateDCUFWStatus(DCUStatus &status)
 {
     STATUS rc = OK;
     const unsigned int fwStatusReg = static_cast<unsigned int>(status.fwStatusReg) & 0xFFFFFFU;
@@ -900,9 +900,9 @@ void DUHWMgr::processDCUStatus(DCUStatus status)
 
     if (_verbose)
     {
-        printf("Processing DCU loc = %d, fwStatusReg = 0x%x\n", loc, status.fwStatusReg);
+        printf("Processing DCU loc = %d, fwStatusReg = 0x%x, locStatus = %d\n", loc, status.fwStatusReg, status.locStatus);
     }
-    _logger.logDebug("Processing loc = %d, fwStatusReg = 0x%x", loc, status.fwStatusReg);
+    _logger.logDebug("Processing loc = %d, fwStatusReg = 0x%x, locStatus = %d", loc, status.fwStatusReg, status.locStatus);
 
     // Add DCU to DCU Send Queue
     if ((loc > 0) && (loc < 153))

@@ -58,7 +58,7 @@ class DUHWMgr : public Uncopyable
         void readSWCStatus(SWC_STATUS_DATA_TYPE dataType);
         void readDCUStatus(bool sendCurrentDCUList = false);
         DCUStatus readDCUFWStatus(int reg);
-        STATUS validateDCUFWStatus(DCUStatus status);
+        STATUS validateDCUFWStatus(DCUStatus &status);
 
         void setDCUStatusToTwgs(RFCC_CH group, DCUHealthState health, int dcuNum);
 
