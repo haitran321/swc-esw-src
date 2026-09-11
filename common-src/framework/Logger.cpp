@@ -68,7 +68,7 @@ STATUS Logger::initialize(const char *sourcePrefix)
     return rc;
 }
 
-char* Logger::toString(LogLevel level)
+const char *Logger::toString(LogLevel level)
 {
     switch (level)
     {
@@ -85,7 +85,7 @@ char* Logger::toString(LogLevel level)
     }
 }
 
-void Logger::log(LogLevel level, char *msg, va_list *args)
+void Logger::log(LogLevel level, const char *msg, va_list *args)
 {
     STATUS rc = OK;
     // Send message to RIMS
@@ -108,7 +108,37 @@ void Logger::log(LogLevel level, char *msg, va_list *args)
 
     if (!_sourcePrefix.empty())
     {
-        size += snprintf(text + size, sizeof text - size, "%s: ", _sourcePrefix.c_str());
+        if (size >= 0 && static_cast<size_t>(size) < sizeof text)
+        {
+            size_t remaining = sizeof text - static_cast<size_t>(size);
+            size_t copyLen = _sourcePrefix.size();
+            if (copyLen > (remaining - 1))
+            {
+                copyLen = remaining - 1;
+            }
+
+            memcpy(text + size, _sourcePrefix.c_str(), copyLen);
+            size += static_cast<int>(copyLen);
+
+            if (size >= 0 && static_cast<size_t>(size) < sizeof text)
+            {
+                text[size++] = ':';
+            }
+
+            if (size >= 0 && static_cast<size_t>(size) < sizeof text)
+            {
+                text[size++] = ' ';
+            }
+
+            if (size >= 0 && static_cast<size_t>(size) < sizeof text)
+            {
+                text[size] = '\0';
+            }
+            else
+            {
+                text[sizeof text - 1] = '\0';
+            }
+        }
     }
 
     // Add user msg
@@ -122,7 +152,7 @@ void Logger::log(LogLevel level, char *msg, va_list *args)
     }
 }
 
-void Logger::logInfo(char *msg, ...)
+void Logger::logInfo(const char *msg, ...)
 {
     if (LOG_LEVEL <= Info)
     {
@@ -133,7 +163,7 @@ void Logger::logInfo(char *msg, ...)
     }
 }
 
-void Logger::logDebug(char *msg, ...)
+void Logger::logDebug(const char *msg, ...)
 {
     if (LOG_LEVEL <= Debug)
     {
@@ -144,7 +174,7 @@ void Logger::logDebug(char *msg, ...)
     }
 }
 
-void Logger::logTrace(char *msg, ...)
+void Logger::logTrace(const char *msg, ...)
 {
     if (LOG_LEVEL <= Trace)
     {
@@ -155,7 +185,7 @@ void Logger::logTrace(char *msg, ...)
     }
 }
 
-void Logger::logError(char *msg, ...)
+void Logger::logError(const char *msg, ...)
 {
     if (LOG_LEVEL <= Error)
     {
@@ -165,4 +195,3 @@ void Logger::logError(char *msg, ...)
         va_end(args);
     }
 }
-

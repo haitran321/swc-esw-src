@@ -849,7 +849,7 @@ STATUS DUHWMgr::validateDCUFWStatus(DCUStatus &status)
         rc = ERROR;
     }
 
-    if (rc != ERROR)
+    if (rc != ERROR)  
     {
 
         // Check location valid bit
@@ -970,7 +970,10 @@ void DUHWMgr::processDCUStatus(DCUStatus status)
 
 void DUHWMgr::processBetaDCUStatus(DCUStatus status)
 {
-    if (status.group < NUM_RFCC_CH && status.loc < NUM_DCU)
+    if ((status.group >= ALPHA) &&
+        (status.group < NUM_RFCC_CH) &&
+        (status.loc >= 0) &&
+        (status.loc < NUM_DCU))
     {
         // Update SW Beta DCU status
         _dcuStatus[status.group][status.loc] = status;
@@ -979,7 +982,9 @@ void DUHWMgr::processBetaDCUStatus(DCUStatus status)
         addDCUStatusToDeque(status);
     }
     
-    if (status.group < NUM_RFCC_CH && status.loc == resetDCU.loc)
+    if ((status.group >= ALPHA) &&
+        (status.group < NUM_RFCC_CH) &&
+        (status.loc == resetDCU.loc))
     {
         if (_verbose)
         {

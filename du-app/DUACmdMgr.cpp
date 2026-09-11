@@ -309,13 +309,13 @@ void DUACmdMgr::handleDUStatusRequest(const StatusRequestCmdDataType& params)
         for (int dcu = 0; dcu < NUM_DCU; dcu++)
         {
             swcOverallStatusRptMsg.setAlphaDCUStatus(dcu, swcStatus.alphaDCU[dcu]);
-            _logger.logInfo("A: %d, %d", dcu, swcStatus.alphaDCU[dcu]);
+//          _logger.logInfo("A: %d, %d", dcu, swcStatus.alphaDCU[dcu]);
         }
 
         for (int dcu = 0; dcu < NUM_DCU; dcu++)
         {
             swcOverallStatusRptMsg.setBetaDCUStatus(dcu, swcStatus.betaDCU[dcu]);
-            _logger.logInfo("B: %d, %d", dcu, swcStatus.alphaDCU[dcu]);
+//          _logger.logInfo("B: %d, %d", dcu, swcStatus.alphaDCU[dcu]);
         }
         swcOverallStatusRptMsg.setLastProcessedAlpha(lastProcessedAlpha);
         swcOverallStatusRptMsg.setLastProcessedBeta(lastProcessedBeta);

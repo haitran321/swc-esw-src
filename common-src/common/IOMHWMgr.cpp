@@ -57,10 +57,11 @@ STATUS IOMHWMgr::createContext()
     _modbusCtx = modbus_new_tcp(_ioModuleIpAddress.c_str(), _ioModulePort);
     if (_modbusCtx == nullptr)
     {
-        _logger.logError("Unable to create Modbus context for %s:%d",
-                         _ioModuleIpAddress.c_str(), _ioModulePort);
-        printf("Unable to create Modbus context for %s:%d\n",
-               _ioModuleIpAddress.c_str(), _ioModulePort);
+        std::ostringstream errorMsg;
+        errorMsg << "Unable to create Modbus context for "
+                 << _ioModuleIpAddress << ":" << _ioModulePort;
+        _logger.logError("%s", errorMsg.str().c_str());
+        std::cout << errorMsg.str() << std::endl;
         return ERROR;
     }
 

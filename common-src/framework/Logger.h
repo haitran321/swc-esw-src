@@ -25,22 +25,22 @@ public:
 
     STATUS initialize(const char *sourcePrefix = NULL);
 
-    void logInfo(char *msg, ...);
+    void logInfo(const char *msg, ...);
 
-    void logDebug(char *msg, ...);
+    void logDebug(const char *msg, ...);
 
-    void logTrace(char *msg, ...);
+    void logTrace(const char *msg, ...);
 
-    void logError(char *msg, ...);
+    void logError(const char *msg, ...);
 
 private:
 
     // Disallow construction
     Logger();
 
-    char* toString(LogLevel level);
+    const char* toString(LogLevel level);
 
-    void log(LogLevel level, char *msg, va_list *args);
+    void log(LogLevel level, const char *msg, va_list *args);
 
     UDPNetworkDevice *_udpDev;
 
